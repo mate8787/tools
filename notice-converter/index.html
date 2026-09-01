@@ -81,7 +81,7 @@
     font-size: 12px;
     margin: 0 0 10px;
   }
-  #baseTemplate {
+  #baseTemplate, #bulkPaste {
     width: 100%;
     height: 260px;
     background: var(--panel-alt);
@@ -93,7 +93,21 @@
     font-size: 12px;
     resize: vertical;
   }
-  #baseTemplate:focus { outline: none; border-color: var(--accent-dim); }
+  #baseTemplate:focus, #bulkPaste:focus { outline: none; border-color: var(--accent-dim); }
+  .all-outputs-wrap { margin-top: 26px; }
+  .all-outputs-wrap > h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .all-outputs-wrap > .hint {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 0 0 10px;
+  }
   .base-status {
     font-size: 12px;
     margin-top: 8px;
@@ -320,6 +334,28 @@
     </div>
   </div>
 
+  <div class="base-section open" id="bulkSection">
+    <div class="base-header" onclick="toggleBulk()">
+      <h2>Paste all languages at once</h2>
+      <span class="chev">▶</span>
+    </div>
+    <div class="base-body">
+      <p class="base-hint">
+        Paste a table copied straight from your translation sheet. The first row is the
+        language codes; every row after that is one text segment, columns separated by tabs.
+        Recognised codes: <code>EN&nbsp; KR&nbsp; DE&nbsp; ES-ES&nbsp; ES-MX&nbsp; FR&nbsp; IT&nbsp; PL&nbsp; PT-BR&nbsp; TR&nbsp; RU&nbsp; CN&nbsp; TW&nbsp; JP</code>.
+        Blank rows and <code>[bracket-only]</code> placeholder rows (like image markers) are skipped automatically,
+        just as in the per-language boxes. Every language tab is filled and all sources are generated below.
+      </p>
+      <textarea id="bulkPaste" placeholder="EN&#9;KR&#9;DE&#9;ES-ES&#9;ES-MX&#9;...&#10;First English segment&#9;First Korean segment&#9;...&#10;Second English segment&#9;Second Korean segment&#9;..."></textarea>
+      <div class="actions">
+        <button class="btn-primary" onclick="bulkSplit()">Split &amp; generate all languages</button>
+        <button class="btn-secondary" onclick="clearBulk()">Clear</button>
+      </div>
+      <div class="base-status" id="bulkStatus"></div>
+    </div>
+  </div>
+
   <div class="tabbar" id="tabbar"></div>
 
   <div class="top-actions">
@@ -327,6 +363,8 @@
   </div>
 
   <div id="langPanels"></div>
+
+  <div class="all-outputs-wrap" id="allOutputs"></div>
 </div>
 
 <div class="toast" id="toast">Copied!</div>
@@ -384,6 +422,10 @@ function resetState() {
 
 function toggleBase() {
   document.getElementById('baseSection').classList.toggle('open');
+}
+
+function toggleBulk() {
+  document.getElementById('bulkSection').classList.toggle('open');
 }
 
 async function loadTemplate() {
@@ -453,6 +495,8 @@ function applyTemplateChange() {
   resetState();
   buildTabs();
   buildPanels();
+  const ao = document.getElementById('allOutputs');
+  if (ao) ao.innerHTML = '';
 }
 
 function renderSegmentPreview() {
@@ -581,6 +625,162 @@ function autoSplit(l) {
     statusEl.className = 'parse-status warn';
     statusEl.textContent = `⚠ Found only ${lines.length} lines, expected ${expected}. Some fields are empty — fill them in manually.`;
   }
+}
+
+// ---- Bulk paste: whole translation table at once ----
+const HEADER_ALIASES = {
+  'EN':'EN','ENG':'EN','EN-US':'EN','EN-GB':'EN',
+  'KR':'KR','KO':'KR','KO-KR':'KR','KOR':'KR',
+  'DE':'DE','DE-DE':'DE','GER':'DE','DEU':'DE',
+  'ES':'ES','ES-ES':'ES','ES-EU':'ES','SPA':'ES',
+  'MX':'MX','ES-MX':'MX','ES-LA':'MX','ES-419':'MX','LATAM':'MX',
+  'FR':'FR','FR-FR':'FR','FRA':'FR',
+  'IT':'IT','IT-IT':'IT','ITA':'IT',
+  'PL':'PL','PL-PL':'PL','POL':'PL',
+  'BR':'BR','PT-BR':'BR','PT':'BR','PTB':'BR','PT-PT':'BR','POR':'BR',
+  'TR':'TR','TR-TR':'TR','TUR':'TR',
+  'RU':'RU','RU-RU':'RU','RUS':'RU',
+  'CN':'CN','ZH':'CN','ZH-CN':'CN','ZH-HANS':'CN','ZHS':'CN','SC':'CN','CHS':'CN',
+  'TW':'TW','ZH-TW':'TW','ZH-HANT':'TW','ZHT':'TW','TC':'TW','ZH-HK':'TW','HK':'TW','CHT':'TW',
+  'JP':'JP','JA':'JP','JA-JP':'JP','JPN':'JP'
+};
+
+function normHeader(h) {
+  return h.trim().toUpperCase().replace(/\s+/g, '').replace(/_/g, '-');
+}
+
+function dequote(s) {
+  s = String(s == null ? '' : s).replace(/\r/g, '');
+  if (s.length >= 2 && s.charAt(0) === '"' && s.charAt(s.length - 1) === '"') {
+    return s.slice(1, -1).replace(/""/g, '"');
+  }
+  return s;
+}
+
+function clearBulk() {
+  document.getElementById('bulkPaste').value = '';
+  const s = document.getElementById('bulkStatus');
+  s.className = 'base-status';
+  s.textContent = '';
+  document.getElementById('allOutputs').innerHTML = '';
+}
+
+function bulkSplit() {
+  const statusEl = document.getElementById('bulkStatus');
+  const raw = document.getElementById('bulkPaste').value;
+
+  if (EDITABLE_INDICES.length === 0) {
+    statusEl.className = 'base-status err';
+    statusEl.textContent = '⚠ Save a base template first — there are no fields to fill yet.';
+    return;
+  }
+
+  const allLines = raw.split(/\r?\n/);
+  const headerIdx = allLines.findIndex(l => l.trim().length > 0);
+  if (headerIdx === -1) {
+    statusEl.className = 'base-status err';
+    statusEl.textContent = '⚠ Nothing pasted.';
+    return;
+  }
+
+  const headerCells = allLines[headerIdx].split('\t');
+  if (headerCells.length < 2) {
+    statusEl.className = 'base-status err';
+    statusEl.textContent = '⚠ The first row has no tab-separated columns. Copy the block straight out of your spreadsheet so the columns stay tab-separated.';
+    return;
+  }
+
+  const colToLang = {};
+  const recognized = [];
+  const unknown = [];
+  headerCells.forEach((h, idx) => {
+    const key = normHeader(h);
+    if (!key) return;
+    const lang = HEADER_ALIASES[key];
+    if (lang && LANGS.indexOf(lang) !== -1) {
+      if (!(idx in colToLang) && recognized.indexOf(lang) === -1) {
+        colToLang[idx] = lang;
+        recognized.push(lang);
+      }
+    } else {
+      unknown.push(h.trim());
+    }
+  });
+
+  if (recognized.length === 0) {
+    statusEl.className = 'base-status err';
+    statusEl.textContent = '⚠ No column header in the first row matched a known language (EN, KR, DE, ES-ES, ES-MX, FR, IT, PL, PT-BR, TR, RU, CN, TW, JP).';
+    return;
+  }
+
+  const dataRows = [];
+  for (let i = headerIdx + 1; i < allLines.length; i++) {
+    dataRows.push(allLines[i].split('\t'));
+  }
+
+  const expected = EDITABLE_INDICES.length;
+  const perLangCount = {};
+  const filledLangs = [];
+
+  Object.keys(colToLang).forEach(colStr => {
+    const col = parseInt(colStr, 10);
+    const lang = colToLang[col];
+    // same filtering rule as the per-language auto-split: skip blank and bracket-only cells
+    const cells = dataRows
+      .map(r => dequote(r[col]).trim())
+      .filter(v => v.length > 0 && !isBracketOnly(v));
+    perLangCount[lang] = cells.length;
+
+    EDITABLE_INDICES.forEach((segIdx, n) => {
+      const val = cells[n] || '';
+      state[lang].values[segIdx] = val;
+      const fld = document.getElementById('fld_' + segIdx + '_' + lang);
+      if (fld) fld.value = val;
+    });
+    updateDot(lang);
+    if (cells.length > 0) filledLangs.push(lang);
+  });
+
+  const orderedFilled = recognized.filter(l => filledLangs.indexOf(l) !== -1);
+  renderAllOutputs(orderedFilled);
+
+  const problems = [];
+  const mismatched = Object.keys(perLangCount).filter(l => perLangCount[l] !== expected);
+  if (mismatched.length) {
+    problems.push('segment count off for ' + mismatched.map(l => `${l} (${perLangCount[l]}/${expected})`).join(', '));
+  }
+  if (unknown.length) problems.push('ignored column(s): ' + unknown.join(', '));
+  const emptyLangs = recognized.filter(l => filledLangs.indexOf(l) === -1);
+  if (emptyLangs.length) problems.push('no text for ' + emptyLangs.join(', '));
+
+  if (problems.length) {
+    statusEl.className = 'base-status err';
+    statusEl.textContent = `⚠ Filled ${orderedFilled.length} language(s), expected ${expected} segments each — ` + problems.join('; ') + '. Check those tabs before using the output.';
+  } else {
+    statusEl.className = 'base-status ok';
+    statusEl.textContent = `✓ Filled all ${orderedFilled.length} languages with ${expected} segments each. Generated sources are below; the tabs are populated too.`;
+  }
+}
+
+function renderAllOutputs(langs) {
+  const el = document.getElementById('allOutputs');
+  if (!langs || langs.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = '<h2>All generated sources</h2>' +
+    '<p class="hint">One box per language, in sheet order. Each Copy button copies that language\'s full HTML source.</p>' +
+    langs.map(l => `
+      <div class="panel" style="margin-top:14px;">
+        <h2>${l}</h2>
+        <div class="actions" style="margin-top:0; margin-bottom:10px;">
+          <button class="btn-primary btn-small" onclick="copyOutput('${l}')">Copy ${l} source</button>
+        </div>
+        <pre class="output" id="alloutput_${l}"></pre>
+      </div>
+    `).join('');
+  langs.forEach(l => {
+    const html = generate(l);
+    const box = document.getElementById('alloutput_' + l);
+    if (box) box.textContent = html;
+  });
 }
 
 function generate(l) {
