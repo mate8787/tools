@@ -551,7 +551,7 @@ function buildPanels() {
       <div class="panel">
         <h2>3. Generated HTML source — ${l}</h2>
         <div class="actions" style="margin-top:0; margin-bottom:12px;">
-          <button class="btn-primary" onclick="generateAndCopy('${l}')">Generate & copy</button>
+          <button class="btn-primary" onclick="generateAndCopy('${l}')">Copy code</button>
         </div>
         <pre class="output" id="output_${l}"><span class="empty-hint">Generated HTML will appear here.</span></pre>
       </div>
@@ -802,7 +802,7 @@ function generate(l) {
 
 function generateAndCopy(l) {
   const text = generate(l);
-  navigator.clipboard.writeText(text).then(() => showToast(`Generated & copied ${l} source!`));
+  navigator.clipboard.writeText(text).then(() => showToast(`Copied ${l} source!`));
 }
 
 function copyOutput(l) {
