@@ -120,6 +120,9 @@
     margin-top: 12px;
   }
   .segment-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     background: var(--panel-alt);
     border: 1px solid var(--border);
     border-radius: 5px;
@@ -132,7 +135,23 @@
     color: var(--accent);
     font-family: var(--mono);
     font-size: 10px;
-    margin-right: 8px;
+    flex: none;
+    width: 34px;
+    text-align: right;
+  }
+  .segment-preview-item .idx.idx-skip { color: var(--muted); }
+  .segment-preview-item .seg-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .segment-preview-item.ignored { opacity: 0.5; }
+  .segment-preview-item.ignored .seg-text { text-decoration: line-through; }
+  .segment-preview-item .seg-ignore {
+    flex: none;
+    padding: 3px 9px;
+    font-size: 11px;
   }
 
   .tabbar {
@@ -376,9 +395,22 @@ const LANGS = ['EN','KR','DE','ES','MX','FR','IT','PL','BR','TR','RU','CN','TW',
 
 let CURRENT_TEMPLATE = '';
 let SEGMENTS = [];          // full parsed template: [{type:'tag', raw} | {type:'text', raw, leading, core, trailing, editable}]
-let EDITABLE_INDICES = [];  // indices into SEGMENTS that are editable text
+let EDITABLE_INDICES = [];  // every detected translatable text segment (indices into SEGMENTS)
+let IGNORED = new Set();    // subset of EDITABLE_INDICES the user chose to skip
+let ACTIVE_INDICES = [];    // EDITABLE_INDICES minus IGNORED — the ones that become fields
 const state = {};           // state[lang] = { raw: '', values: { segIndex: text } }
 let activeLang = LANGS[0];
+
+const IGNORED_KEY = 'cd_notice_ignored_segments';
+
+function recomputeActive() {
+  IGNORED = new Set([...IGNORED].filter(i => EDITABLE_INDICES.indexOf(i) !== -1));
+  ACTIVE_INDICES = EDITABLE_INDICES.filter(i => !IGNORED.has(i));
+}
+
+function persistIgnored() {
+  try { localStorage.setItem(IGNORED_KEY, JSON.stringify([...IGNORED])); } catch (e) {}
+}
 
 function isBracketOnly(s) {
   return /^\[[^\]]*\]$/.test(s.trim());
@@ -433,6 +465,10 @@ function toggleBulk() {
 async function loadTemplate() {
   const statusEl = document.getElementById('baseStatus');
   try {
+    const ig = localStorage.getItem(IGNORED_KEY);
+    if (ig) IGNORED = new Set(JSON.parse(ig).filter(n => Number.isInteger(n)));
+  } catch (e) {}
+  try {
     const saved = localStorage.getItem('cd_notice_base_template');
     if (saved) {
       CURRENT_TEMPLATE = saved;
@@ -463,8 +499,7 @@ async function saveTemplate() {
     statusEl.className = 'base-status err';
     statusEl.textContent = '⚠ No translatable text detected in this HTML — check that you pasted the full source code.';
   } else {
-    statusEl.className = 'base-status ok';
-    statusEl.textContent = `✓ Template saved — detected ${EDITABLE_INDICES.length} translatable text segment(s).`;
+    setSavedStatus();
   }
 
   try {
@@ -475,9 +510,22 @@ async function saveTemplate() {
   }
 }
 
+function setSavedStatus() {
+  const statusEl = document.getElementById('baseStatus');
+  if (EDITABLE_INDICES.length === 0) return;
+  statusEl.className = 'base-status ok';
+  if (IGNORED.size) {
+    statusEl.textContent = `✓ Template saved — ${ACTIVE_INDICES.length} active segment(s), ${IGNORED.size} ignored (${EDITABLE_INDICES.length} detected).`;
+  } else {
+    statusEl.textContent = `✓ Template saved — detected ${EDITABLE_INDICES.length} translatable text segment(s).`;
+  }
+}
+
 async function resetTemplate() {
   CURRENT_TEMPLATE = '';
   document.getElementById('baseTemplate').value = '';
+  IGNORED = new Set();
+  persistIgnored();
   const statusEl = document.getElementById('baseStatus');
   try {
     localStorage.removeItem('cd_notice_base_template');
@@ -493,6 +541,7 @@ async function resetTemplate() {
 function applyTemplateChange() {
   SEGMENTS = parseSegments(CURRENT_TEMPLATE);
   EDITABLE_INDICES = SEGMENTS.map((s, i) => (s.type === 'text' && s.editable) ? i : -1).filter(i => i !== -1);
+  recomputeActive();
   renderSegmentPreview();
   resetState();
   buildTabs();
@@ -501,15 +550,40 @@ function applyTemplateChange() {
   if (ao) ao.innerHTML = '';
 }
 
+function toggleIgnore(i) {
+  if (IGNORED.has(i)) IGNORED.delete(i); else IGNORED.add(i);
+  persistIgnored();
+  recomputeActive();
+  renderSegmentPreview();
+  buildTabs();
+  buildPanels();               // reads current values from state, so entered text is kept
+  LANGS.forEach(updateDot);
+  setSavedStatus();
+  const ao = document.getElementById('allOutputs');
+  if (ao && ao.children.length) {
+    const langs = [...ao.querySelectorAll('.panel > h2')].map(h => h.textContent);
+    renderAllOutputs(langs);
+  }
+}
+
 function renderSegmentPreview() {
   const el = document.getElementById('segmentPreview');
   if (EDITABLE_INDICES.length === 0) {
     el.innerHTML = '';
     return;
   }
-  el.innerHTML = EDITABLE_INDICES.map((i, n) =>
-    `<div class="segment-preview-item"><span class="idx">${n + 1}</span>${truncate(SEGMENTS[i].core, 90)}</div>`
-  ).join('');
+  let active = 0;
+  el.innerHTML = EDITABLE_INDICES.map(i => {
+    const ignored = IGNORED.has(i);
+    const badge = ignored
+      ? '<span class="idx idx-skip">skip</span>'
+      : `<span class="idx">${++active}</span>`;
+    return `<div class="segment-preview-item${ignored ? ' ignored' : ''}">
+      ${badge}
+      <span class="seg-text">${escapeHtml(truncate(SEGMENTS[i].core, 90))}</span>
+      <button class="btn-secondary btn-small seg-ignore" onclick="toggleIgnore(${i})">${ignored ? 'Include' : 'Ignore'}</button>
+    </div>`;
+  }).join('');
 }
 
 // ---- Tabs / panels ----
@@ -530,12 +604,16 @@ function buildPanels() {
     container.innerHTML = `<div class="no-tokens-warning">No translatable text detected yet — paste the current notice HTML into the Base Template section above and click Save.</div>`;
     return;
   }
+  if (ACTIVE_INDICES.length === 0) {
+    container.innerHTML = `<div class="no-tokens-warning">Every detected segment is set to “Ignore”. Include at least one segment in the Base template section to start translating.</div>`;
+    return;
+  }
 
   container.innerHTML = LANGS.map(l => `
     <div class="lang-panel ${l === activeLang ? 'active' : ''}" id="panel_${l}">
       <div class="panel">
         <h2>1. Paste translated block — ${l}</h2>
-        <textarea class="rawPaste" id="raw_${l}" placeholder="Paste the full translated text here, one segment per line, in the same order as the ${EDITABLE_INDICES.length} fields shown below." oninput="onRawInput('${l}')"></textarea>
+        <textarea class="rawPaste" id="raw_${l}" placeholder="Paste the full translated text here, one segment per line, in the same order as the ${ACTIVE_INDICES.length} fields shown below." oninput="onRawInput('${l}')"></textarea>
         <div class="actions">
           <button class="btn-primary" onclick="autoSplit('${l}')">Auto-split into fields ↓</button>
           <button class="btn-secondary btn-small" onclick="clearRaw('${l}')">Clear</button>
@@ -543,11 +621,15 @@ function buildPanels() {
         <div id="status_${l}" class="parse-status"></div>
 
         <h2 style="margin-top:20px;">2. Review / edit fields</h2>
-        ${EDITABLE_INDICES.map((i, n) => `
+        ${ACTIVE_INDICES.map((i, n) => {
+          const v = (state[l] && state[l].values[i] != null && state[l].values[i] !== '')
+            ? state[l].values[i]
+            : (l === 'EN' ? SEGMENTS[i].core : '');
+          return `
           <label>Field ${n + 1}</label>
           <div class="source-text">${escapeHtml(SEGMENTS[i].core)}</div>
-          <textarea class="field-textarea" id="fld_${i}_${l}" placeholder="Translation..." oninput="onFieldInput('${l}')">${l === 'EN' ? escapeHtml(SEGMENTS[i].core) : ''}</textarea>
-        `).join('')}
+          <textarea class="field-textarea" id="fld_${i}_${l}" placeholder="Translation..." oninput="onFieldInput('${l}')">${escapeHtml(v)}</textarea>`;
+        }).join('')}
       </div>
 
       <div class="panel">
@@ -582,7 +664,7 @@ function onRawInput(l) {
 }
 
 function onFieldInput(l) {
-  EDITABLE_INDICES.forEach(i => {
+  ACTIVE_INDICES.forEach(i => {
     const el = document.getElementById('fld_' + i + '_' + l);
     if (el) state[l].values[i] = el.value;
   });
@@ -592,10 +674,10 @@ function onFieldInput(l) {
 function updateDot(l) {
   const tab = document.getElementById('tabbtn_' + l);
   if (!tab) return;
-  const total = EDITABLE_INDICES.length;
-  const filled = EDITABLE_INDICES.filter(i => state[l].values[i] && state[l].values[i].trim().length > 0).length;
+  const total = ACTIVE_INDICES.length;
+  const filled = ACTIVE_INDICES.filter(i => state[l].values[i] && state[l].values[i].trim().length > 0).length;
   tab.classList.remove('partial', 'complete');
-  if (filled === 0) return;               // untouched — no dot
+  if (total === 0 || filled === 0) return; // untouched — no dot
   if (filled < total) tab.classList.add('partial');   // some fields missing — red dot
   else tab.classList.add('complete');                 // every field filled — green dot
 }
@@ -612,9 +694,9 @@ function autoSplit(l) {
   const lines = rawLines.map(x => x.trim()).filter(x => x.length > 0 && !isBracketOnly(x));
 
   const statusEl = document.getElementById('status_' + l);
-  const expected = EDITABLE_INDICES.length;
+  const expected = ACTIVE_INDICES.length;
 
-  EDITABLE_INDICES.forEach((i, n) => {
+  ACTIVE_INDICES.forEach((i, n) => {
     const val = lines[n] || '';
     const el = document.getElementById('fld_' + i + '_' + l);
     if (el) el.value = val;
@@ -681,6 +763,11 @@ function bulkSplit() {
     statusEl.textContent = '⚠ Save a base template first — there are no fields to fill yet.';
     return;
   }
+  if (ACTIVE_INDICES.length === 0) {
+    statusEl.className = 'base-status err';
+    statusEl.textContent = '⚠ Every detected segment is set to “Ignore” — include at least one before pasting translations.';
+    return;
+  }
 
   const allLines = raw.split(/\r?\n/);
   const headerIdx = allLines.findIndex(l => l.trim().length > 0);
@@ -725,7 +812,7 @@ function bulkSplit() {
     dataRows.push(allLines[i].split('\t'));
   }
 
-  const expected = EDITABLE_INDICES.length;
+  const expected = ACTIVE_INDICES.length;
   const perLangCount = {};
   const filledLangs = [];
 
@@ -738,7 +825,7 @@ function bulkSplit() {
       .filter(v => v.length > 0 && !isBracketOnly(v));
     perLangCount[lang] = cells.length;
 
-    EDITABLE_INDICES.forEach((segIdx, n) => {
+    ACTIVE_INDICES.forEach((segIdx, n) => {
       const val = cells[n] || '';
       state[lang].values[segIdx] = val;
       const fld = document.getElementById('fld_' + segIdx + '_' + lang);
@@ -795,8 +882,8 @@ function generate(l) {
   SEGMENTS.forEach((seg, i) => {
     if (seg.type === 'tag') {
       html += seg.raw;
-    } else if (!seg.editable) {
-      html += seg.raw;
+    } else if (!seg.editable || IGNORED.has(i)) {
+      html += seg.raw;   // ignored segments keep the original template text in every language
     } else {
       const el = document.getElementById('fld_' + i + '_' + l);
       const val = el ? el.value : (state[l].values[i] || '');
@@ -821,7 +908,7 @@ function copyOutput(l) {
 }
 
 function downloadAll() {
-  const filled = LANGS.filter(l => EDITABLE_INDICES.some(i => state[l].values[i] && state[l].values[i].trim().length > 0));
+  const filled = LANGS.filter(l => ACTIVE_INDICES.some(i => state[l].values[i] && state[l].values[i].trim().length > 0));
   if (filled.length === 0) { showToast('No languages filled in yet'); return; }
   let out = '';
   filled.forEach(l => {
