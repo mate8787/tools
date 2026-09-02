@@ -15,6 +15,7 @@
     --accent-dim: #3d5a80;
     --ok: #6fcf97;
     --warn: #ffb450;
+    --bad: #ff5c5c;
     --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
   }
   * { box-sizing: border-box; }
@@ -170,7 +171,8 @@
     vertical-align: middle;
     opacity: 0;
   }
-  .tab.filled .dot { opacity: 1; }
+  .tab.complete .dot { opacity: 1; background: var(--ok); }
+  .tab.partial .dot { opacity: 1; background: var(--bad); }
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -588,9 +590,14 @@ function onFieldInput(l) {
 }
 
 function updateDot(l) {
-  const filled = EDITABLE_INDICES.some(i => state[l].values[i] && state[l].values[i].trim().length > 0);
   const tab = document.getElementById('tabbtn_' + l);
-  if (tab) { if (filled) tab.classList.add('filled'); else tab.classList.remove('filled'); }
+  if (!tab) return;
+  const total = EDITABLE_INDICES.length;
+  const filled = EDITABLE_INDICES.filter(i => state[l].values[i] && state[l].values[i].trim().length > 0).length;
+  tab.classList.remove('partial', 'complete');
+  if (filled === 0) return;               // untouched — no dot
+  if (filled < total) tab.classList.add('partial');   // some fields missing — red dot
+  else tab.classList.add('complete');                 // every field filled — green dot
 }
 
 function clearRaw(l) {
