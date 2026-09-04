@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Link Analyzer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; min-height: 100vh; padding: 2rem; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+
+  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+
+  label { font-size: 13px; font-weight: 500; color: #444; display: block; margin-bottom: 6px; }
+  input[type="text"], input[type="password"] {
+    width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 7px;
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, input[type="password"]:focus { border-color: #5b5ef4; }
+  textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 7px;
+    font-size: 13px; font-family: monospace; resize: vertical; min-height: 130px;
+    outline: none; transition: border-color 0.2s; line-height: 1.5;
+  }
+  textarea:focus { border-color: #5b5ef4; }
+
+  .key-row { display: flex; gap: 10px; align-items: flex-end; }
+  .key-row input { flex: 1; }
+
+  button {
+    padding: 9px 20px; border-radius: 7px; font-size: 14px; font-weight: 500;
+    cursor: pointer; border: 1px solid #ddd; background: #fff; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  button:hover { background: #f0f0f0; }
+  .btn-primary { background: #5b5ef4; color: #fff; border-color: #5b5ef4; }
+  .btn-primary:hover { background: #4a4de0; border-color: #4a4de0; }
+  .btn-primary:disabled { background: #aab; border-color: #aab; cursor: default; }
+  .btn-copy { font-size: 13px; padding: 7px 14px; }
+  .btn-clear { font-size: 13px; padding: 7px 14px; color: #888; }
+
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #status { font-size: 13px; color: #666; flex: 1; min-width: 200px; }
+  .progress-bar { width: 100%; height: 4px; background: #e8e8e8; border-radius: 2px; margin-top: 10px; display: none; }
+  .progress-fill { height: 100%; background: #5b5ef4; border-radius: 2px; transition: width 0.3s; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+  th { text-align: left; padding: 9px 12px; background: #f8f8f8; border-bottom: 2px solid #e0e0e0; font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  td.url-cell { max-width: 200px; }
+  td.url-cell a { color: #5b5ef4; text-decoration: none; font-size: 12px; word-break: break-all; }
+  td.url-cell a:hover { text-decoration: underline; }
+  td.title-cell { max-width: 280px; }
+  td.num { text-align: right; }
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    font-weight: 500; white-space: nowrap;
+  }
+  .badge-yt    { background: #ffebeb; color: #c0392b; }
+  .badge-short { background: #fff3e0; color: #e65100; }
+  .badge-tt    { background: #e8f5e9; color: #2e7d32; }
+  .badge-bili  { background: #e3f2fd; color: #1565c0; }
+  .badge-ruli  { background: #fce4ec; color: #880e4f; }
+  .badge-vm    { background: #f3e5f5; color: #6a1b9a; }
+  .badge-other { background: #f5f5f5; color: #555; }
+
+  .error-row td { color: #c0392b; font-size: 12px; font-style: italic; }
+
+  .note { font-size: 12px; color: #888; margin-top: 8px; line-height: 1.5; }
+  .hint { font-size: 12px; color: #5b5ef4; margin-top: 4px; }
+  .collapsible-toggle { font-size: 12px; color: #5b5ef4; cursor: pointer; user-select: none; }
+  .collapsible-toggle:hover { text-decoration: underline; }
+  .api-note { font-size: 12px; color: #888; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 Video Link Analyzer</h1>
+  <p class="subtitle">Paste links below and fetch video stats — copy the table straight into Excel.</p>
+
+  <div class="card">
+    <label>YouTube Data API Key <span style="font-weight:400;color:#999">(needed for YouTube stats)</span></label>
+    <div class="key-row">
+      <input type="password" id="apiKey" placeholder="AIza..." value="AIzaSyBSmeCPIOhI9R8WvQZd_arYxkoDA4Jz9ew" />
+      <button onclick="toggleKeyVis()">Show</button>
+    </div>
+    <div class="api-note">
+      Don't have a key? Get one free at <a href="https://console.cloud.google.com/" target="_blank" style="color:#5b5ef4">console.cloud.google.com</a> → enable "YouTube Data API v3" → Credentials → Create API key. Free quota: 10,000 units/day.
+    </div>
+  </div>
+
+  <div class="card">
+    <label>Paste links (one per line)</label>
+    <textarea id="links" placeholder="https://www.youtube.com/watch?v=...&#10;https://www.youtube.com/shorts/...&#10;https://www.tiktok.com/@user/video/...&#10;https://www.bilibili.com/video/..."></textarea>
+    <p class="note">YouTube videos &amp; Shorts: stats fetched via API. TikTok, Bilibili, Ruliweb, VM and others: content type detected, stats shown as — (APIs not publicly available).</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" id="fetchBtn" onclick="fetchAll()">Get data</button>
+    <button class="btn-copy" onclick="copyTable()" id="copyBtn" style="display:none">Copy table</button>
+    <button class="btn-clear" onclick="clearAll()">Clear</button>
+    <span id="status"></span>
+  </div>
+  <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <div id="results" style="margin-top:1.5rem; display:none">
+    <div class="card" style="padding:0">
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>URL</th>
+              <th>Title</th>
+              <th class="num">Views</th>
+              <th class="num">Comments</th>
+              <th>Channel</th>
+              <th class="num">Subscribers</th>
+              <th>Published</th>
+              <th>Content type</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note" style="margin-top:8px">💡 Click "Copy table" then paste into Excel (Ctrl+V). All formatting is preserved.</p>
+  </div>
+</div>
+
+<script>
+function toggleKeyVis() {
+  const inp = document.getElementById('apiKey');
+  const btn = event.target;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+  else { inp.type = 'password'; btn.textContent = 'Show'; }
+}
+
+function detectContentType(url) {
+  try {
+    const u = new URL(url.trim());
+    const host = u.hostname.replace('www.', '').replace('m.', '');
+    const path = u.pathname;
+
+    if (host === 'youtube.com' || host === 'youtu.be') {
+      if (path.includes('/shorts/')) return { type: 'YouTube Shorts', badge: 'badge-short' };
+      if (path.startsWith('/watch') || path.startsWith('/v/') || host === 'youtu.be') return { type: 'YouTube Video', badge: 'badge-yt' };
+      if (path.includes('/live/')) return { type: 'YouTube Live', badge: 'badge-yt' };
+      return { type: 'YouTube', badge: 'badge-yt' };
+    }
+    if (host === 'tiktok.com' || host === 'vm.tiktok.com') {
+      if (host === 'vm.tiktok.com' || url.includes('vm.tiktok')) return { type: 'TikTok (VM)', badge: 'badge-vm' };
+      return { type: 'TikTok', badge: 'badge-tt' };
+    }
+    if (host === 'bilibili.com' || host === 'b23.tv') return { type: 'Bilibili', badge: 'badge-bili' };
+    if (host === 'ruliweb.com') return { type: 'Ruliweb', badge: 'badge-ruli' };
+    if (host.includes('vm.')) return { type: 'VM', badge: 'badge-vm' };
+    if (host === 'instagram.com') {
+      if (path.includes('/reel/')) return { type: 'Instagram Reel', badge: 'badge-other' };
+      return { type: 'Instagram', badge: 'badge-other' };
+    }
+    if (host === 'twitter.com' || host === 'x.com') return { type: 'X (Twitter)', badge: 'badge-other' };
+    if (host === 'facebook.com' || host === 'fb.watch') return { type: 'Facebook', badge: 'badge-other' };
+    if (host === 'twitch.tv') return { type: 'Twitch', badge: 'badge-other' };
+    if (host === 'vimeo.com') return { type: 'Vimeo', badge: 'badge-other' };
+    return { type: host, badge: 'badge-other' };
+  } catch(e) {
+    return { type: 'Unknown', badge: 'badge-other' };
+  }
+}
+
+function extractYouTubeId(url) {
+  try {
+    const u = new URL(url.trim());
+    const host = u.hostname.replace('www.', '').replace('m.', '');
+    if (host === 'youtu.be') return u.pathname.slice(1).split('?')[0];
+    if (host === 'youtube.com') {
+      if (u.searchParams.get('v')) return u.searchParams.get('v');
+      const m = u.pathname.match(/\/(shorts|v|embed|live)\/([a-zA-Z0-9_-]{11})/);
+      if (m) return m[2];
+    }
+  } catch(e) {}
+  return null;
+}
+
+function fmtNum(n) {
+  if (n == null || n === '') return '—';
+  return Number(n).toLocaleString('en-US');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return iso.slice(0, 10);
+}
+
+async function fetchYouTubeStats(videoIds, apiKey) {
+  const ids = videoIds.join(',');
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${ids}&key=${apiKey}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`YouTube API error ${r.status}`);
+  const data = await r.json();
+  if (data.error) throw new Error(data.error.message);
+
+  const channelIds = [...new Set(data.items.map(i => i.snippet.channelId))];
+  let channelMap = {};
+  if (channelIds.length > 0) {
+    const cUrl = `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelIds.join(',')}&key=${apiKey}`;
+    const cr = await fetch(cUrl);
+    if (cr.ok) {
+      const cdata = await cr.json();
+      (cdata.items || []).forEach(c => { channelMap[c.id] = c.statistics?.subscriberCount; });
+    }
+  }
+
+  const result = {};
+  (data.items || []).forEach(item => {
+    result[item.id] = {
+      title: item.snippet?.title,
+      views: item.statistics?.viewCount,
+      comments: item.statistics?.commentCount,
+      channel: item.snippet?.channelTitle,
+      channelId: item.snippet?.channelId,
+      subscribers: channelMap[item.snippet?.channelId],
+      published: item.snippet?.publishedAt
+    };
+  });
+  return result;
+}
+
+async function fetchAll() {
+  const raw = document.getElementById('links').value.trim();
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!raw) { setStatus('Paste some links first.'); return; }
+
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) { setStatus('No valid links found.'); return; }
+
+  document.getElementById('fetchBtn').disabled = true;
+  document.getElementById('copyBtn').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('progressBar').style.display = 'block';
+  document.getElementById('progressFill').style.width = '0%';
+  setStatus(`Analyzing ${lines.length} link(s)...`);
+
+  const parsed = lines.map((url, i) => ({ idx: i + 1, url, ct: detectContentType(url), ytId: extractYouTubeId(url) }));
+  const ytItems = parsed.filter(p => p.ytId);
+  let ytStats = {};
+
+  if (ytItems.length > 0) {
+    if (!apiKey) {
+      setStatus('⚠ No API key — YouTube stats will be empty. Enter key above.');
+    } else {
+      setStatus(`Fetching YouTube stats for ${ytItems.length} video(s)...`);
+      try {
+        const batchSize = 50;
+        for (let i = 0; i < ytItems.length; i += batchSize) {
+          const batch = ytItems.slice(i, i + batchSize).map(p => p.ytId);
+          const batchStats = await fetchYouTubeStats(batch, apiKey);
+          Object.assign(ytStats, batchStats);
+        }
+      } catch(e) {
+        setStatus('⚠ YouTube API error: ' + e.message + '. Check your API key.');
+      }
+    }
+  }
+
+  document.getElementById('progressFill').style.width = '100%';
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  parsed.forEach((p, i) => {
+    const s = p.ytId ? ytStats[p.ytId] : null;
+    const tr = document.createElement('tr');
+    if (s === undefined && p.ytId) tr.className = 'error-row';
+
+    const shortUrl = p.url.length > 50 ? p.url.slice(0, 48) + '…' : p.url;
+    tr.innerHTML = `
+      <td>${p.idx}</td>
+      <td class="url-cell"><a href="${esc(p.url)}" target="_blank" title="${esc(p.url)}">${esc(shortUrl)}</a></td>
+      <td class="title-cell" title="${s ? esc(s.title || '') : ''}">${s ? esc(s.title || '—') : '—'}</td>
+      <td class="num">${s ? fmtNum(s.views) : '—'}</td>
+      <td class="num">${s ? fmtNum(s.comments) : '—'}</td>
+      <td>${s ? esc(s.channel || '—') : '—'}</td>
+      <td class="num">${s ? fmtNum(s.subscribers) : '—'}</td>
+      <td>${s ? fmtDate(s.published) : '—'}</td>
+      <td><span class="badge ${p.ct.badge}">${esc(p.ct.type)}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('copyBtn').style.display = 'inline-block';
+  document.getElementById('fetchBtn').disabled = false;
+  setTimeout(() => { document.getElementById('progressBar').style.display = 'none'; }, 600);
+  setStatus(`Done — ${lines.length} link(s) processed.`);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setStatus(msg) { document.getElementById('status').textContent = msg; }
+
+function clearAll() {
+  document.getElementById('links').value = '';
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('copyBtn').style.display = 'none';
+  setStatus('');
+}
+
+function copyTable() {
+  const rows = [];
+  const headers = ['#','URL','Title','Views','Comments','Channel','Subscribers','Published','Content type'];
+  rows.push(headers.join('\t'));
+
+  const trs = document.querySelectorAll('#tableBody tr');
+  trs.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    const row = [];
+    cells.forEach((td, i) => {
+      let val = td.textContent.trim();
+      // strip thousands separators from numeric cells only; keep text (e.g. titles) intact
+      if (td.classList.contains('num')) val = val.replace(/,/g, '');
+      // guard against tabs/newlines inside a field breaking the TSV layout
+      val = val.replace(/[\t\r\n]+/g, ' ');
+      row.push(val);
+    });
+    rows.push(row.join('\t'));
+  });
+
+  const text = rows.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = 'Copy table'; }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    document.getElementById('copyBtn').textContent = '✓ Copied!';
+    setTimeout(() => { document.getElementById('copyBtn').textContent = 'Copy table'; }, 2000);
+  });
+}
+
+document.getElementById('links').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.ctrlKey) fetchAll();
+});
+</script>
+</body>
+</html>
