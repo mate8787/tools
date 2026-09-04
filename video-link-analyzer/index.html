@@ -99,6 +99,16 @@
   .collapsible-toggle:hover { text-decoration: underline; }
   .api-note { font-size: 12px; color: var(--warn); background: rgba(255,180,80,0.12); border: 1px solid rgba(255,180,80,0.3); border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
   .api-note a { color: var(--accent); }
+
+  select {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 14px; font-family: inherit; background: var(--panel-alt); color: var(--text);
+    outline: none; transition: border-color 0.2s;
+  }
+  select:focus { border-color: var(--accent-dim); }
+  .saved-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .saved-row select { flex: 1; min-width: 220px; }
+  .saved-row button { font-size: 13px; padding: 8px 14px; }
 </style>
 </head>
 <body>
@@ -118,6 +128,19 @@
   </div>
 
   <div class="card">
+    <label>Saved link sets <span style="font-weight:400;color:var(--muted)">(stored in this browser only)</span></label>
+    <div class="saved-row">
+      <select id="savedSelect" onchange="loadSavedSet()">
+        <option value="">— pick a saved set —</option>
+      </select>
+      <button onclick="saveCurrentSet()">💾 Save current…</button>
+      <button onclick="renameSavedSet()">Rename</button>
+      <button class="btn-clear" onclick="deleteSavedSet()">Delete</button>
+    </div>
+    <p class="note">Picking a set drops its links into the box below and fetches data right away. "Save current" stores whatever is in the box under a name you choose.</p>
+  </div>
+
+  <div class="card">
     <label>Paste links (one per line)</label>
     <textarea id="links" placeholder="https://www.youtube.com/watch?v=...&#10;https://www.youtube.com/shorts/...&#10;https://www.tiktok.com/@user/video/...&#10;https://www.bilibili.com/video/..."></textarea>
     <p class="note">YouTube videos &amp; Shorts: stats fetched via API. TikTok, Bilibili, Ruliweb, VM and others: content type detected, stats shown as — (APIs not publicly available).</p>
@@ -125,6 +148,7 @@
 
   <div class="actions">
     <button class="btn-primary" id="fetchBtn" onclick="fetchAll()">Get data</button>
+    <button id="refreshBtn" onclick="fetchAll()" style="display:none">🔄 Refresh data</button>
     <button class="btn-copy" onclick="copyTable()" id="copyBtn" style="display:none">Copy table</button>
     <button class="btn-clear" onclick="clearAll()">Clear</button>
     <span id="status"></span>
@@ -395,6 +419,7 @@ async function fetchAll() {
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('copyBtn').style.display = 'inline-block';
+  document.getElementById('refreshBtn').style.display = 'inline-block';
   document.getElementById('fetchBtn').disabled = false;
   setTimeout(() => { document.getElementById('progressBar').style.display = 'none'; }, 600);
   setStatus(`Done — ${lines.length} link(s) processed.`);
@@ -411,10 +436,105 @@ function clearAll() {
   document.getElementById('tableBody').innerHTML = '';
   document.getElementById('results').style.display = 'none';
   document.getElementById('copyBtn').style.display = 'none';
+  document.getElementById('refreshBtn').style.display = 'none';
   RESULTS = [];
   sortState = { col: null, dir: null };
   updateHeadIndicators();
   setStatus('');
+}
+
+/* ---- Saved link sets (localStorage) ---- */
+const SAVED_KEY = 'vla_saved_link_sets';
+
+function loadSavedSets() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function persistSavedSets(arr) {
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(arr)); return true; }
+  catch (e) { setStatus('⚠ Could not save — browser storage is unavailable.'); return false; }
+}
+
+function refreshSavedSelect(selectName) {
+  const sel = document.getElementById('savedSelect');
+  const sets = loadSavedSets().sort((a, b) => a.name.localeCompare(b.name));
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = sets.length ? '— pick a saved set —' : '— no saved sets yet —';
+  sel.appendChild(ph);
+  sets.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s.name;
+    const n = (s.links || '').split('\n').map(l => l.trim()).filter(Boolean).length;
+    o.textContent = `${s.name} (${n} link${n === 1 ? '' : 's'})`;
+    sel.appendChild(o);
+  });
+  sel.value = selectName && sets.some(s => s.name === selectName) ? selectName : '';
+}
+
+function saveCurrentSet() {
+  const links = document.getElementById('links').value.trim();
+  if (!links) { setStatus('Nothing to save — paste some links first.'); return; }
+  const sets = loadSavedSets();
+  const suggested = (document.getElementById('savedSelect').value) || '';
+  let name = prompt('Name this link set:', suggested);
+  if (name == null) return;
+  name = name.trim();
+  if (!name) { setStatus('Save cancelled — a name is required.'); return; }
+  const existing = sets.findIndex(s => s.name === name);
+  if (existing !== -1 && !confirm(`A set named "${name}" already exists. Overwrite it?`)) return;
+  const entry = { name, links, updated: new Date().toISOString() };
+  if (existing !== -1) sets[existing] = entry; else sets.push(entry);
+  if (persistSavedSets(sets)) {
+    refreshSavedSelect(name);
+    setStatus(`Saved "${name}".`);
+  }
+}
+
+function loadSavedSet() {
+  const name = document.getElementById('savedSelect').value;
+  if (!name) return;
+  const set = loadSavedSets().find(s => s.name === name);
+  if (!set) { setStatus('That set could not be found.'); refreshSavedSelect(); return; }
+  document.getElementById('links').value = set.links;
+  setStatus(`Loaded "${name}" — fetching…`);
+  fetchAll();
+}
+
+function renameSavedSet() {
+  const name = document.getElementById('savedSelect').value;
+  if (!name) { setStatus('Pick a saved set to rename.'); return; }
+  const sets = loadSavedSets();
+  const idx = sets.findIndex(s => s.name === name);
+  if (idx === -1) return;
+  let next = prompt('Rename set:', name);
+  if (next == null) return;
+  next = next.trim();
+  if (!next || next === name) return;
+  const clashIdx = sets.findIndex((s, i) => i !== idx && s.name === next);
+  if (clashIdx !== -1 && !confirm(`A set named "${next}" already exists. Overwrite it?`)) return;
+  sets[idx].name = next;
+  sets[idx].updated = new Date().toISOString();
+  if (clashIdx !== -1) sets.splice(clashIdx, 1);
+  if (persistSavedSets(sets)) {
+    refreshSavedSelect(next);
+    setStatus(`Renamed to "${next}".`);
+  }
+}
+
+function deleteSavedSet() {
+  const name = document.getElementById('savedSelect').value;
+  if (!name) { setStatus('Pick a saved set to delete.'); return; }
+  if (!confirm(`Delete saved set "${name}"? This cannot be undone.`)) return;
+  const sets = loadSavedSets().filter(s => s.name !== name);
+  if (persistSavedSets(sets)) {
+    refreshSavedSelect();
+    setStatus(`Deleted "${name}".`);
+  }
 }
 
 function copyTable() {
@@ -456,6 +576,7 @@ document.getElementById('links').addEventListener('keydown', function(e) {
 });
 
 buildHead();
+refreshSavedSelect();
 </script>
 </body>
 </html>
