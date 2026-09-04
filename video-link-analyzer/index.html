@@ -5,55 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Video Link Analyzer</title>
 <style>
+  :root {
+    --bg: #1c1c1e;
+    --panel: #242426;
+    --panel-alt: #2c2c2f;
+    --border: #3a3a3d;
+    --text: #e8e8ea;
+    --muted: #9a9a9e;
+    --accent: #7fb3ff;
+    --accent-dim: #3d5a80;
+    --ok: #6fcf97;
+    --warn: #ffb450;
+    --bad: #ff5c5c;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; min-height: 100vh; padding: 2rem; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; font-size: 14px; line-height: 1.5; }
   .container { max-width: 1100px; margin: 0 auto; }
   h1 { font-size: 22px; font-weight: 600; margin-bottom: 0.25rem; }
-  .subtitle { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+  .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
 
-  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
 
-  label { font-size: 13px; font-weight: 500; color: #444; display: block; margin-bottom: 6px; }
+  label { font-size: 13px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 6px; }
   input[type="text"], input[type="password"] {
-    width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 7px;
+    width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px;
     font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;
+    background: var(--panel-alt); color: var(--text);
   }
-  input[type="text"]:focus, input[type="password"]:focus { border-color: #5b5ef4; }
+  input[type="text"]:focus, input[type="password"]:focus { border-color: var(--accent-dim); }
   textarea {
-    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 7px;
-    font-size: 13px; font-family: monospace; resize: vertical; min-height: 130px;
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; font-family: var(--mono); resize: vertical; min-height: 130px;
     outline: none; transition: border-color 0.2s; line-height: 1.5;
+    background: var(--panel-alt); color: var(--text);
   }
-  textarea:focus { border-color: #5b5ef4; }
+  textarea:focus { border-color: var(--accent-dim); }
+  textarea::placeholder { color: var(--muted); }
 
   .key-row { display: flex; gap: 10px; align-items: flex-end; }
   .key-row input { flex: 1; }
 
   button {
     padding: 9px 20px; border-radius: 7px; font-size: 14px; font-weight: 500;
-    cursor: pointer; border: 1px solid #ddd; background: #fff; font-family: inherit;
-    transition: background 0.15s, border-color 0.15s;
+    cursor: pointer; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text);
+    font-family: inherit; transition: background 0.15s, border-color 0.15s;
   }
-  button:hover { background: #f0f0f0; }
-  .btn-primary { background: #5b5ef4; color: #fff; border-color: #5b5ef4; }
-  .btn-primary:hover { background: #4a4de0; border-color: #4a4de0; }
-  .btn-primary:disabled { background: #aab; border-color: #aab; cursor: default; }
+  button:hover { border-color: var(--accent-dim); }
+  .btn-primary { background: var(--accent-dim); color: #fff; border-color: var(--accent-dim); }
+  .btn-primary:hover { background: #4a6d94; border-color: #4a6d94; }
+  .btn-primary:disabled { background: #33383e; border-color: #33383e; color: var(--muted); cursor: default; }
   .btn-copy { font-size: 13px; padding: 7px 14px; }
-  .btn-clear { font-size: 13px; padding: 7px 14px; color: #888; }
+  .btn-clear { font-size: 13px; padding: 7px 14px; color: var(--muted); }
 
   .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  #status { font-size: 13px; color: #666; flex: 1; min-width: 200px; }
-  .progress-bar { width: 100%; height: 4px; background: #e8e8e8; border-radius: 2px; margin-top: 10px; display: none; }
-  .progress-fill { height: 100%; background: #5b5ef4; border-radius: 2px; transition: width 0.3s; }
+  #status { font-size: 13px; color: var(--muted); flex: 1; min-width: 200px; }
+  .progress-bar { width: 100%; height: 4px; background: var(--panel-alt); border-radius: 2px; margin-top: 10px; display: none; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
 
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
-  th { text-align: left; padding: 9px 12px; background: #f8f8f8; border-bottom: 2px solid #e0e0e0; font-size: 12px; font-weight: 600; color: #555; white-space: nowrap; }
-  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  th { text-align: left; padding: 9px 12px; background: var(--panel-alt); border-bottom: 2px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafafa; }
+  tr:hover td { background: var(--panel-alt); }
   td.url-cell { max-width: 200px; }
-  td.url-cell a { color: #5b5ef4; text-decoration: none; font-size: 12px; word-break: break-all; }
+  td.url-cell a { color: var(--accent); text-decoration: none; font-size: 12px; word-break: break-all; }
   td.url-cell a:hover { text-decoration: underline; }
   td.title-cell { max-width: 280px; }
   td.num { text-align: right; }
@@ -61,21 +78,22 @@
     display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px;
     font-weight: 500; white-space: nowrap;
   }
-  .badge-yt    { background: #ffebeb; color: #c0392b; }
-  .badge-short { background: #fff3e0; color: #e65100; }
-  .badge-tt    { background: #e8f5e9; color: #2e7d32; }
-  .badge-bili  { background: #e3f2fd; color: #1565c0; }
-  .badge-ruli  { background: #fce4ec; color: #880e4f; }
-  .badge-vm    { background: #f3e5f5; color: #6a1b9a; }
-  .badge-other { background: #f5f5f5; color: #555; }
+  .badge-yt    { background: rgba(255,92,92,0.16);  color: #ff8a8a; }
+  .badge-short { background: rgba(255,180,80,0.16); color: #ffc06a; }
+  .badge-tt    { background: rgba(111,207,151,0.16); color: #7fe0ab; }
+  .badge-bili  { background: rgba(127,179,255,0.16); color: #9cc4ff; }
+  .badge-ruli  { background: rgba(255,140,190,0.16); color: #ff9ec9; }
+  .badge-vm    { background: rgba(191,140,255,0.16); color: #cba8ff; }
+  .badge-other { background: rgba(255,255,255,0.08); color: var(--muted); }
 
-  .error-row td { color: #c0392b; font-size: 12px; font-style: italic; }
+  .error-row td { color: var(--bad); font-size: 12px; font-style: italic; }
 
-  .note { font-size: 12px; color: #888; margin-top: 8px; line-height: 1.5; }
-  .hint { font-size: 12px; color: #5b5ef4; margin-top: 4px; }
-  .collapsible-toggle { font-size: 12px; color: #5b5ef4; cursor: pointer; user-select: none; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .hint { font-size: 12px; color: var(--accent); margin-top: 4px; }
+  .collapsible-toggle { font-size: 12px; color: var(--accent); cursor: pointer; user-select: none; }
   .collapsible-toggle:hover { text-decoration: underline; }
-  .api-note { font-size: 12px; color: #888; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
+  .api-note { font-size: 12px; color: var(--warn); background: rgba(255,180,80,0.12); border: 1px solid rgba(255,180,80,0.3); border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
+  .api-note a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -84,13 +102,13 @@
   <p class="subtitle">Paste links below and fetch video stats — copy the table straight into Excel.</p>
 
   <div class="card">
-    <label>YouTube Data API Key <span style="font-weight:400;color:#999">(needed for YouTube stats)</span></label>
+    <label>YouTube Data API Key <span style="font-weight:400;color:var(--muted)">(needed for YouTube stats)</span></label>
     <div class="key-row">
       <input type="password" id="apiKey" placeholder="AIza..." value="AIzaSyBSmeCPIOhI9R8WvQZd_arYxkoDA4Jz9ew" />
       <button onclick="toggleKeyVis()">Show</button>
     </div>
     <div class="api-note">
-      Don't have a key? Get one free at <a href="https://console.cloud.google.com/" target="_blank" style="color:#5b5ef4">console.cloud.google.com</a> → enable "YouTube Data API v3" → Credentials → Create API key. Free quota: 10,000 units/day.
+      Don't have a key? Get one free at <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> → enable "YouTube Data API v3" → Credentials → Create API key. Free quota: 10,000 units/day.
     </div>
   </div>
 
