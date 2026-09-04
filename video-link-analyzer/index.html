@@ -66,6 +66,11 @@
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
   th { text-align: left; padding: 9px 12px; background: var(--panel-alt); border-bottom: 2px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  th.num { text-align: right; }
+  th.sortable { cursor: pointer; user-select: none; transition: color 0.12s; }
+  th.sortable:hover { color: var(--text); }
+  th.sorted { color: var(--accent); }
+  th .sort-arrow { font-size: 10px; }
   td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--panel-alt); }
@@ -131,23 +136,13 @@
       <div class="table-wrap">
         <table id="dataTable">
           <thead>
-            <tr>
-              <th>#</th>
-              <th>URL</th>
-              <th>Title</th>
-              <th class="num">Views</th>
-              <th class="num">Comments</th>
-              <th>Channel</th>
-              <th class="num">Subscribers</th>
-              <th>Published</th>
-              <th>Content type</th>
-            </tr>
+            <tr id="headRow"></tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
     </div>
-    <p class="note" style="margin-top:8px">💡 Click "Copy table" then paste into Excel (Ctrl+V). All formatting is preserved.</p>
+    <p class="note" style="margin-top:8px">💡 Click a column header to sort — first click ascending (▲), second descending (▼), third clears back to original order. Blank values always sort to the bottom. Then "Copy table" and paste into Excel (Ctrl+V) — rows copy in the order shown.</p>
   </div>
 </div>
 
@@ -250,6 +245,95 @@ async function fetchYouTubeStats(videoIds, apiKey) {
   return result;
 }
 
+let RESULTS = [];
+let sortState = { col: null, dir: null };  // dir: 'asc' | 'desc'; col null = original order
+
+const COLUMNS = [
+  { key: 'idx',       label: '#',            type: 'num',  get: r => r.idx },
+  { key: 'url',       label: 'URL',          type: 'text', get: r => r.url },
+  { key: 'title',     label: 'Title',        type: 'text', get: r => r.title },
+  { key: 'views',     label: 'Views',        type: 'num',  get: r => r.views },
+  { key: 'comments',  label: 'Comments',     type: 'num',  get: r => r.comments },
+  { key: 'channel',   label: 'Channel',      type: 'text', get: r => r.channel },
+  { key: 'subs',      label: 'Subscribers',  type: 'num',  get: r => r.subscribers },
+  { key: 'published', label: 'Published',    type: 'text', get: r => r.published },
+  { key: 'ct',        label: 'Content type', type: 'text', get: r => r.ct.type }
+];
+
+function buildHead() {
+  const hr = document.getElementById('headRow');
+  hr.innerHTML = COLUMNS.map(c =>
+    `<th class="sortable${c.type === 'num' ? ' num' : ''}" data-key="${c.key}" title="Click to sort">${esc(c.label)}<span class="sort-arrow"></span></th>`
+  ).join('');
+  hr.querySelectorAll('th').forEach(th => th.addEventListener('click', () => onSort(th.dataset.key)));
+}
+
+function onSort(key) {
+  if (sortState.col !== key) sortState = { col: key, dir: 'asc' };
+  else if (sortState.dir === 'asc') sortState.dir = 'desc';
+  else sortState = { col: null, dir: null };   // third click: back to original order
+  renderTable();
+}
+
+function updateHeadIndicators() {
+  document.querySelectorAll('#headRow th').forEach(th => {
+    const arrow = th.querySelector('.sort-arrow');
+    if (th.dataset.key === sortState.col) {
+      th.classList.add('sorted');
+      if (arrow) arrow.textContent = sortState.dir === 'desc' ? ' ▼' : ' ▲';
+    } else {
+      th.classList.remove('sorted');
+      if (arrow) arrow.textContent = '';
+    }
+  });
+}
+
+function sortedResults() {
+  const arr = RESULTS.slice();
+  if (!sortState.col) return arr;
+  const col = COLUMNS.find(c => c.key === sortState.col);
+  if (!col) return arr;
+  const dir = sortState.dir === 'desc' ? -1 : 1;
+  arr.sort((a, b) => {
+    const va = col.get(a), vb = col.get(b);
+    const ea = va == null || va === '';
+    const eb = vb == null || vb === '';
+    if (ea && eb) return a.idx - b.idx;
+    if (ea) return 1;    // blanks always sink to the bottom, regardless of direction
+    if (eb) return -1;
+    let cmp;
+    if (col.type === 'num') cmp = Number(va) - Number(vb);
+    else cmp = String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: 'base' });
+    if (cmp === 0) return a.idx - b.idx;
+    return cmp * dir;
+  });
+  return arr;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  sortedResults().forEach(r => {
+    const has = r.hasStats;
+    const tr = document.createElement('tr');
+    if (r.isError) tr.className = 'error-row';
+    const shortUrl = r.url.length > 50 ? r.url.slice(0, 48) + '…' : r.url;
+    tr.innerHTML = `
+      <td>${r.idx}</td>
+      <td class="url-cell"><a href="${esc(r.url)}" target="_blank" title="${esc(r.url)}">${esc(shortUrl)}</a></td>
+      <td class="title-cell" title="${esc(r.title || '')}">${has ? esc(r.title || '—') : '—'}</td>
+      <td class="num">${has ? fmtNum(r.views) : '—'}</td>
+      <td class="num">${has ? fmtNum(r.comments) : '—'}</td>
+      <td>${has ? esc(r.channel || '—') : '—'}</td>
+      <td class="num">${has ? fmtNum(r.subscribers) : '—'}</td>
+      <td>${has ? fmtDate(r.published) : '—'}</td>
+      <td><span class="badge ${r.ct.badge}">${esc(r.ct.type)}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateHeadIndicators();
+}
+
 async function fetchAll() {
   const raw = document.getElementById('links').value.trim();
   const apiKey = document.getElementById('apiKey').value.trim();
@@ -289,28 +373,25 @@ async function fetchAll() {
 
   document.getElementById('progressFill').style.width = '100%';
 
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '';
-
-  parsed.forEach((p, i) => {
+  RESULTS = parsed.map(p => {
     const s = p.ytId ? ytStats[p.ytId] : null;
-    const tr = document.createElement('tr');
-    if (s === undefined && p.ytId) tr.className = 'error-row';
-
-    const shortUrl = p.url.length > 50 ? p.url.slice(0, 48) + '…' : p.url;
-    tr.innerHTML = `
-      <td>${p.idx}</td>
-      <td class="url-cell"><a href="${esc(p.url)}" target="_blank" title="${esc(p.url)}">${esc(shortUrl)}</a></td>
-      <td class="title-cell" title="${s ? esc(s.title || '') : ''}">${s ? esc(s.title || '—') : '—'}</td>
-      <td class="num">${s ? fmtNum(s.views) : '—'}</td>
-      <td class="num">${s ? fmtNum(s.comments) : '—'}</td>
-      <td>${s ? esc(s.channel || '—') : '—'}</td>
-      <td class="num">${s ? fmtNum(s.subscribers) : '—'}</td>
-      <td>${s ? fmtDate(s.published) : '—'}</td>
-      <td><span class="badge ${p.ct.badge}">${esc(p.ct.type)}</span></td>
-    `;
-    tbody.appendChild(tr);
+    return {
+      idx: p.idx,
+      url: p.url,
+      ct: p.ct,
+      ytId: p.ytId,
+      isError: (s === undefined && !!p.ytId),
+      hasStats: !!s,
+      title: s ? s.title : undefined,
+      views: s ? s.views : undefined,
+      comments: s ? s.comments : undefined,
+      channel: s ? s.channel : undefined,
+      subscribers: s ? s.subscribers : undefined,
+      published: s ? s.published : undefined
+    };
   });
+  sortState = { col: null, dir: null };
+  renderTable();
 
   document.getElementById('results').style.display = 'block';
   document.getElementById('copyBtn').style.display = 'inline-block';
@@ -330,12 +411,15 @@ function clearAll() {
   document.getElementById('tableBody').innerHTML = '';
   document.getElementById('results').style.display = 'none';
   document.getElementById('copyBtn').style.display = 'none';
+  RESULTS = [];
+  sortState = { col: null, dir: null };
+  updateHeadIndicators();
   setStatus('');
 }
 
 function copyTable() {
   const rows = [];
-  const headers = ['#','URL','Title','Views','Comments','Channel','Subscribers','Published','Content type'];
+  const headers = COLUMNS.map(c => c.label);
   rows.push(headers.join('\t'));
 
   const trs = document.querySelectorAll('#tableBody tr');
@@ -370,6 +454,8 @@ function copyTable() {
 document.getElementById('links').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && e.ctrlKey) fetchAll();
 });
+
+buildHead();
 </script>
 </body>
 </html>
