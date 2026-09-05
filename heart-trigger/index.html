@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>하트 트리거</title>
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --panel: #242426;
+    --border: #3a3a3d;
+    --text: #e8e8ea;
+    --muted: #9a9a9e;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    overflow: hidden;
+  }
+  .wrap {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    position: relative;
+    z-index: 2;
+  }
+  .emoji {
+    font-size: 48px;
+  }
+  .hint {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  input#nameInput {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    width: min(320px, 80vw);
+    text-align: center;
+    outline: none;
+  }
+  input#nameInput:focus {
+    border-color: #ff6b9d;
+  }
+  #heartLayer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .heart {
+    position: absolute;
+    bottom: -10vh;
+    animation-name: floatUp;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-115vh) translateX(var(--drift, 0px)) rotate(360deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="emoji">💌</div>
+    <p class="hint">이름을 입력하고 Enter를 눌러보세요</p>
+    <input id="nameInput" type="text" placeholder="이름을 입력하세요" autocomplete="off" autofocus>
+  </div>
+  <div id="heartLayer"></div>
+
+<script>
+  const TRIGGER = "전예솔";
+  const input = document.getElementById('nameInput');
+  const layer = document.getElementById('heartLayer');
+  const COLORS = ['#ff5c8a', '#ff8fab', '#ff2e63', '#ff6b9d', '#ffb3c6', '#ff85a1'];
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (input.value.trim() === TRIGGER) {
+        burstHearts();
+      }
+      input.value = '';
+    }
+  });
+
+  function burstHearts() {
+    const count = 70;
+    for (let i = 0; i < count; i++) {
+      setTimeout(spawnHeart, i * 18);
+    }
+  }
+
+  function spawnHeart() {
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.textContent = '❤';
+    const size = 14 + Math.random() * 30;
+    const duration = 2.8 + Math.random() * 2.2;
+    const drift = (Math.random() - 0.5) * 160;
+    heart.style.left = Math.random() * 100 + 'vw';
+    heart.style.fontSize = size + 'px';
+    heart.style.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    heart.style.setProperty('--drift', drift + 'px');
+    heart.style.animationDuration = duration + 's';
+    layer.appendChild(heart);
+    heart.addEventListener('animationend', () => heart.remove());
+  }
+</script>
+</body>
+</html>
