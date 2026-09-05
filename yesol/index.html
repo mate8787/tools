@@ -72,6 +72,21 @@
     0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
     100% { transform: translateY(-115vh) translateX(var(--drift, 0px)) rotate(360deg); opacity: 0; }
   }
+  .word {
+    position: absolute;
+    bottom: -10vh;
+    font-weight: 800;
+    font-style: italic;
+    white-space: nowrap;
+    animation-name: spinUp;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes spinUp {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg) scale(1); opacity: 1; }
+    100% { transform: translateY(-120vh) translateX(var(--drift, 0px)) rotate(var(--spin, 720deg)) scale(1.15); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -100,7 +115,9 @@
   function burstHearts() {
     const count = 70;
     for (let i = 0; i < count; i++) {
-      setTimeout(spawnHeart, i * 18);
+      setTimeout(() => {
+        if (i % 3 === 0) spawnWord(); else spawnHeart();
+      }, i * 18);
     }
   }
 
@@ -118,6 +135,24 @@
     heart.style.animationDuration = duration + 's';
     layer.appendChild(heart);
     heart.addEventListener('animationend', () => heart.remove());
+  }
+
+  function spawnWord() {
+    const word = document.createElement('div');
+    word.className = 'word';
+    word.textContent = 'Yesol';
+    const size = 16 + Math.random() * 26;
+    const duration = 2.8 + Math.random() * 2.4;
+    const drift = (Math.random() - 0.5) * 200;
+    const spin = (Math.random() < 0.5 ? -1 : 1) * (540 + Math.random() * 540);
+    word.style.left = Math.random() * 90 + 'vw';
+    word.style.fontSize = size + 'px';
+    word.style.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    word.style.setProperty('--drift', drift + 'px');
+    word.style.setProperty('--spin', spin + 'deg');
+    word.style.animationDuration = duration + 's';
+    layer.appendChild(word);
+    word.addEventListener('animationend', () => word.remove());
   }
 </script>
 </body>
