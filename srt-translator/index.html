@@ -98,7 +98,7 @@
 <body>
 <div class="container">
   <h1>SRT Translator</h1>
-  <p class="subtitle">Load a subtitle file, translate every line to Polish, tweak by hand, then download a new <code style="font-family:var(--mono)">.srt</code>.</p>
+  <p class="subtitle">Load a subtitle file, translate every line to Polish (auto or by importing your own), tweak by hand, then download a new <code style="font-family:var(--mono)">.srt</code> or a plain text transcript.</p>
 
   <div class="card">
     <label>Subtitle file (.srt)</label>
@@ -129,12 +129,18 @@
     <div class="actions">
       <button class="btn-primary" id="translateBtn" onclick="translateAll()">Translate all &rarr; Polish</button>
       <button id="downloadBtn" onclick="downloadSrt()">Download translated .srt</button>
+      <button id="downloadTxtBtn" onclick="downloadTxt()">Download text only (.txt)</button>
       <button id="clearBtn" onclick="clearAll()">Clear translations</button>
       <span class="count-pill" id="countPill"></span>
     </div>
+    <div class="row-inline" style="margin-top:12px">
+      <label style="margin:0">Import translation from a file</label>
+      <input type="file" id="importInput" accept=".srt,.txt,text/plain" />
+    </div>
     <div id="status" style="margin-top:10px"></div>
     <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
-    <p class="note">Translate all fills only the <em>empty</em> boxes, so your manual edits are safe if you run it again. Tick <label style="display:inline"><input type="checkbox" id="overwrite" style="vertical-align:middle"> overwrite existing</label> to redo everything.</p>
+    <p class="note">Translate all fills only the <em>empty</em> boxes, so your manual edits are safe if you run it again. Tick <label style="display:inline"><input type="checkbox" id="overwrite" style="vertical-align:middle"> overwrite existing</label> to redo everything.<br>
+    Import accepts a translated <code>.srt</code> (matched by line number) or a plain <code>.txt</code> with one entry per subtitle, entries separated by a blank line &mdash; the same format "Download text only" produces.</p>
   </div>
 
   <div class="card" id="editorCard" style="display:none">
@@ -224,6 +230,16 @@ function updateCount() {
   const done = tas.filter(t => t.value.trim() !== '').length;
   $('countPill').textContent = `${done} / ${tas.length} translated`;
   $('downloadBtn').disabled = tas.length === 0;
+  $('downloadTxtBtn').disabled = tas.length === 0;
+}
+
+function setBox(n, val) {
+  const ta = document.querySelector(`textarea.tgt-text[data-n="${n}"]`);
+  if (!ta) return;
+  ta.value = String(val).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trimEnd();
+  ta.classList.toggle('filled', ta.value.trim() !== '');
+  ta.classList.remove('err');
+  autosize(ta);
 }
 
 /* ---------- file load ---------- */
@@ -250,6 +266,52 @@ $('fileInput').addEventListener('change', e => {
 
 $('srcLang').addEventListener('change', () => {
   if (cues.length) $('srcHead').textContent = 'Source (' + $('srcLang').selectedOptions[0].text + ')';
+});
+
+/* ---------- import an existing translation ---------- */
+$('importInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file || !cues.length) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const raw = String(reader.result).replace(/^﻿/, '');
+    const looksSrt = /\.srt$/i.test(file.name) || /\d\d:\d\d:\d\d,\d\d\d\s*-->/.test(raw);
+    let filled = 0;
+    let note = '';
+
+    if (looksSrt) {
+      const imported = parseSrt(raw);
+      const cueIdx = new Set(cues.map(c => c.index));
+      const idxHits = imported.filter(c => cueIdx.has(c.index)).length;
+
+      if (idxHits === 0 && imported.length === cues.length) {
+        cues.forEach((c, n) => { if (imported[n]) { setBox(n, imported[n].src); filled++; } });
+        note = ` <span style="color:var(--warn)">Line numbers didn't line up, so entries were matched by position.</span>`;
+      } else {
+        const byIdx = {};
+        imported.forEach(c => { byIdx[c.index] = c.src; });
+        cues.forEach((c, n) => {
+          if (byIdx[c.index] != null) { setBox(n, byIdx[c.index]); filled++; }
+        });
+        if (filled < cues.length || imported.length !== idxHits)
+          note = ` <span style="color:var(--warn)">Matched ${filled} of ${cues.length} subtitles by line number.</span>`;
+      }
+    } else {
+      const blocks = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+        .split(/\n{2,}/).map(b => b.replace(/^\n+|\n+$/g, ''));
+      while (blocks.length && blocks[blocks.length - 1].trim() === '') blocks.pop();
+      cues.forEach((c, n) => {
+        if (blocks[n] != null && blocks[n] !== '') { setBox(n, blocks[n]); filled++; }
+      });
+      if (blocks.length !== cues.length)
+        note = ` <span style="color:var(--warn)">The .txt has ${blocks.length} entries vs ${cues.length} subtitles — entries must be separated by a blank line and kept in order.</span>`;
+    }
+
+    updateCount();
+    $('status').innerHTML = `Imported ${filled} translation(s) from "${esc(file.name)}".` + note;
+    e.target.value = '';
+  };
+  reader.readAsText(file, 'utf-8');
 });
 
 /* ---------- translation ---------- */
@@ -332,20 +394,48 @@ function buildSrt() {
   return { text: blocks.join('\n\n') + '\n', missing };
 }
 
-function downloadSrt() {
-  if (!cues.length) return;
-  const { text, missing } = buildSrt();
-  const blob = new Blob(['﻿' + text], { type: 'text/plain;charset=utf-8' });
+function buildPlainText() {
+  const tas = getTextareas();
+  const byN = {};
+  tas.forEach(t => byN[+t.dataset.n] = t.value);
+  let missing = 0;
+  const blocks = cues.map((c, n) => {
+    let txt = (byN[n] != null ? byN[n] : '').replace(/\r\n/g, '\n').trim();
+    if (txt === '') { txt = c.src.trim(); missing++; }   // keep entries aligned with subtitles
+    return txt;
+  });
+  return { text: blocks.join('\n\n') + '\n', missing };
+}
+
+function triggerDownload(content, name) {
+  const blob = new Blob(['﻿' + content], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = fileName + '_pl.srt';
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function downloadSrt() {
+  if (!cues.length) return;
+  const { text, missing } = buildSrt();
+  const name = fileName + '_pl.srt';
+  triggerDownload(text, name);
   $('status').innerHTML = missing
-    ? `Downloaded <code style="font-family:var(--mono)">${esc(a.download)}</code> — ${missing} untranslated line(s) kept the original text.`
-    : `Downloaded <code style="font-family:var(--mono)">${esc(a.download)}</code>.`;
+    ? `Downloaded <code style="font-family:var(--mono)">${esc(name)}</code> — ${missing} untranslated line(s) kept the original text.`
+    : `Downloaded <code style="font-family:var(--mono)">${esc(name)}</code>.`;
+}
+
+function downloadTxt() {
+  if (!cues.length) return;
+  const { text, missing } = buildPlainText();
+  const name = fileName + '_pl.txt';
+  triggerDownload(text, name);
+  $('status').innerHTML = missing
+    ? `Downloaded <code style="font-family:var(--mono)">${esc(name)}</code> (text only) — ${missing} untranslated line(s) kept the original text.`
+    : `Downloaded <code style="font-family:var(--mono)">${esc(name)}</code> (text only).`;
 }
 </script>
 </body>
