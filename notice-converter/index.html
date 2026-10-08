@@ -146,6 +146,25 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .merge-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .merge-opt input { margin: 0; }
+  .segment-preview-item .seg-fmt {
+    flex: none;
+    font-size: 10px;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    border-radius: 3px;
+    padding: 0 5px;
+  }
+  .fmt-note { color: var(--accent); font-size: 11px; }
   .segment-preview-item.ignored { opacity: 0.5; }
   .segment-preview-item.ignored .seg-text { text-decoration: line-through; }
   .segment-preview-item .seg-ignore {
@@ -346,6 +365,10 @@
         Paste the exact current notice HTML here, as-is, with its real English text still in it. No markup or tokens needed — anything that isn't inside a tag (like text between <code>&lt;div&gt;</code> and <code>&lt;/div&gt;</code>) is automatically detected as translatable. Everything inside tags — links, image sources, styling — is left byte-for-byte identical across every language.
       </p>
       <textarea id="baseTemplate" placeholder="Paste the current notice HTML here..."></textarea>
+      <label class="merge-opt">
+        <input type="checkbox" id="mergeInline" checked onchange="toggleMerge()">
+        Treat text split only by inline formatting (bold, italic, span, font…) as one segment
+      </label>
       <div class="actions">
         <button class="btn-primary" onclick="saveTemplate()">Save template</button>
         <button class="btn-secondary" onclick="resetTemplate()">Clear template</button>
@@ -401,43 +424,118 @@ let ACTIVE_INDICES = [];    // EDITABLE_INDICES minus IGNORED — the ones that 
 const state = {};           // state[lang] = { raw: '', values: { segIndex: text } }
 let activeLang = LANGS[0];
 
-const IGNORED_KEY = 'cd_notice_ignored_segments';
+const IGNORED_KEY = 'cd_notice_ignored_segments_v2';
+const MERGE_KEY = 'cd_notice_merge_inline';
+let IGNORED_KEYS = new Set();   // ignored segments, remembered by their text so they survive re-parsing
+let MERGE_INLINE = true;        // treat text split only by inline formatting tags as one segment
+
+// Stable identity of a segment: its text plus which occurrence of that text it is.
+function segKey(i) {
+  const core = SEGMENTS[i].core;
+  let n = 0;
+  for (const j of EDITABLE_INDICES) {
+    if (j === i) break;
+    if (SEGMENTS[j].core === core) n++;
+  }
+  return core + '\u0001' + n;
+}
 
 function recomputeActive() {
-  IGNORED = new Set([...IGNORED].filter(i => EDITABLE_INDICES.indexOf(i) !== -1));
+  IGNORED = new Set(EDITABLE_INDICES.filter(i => IGNORED_KEYS.has(segKey(i))));
   ACTIVE_INDICES = EDITABLE_INDICES.filter(i => !IGNORED.has(i));
 }
 
 function persistIgnored() {
-  try { localStorage.setItem(IGNORED_KEY, JSON.stringify([...IGNORED])); } catch (e) {}
+  IGNORED_KEYS = new Set([...IGNORED].map(segKey));
+  try { localStorage.setItem(IGNORED_KEY, JSON.stringify([...IGNORED_KEYS])); } catch (e) {}
 }
 
 function isBracketOnly(s) {
   return /^\[[^\]]*\]$/.test(s.trim());
 }
 
-// Split HTML into alternating tag / text segments. Only text OUTSIDE of tags
-// is ever treated as translatable — attribute values and tag names are untouched.
-function parseSegments(html) {
-  const parts = html.split(/(<[^>]*>)/g);
-  const segs = [];
-  parts.forEach(part => {
-    if (part === '') return;
-    if (/^<[^>]*>$/.test(part)) {
-      segs.push({ type: 'tag', raw: part });
-      return;
-    }
-    const trimmed = part.trim();
-    if (trimmed.length === 0 || isBracketOnly(trimmed)) {
-      segs.push({ type: 'text', raw: part, editable: false });
-      return;
-    }
-    const leading = part.match(/^\s*/)[0];
-    const trailing = part.match(/\s*$/)[0];
-    const core = part.substring(leading.length, part.length - trailing.length);
-    segs.push({ type: 'text', raw: part, leading, core, trailing, editable: true });
+// Tags that only change how text looks (bold, size, colour...) and never split a sentence.
+const INLINE_TAGS = new Set(['b','strong','i','em','u','s','strike','del','ins','mark','small','big','sub','sup','span','font']);
+
+function inlineTagInfo(tag) {
+  const m = tag.match(/^<\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>$/);
+  if (!m || m[3] || !INLINE_TAGS.has(m[2].toLowerCase())) return null;
+  return { name: m[2].toLowerCase(), closing: m[1] === '/' };
+}
+
+// How many inline tags inside toks[a..b] are left unclosed / have no opener inside the range.
+function inlineBalance(toks, a, b) {
+  const stack = [];
+  let strayClose = 0;
+  for (let k = a; k <= b; k++) {
+    const inl = toks[k].kind === 'tag' ? toks[k].inline : null;
+    if (!inl) continue;
+    if (!inl.closing) stack.push(inl.name);
+    else if (stack.length && stack[stack.length - 1] === inl.name) stack.pop();
+    else strayClose++;
+  }
+  return { strayClose, open: stack.length };
+}
+
+// Split HTML into tag / text segments. Only text OUTSIDE of tags is ever treated as
+// translatable — attribute values and tag names are untouched. With `merge` on, text that is
+// separated only by inline formatting tags (e.g. a sentence with a bold phrase in the middle)
+// becomes ONE segment whose text keeps those inline tags.
+function parseSegments(html, merge) {
+  const toks = html.split(/(<[^>]*>)/g).filter(p => p !== '').map(part => {
+    if (/^<[^>]*>$/.test(part)) return { kind: 'tag', raw: part, inline: inlineTagInfo(part) };
+    const t = part.trim();
+    return { kind: 'text', raw: part, blank: t.length === 0, bracket: t.length > 0 && isBracketOnly(t) };
   });
+
+  const segs = [];
+  let i = 0;
+  while (i < toks.length) {
+    const t = toks[i];
+    if (t.kind === 'tag') { segs.push({ type: 'tag', raw: t.raw, inline: t.inline }); i++; continue; }
+    if (t.blank || t.bracket) { segs.push({ type: 'text', raw: t.raw, editable: false, blank: t.blank }); i++; continue; }
+
+    // an editable run starts here; extend it across inline formatting tags to the last text
+    let end = i;
+    if (merge) {
+      for (let j = i + 1; j < toks.length; j++) {
+        const u = toks[j];
+        if (u.kind === 'tag') { if (!u.inline) break; }
+        else if (!u.blank) end = j;
+      }
+    }
+
+    // keep the group's inline tags balanced by pulling in adjacent openers / closers
+    const { strayClose, open } = inlineBalance(toks, i, end);
+    let prefix = '';
+    for (let need = strayClose; need > 0 && segs.length;) {
+      const last = segs[segs.length - 1];
+      if (last.type === 'tag' && last.inline && !last.inline.closing) { prefix = last.raw + prefix; segs.pop(); need--; }
+      else if (last.type === 'text' && last.blank) { prefix = last.raw + prefix; segs.pop(); }
+      else break;
+    }
+    let suffix = '';
+    let k = end + 1;
+    for (let need = open; need > 0 && k < toks.length; k++) {
+      const u = toks[k];
+      if (u.kind === 'tag' && u.inline && u.inline.closing) { suffix += u.raw; need--; }
+      else if (u.kind === 'text' && u.blank) suffix += u.raw;
+      else break;
+    }
+
+    const raw = prefix + toks.slice(i, end + 1).map(x => x.raw).join('') + suffix;
+    const leading = raw.match(/^\s*/)[0];
+    const trailing = raw.match(/\s*$/)[0];
+    const core = raw.substring(leading.length, raw.length - trailing.length);
+    segs.push({ type: 'text', raw, leading, core, trailing, editable: true, hasTags: /<[^>]+>/.test(core) });
+    i = k;
+  }
   return segs;
+}
+
+// Strip attributes from tags so long style="..." values don't clutter the preview.
+function prettyCore(core) {
+  return core.replace(/<(\/?[a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, '<$1>');
 }
 
 function truncate(s, n) {
@@ -466,8 +564,12 @@ async function loadTemplate() {
   const statusEl = document.getElementById('baseStatus');
   try {
     const ig = localStorage.getItem(IGNORED_KEY);
-    if (ig) IGNORED = new Set(JSON.parse(ig).filter(n => Number.isInteger(n)));
+    if (ig) IGNORED_KEYS = new Set(JSON.parse(ig).filter(s => typeof s === 'string'));
   } catch (e) {}
+  try {
+    if (localStorage.getItem(MERGE_KEY) === '0') MERGE_INLINE = false;
+  } catch (e) {}
+  document.getElementById('mergeInline').checked = MERGE_INLINE;
   try {
     const saved = localStorage.getItem('cd_notice_base_template');
     if (saved) {
@@ -539,7 +641,7 @@ async function resetTemplate() {
 }
 
 function applyTemplateChange() {
-  SEGMENTS = parseSegments(CURRENT_TEMPLATE);
+  SEGMENTS = parseSegments(CURRENT_TEMPLATE, MERGE_INLINE);
   EDITABLE_INDICES = SEGMENTS.map((s, i) => (s.type === 'text' && s.editable) ? i : -1).filter(i => i !== -1);
   recomputeActive();
   renderSegmentPreview();
@@ -548,6 +650,13 @@ function applyTemplateChange() {
   buildPanels();
   const ao = document.getElementById('allOutputs');
   if (ao) ao.innerHTML = '';
+}
+
+function toggleMerge() {
+  MERGE_INLINE = document.getElementById('mergeInline').checked;
+  try { localStorage.setItem(MERGE_KEY, MERGE_INLINE ? '1' : '0'); } catch (e) {}
+  applyTemplateChange();       // segmentation changed, so fields are rebuilt from scratch
+  setSavedStatus();
 }
 
 function toggleIgnore(i) {
@@ -580,7 +689,8 @@ function renderSegmentPreview() {
       : `<span class="idx">${++active}</span>`;
     return `<div class="segment-preview-item${ignored ? ' ignored' : ''}">
       ${badge}
-      <span class="seg-text">${escapeHtml(truncate(SEGMENTS[i].core, 90))}</span>
+      <span class="seg-text">${escapeHtml(truncate(prettyCore(SEGMENTS[i].core), 120))}</span>
+      ${SEGMENTS[i].hasTags ? '<span class="seg-fmt" title="Contains inline formatting tags — keep them in the translation">formatting</span>' : ''}
       <button class="btn-secondary btn-small seg-ignore" onclick="toggleIgnore(${i})">${ignored ? 'Include' : 'Ignore'}</button>
     </div>`;
   }).join('');
@@ -626,7 +736,7 @@ function buildPanels() {
             ? state[l].values[i]
             : (l === 'EN' ? SEGMENTS[i].core : '');
           return `
-          <label>Field ${n + 1}</label>
+          <label>Field ${n + 1}${SEGMENTS[i].hasTags ? ' <span class="fmt-note">· contains formatting tags — keep them in the translation</span>' : ''}</label>
           <div class="source-text">${escapeHtml(SEGMENTS[i].core)}</div>
           <textarea class="field-textarea" id="fld_${i}_${l}" placeholder="Translation..." oninput="onFieldInput('${l}')">${escapeHtml(v)}</textarea>`;
         }).join('')}
@@ -843,6 +953,16 @@ function bulkSplit() {
   if (mismatched.length) {
     problems.push('segment count off for ' + mismatched.map(l => `${l} (${perLangCount[l]}/${expected})`).join(', '));
   }
+  const tagLoss = [];
+  ACTIVE_INDICES.forEach((segIdx, n) => {
+    if (!SEGMENTS[segIdx].hasTags) return;
+    const missing = orderedFilled.filter(l => {
+      const v = state[l].values[segIdx] || '';
+      return v && !/<[^>]+>/.test(v);
+    });
+    if (missing.length) tagLoss.push(`#${n + 1} (${missing.join(', ')})`);
+  });
+  if (tagLoss.length) problems.push('segment(s) with formatting tags in the source have none in the translation: ' + tagLoss.join('; ') + ' — bold/styling is lost unless the tags are in the sheet cell');
   if (unknown.length) problems.push('ignored column(s): ' + unknown.join(', '));
   const emptyLangs = recognized.filter(l => filledLangs.indexOf(l) === -1);
   if (emptyLangs.length) problems.push('no text for ' + emptyLangs.join(', '));
