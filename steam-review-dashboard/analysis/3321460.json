@@ -1,0 +1,68 @@
+{
+  "app": "3321460",
+  "analyzed": "2026-10-16",
+  "from": "2026-10-09",
+  "to": "2026-10-16",
+  "sampleSize": 165,
+  "scopes": {
+    "all": {
+      "praise": [
+        { "title": "Huge, explorable open world", "detail": "The most common praise in every language: a vast, handcrafted world with endless things to discover, strong immersion, and a feeling of freedom.", "quote": "very immersive world with endless exploration" },
+        { "title": "Visuals and scenery", "detail": "Graphics and scenery are called some of the best in the genre, mostly by players with capable hardware." },
+        { "title": "Combat and variety of activities", "detail": "Fluid, satisfying combat plus a long list of side activities (crafting, trading, hunting, mini-games, housing) that keep players going for hundreds of hours." },
+        { "title": "Post-launch support", "detail": "Players notice the 2.0 / Enhanced updates, quick patches and the developer's attitude, and many look forward to the DLC.", "quote": "quality of life improvements since launch ... makes this, in my opinion, GOTY" }
+      ],
+      "complaints": [
+        { "title": "Puzzles with no guidance", "detail": "Abyss and other puzzles are the most repeated complaint among Korean and Chinese reviewers and also come up in English; many say they cannot be solved without a guide.", "quote": "Greatest game with the absolute stupidest puzzle system ever." },
+        { "title": "Crashes, launch failures and optimization", "detail": "A large share of negative reviews are about crashing on launch, in the map or inventory, freezes, shimmering or blurry graphics and heavy reliance on ray reconstruction." },
+        { "title": "Controls and interaction", "detail": "Clunky, unresponsive dodge and interaction, too many key combinations, weak gamepad camera and lock-on." },
+        { "title": "Story, characters and quest design", "detail": "Story called weak or confusing even after the update; quests padded with fetch tasks and slow follow-the-NPC sections; unclear objectives." },
+        { "title": "Content feels wide but shallow", "detail": "Many mechanics but little depth, and boss fights criticized for stunlocks and one-hit mechanics.", "quote": "Wide as an ocean, deep as a puddle." }
+      ]
+    },
+    "english": {
+      "praise": [
+        { "title": "Open world and immersion", "detail": "Compared to Skyrim, Witcher 3 and Red Dead 2: a populated, immersive world with a huge amount to do.", "quote": "I honestly haven't felt this invested in a world since Skyrim." },
+        { "title": "Graphics and combat", "detail": "Beautiful visuals and satisfying combat are the other most-named strengths." },
+        { "title": "Value and hours of content", "detail": "Many players report 100 to 300+ hours with plenty left; several call it a game of the year candidate." },
+        { "title": "Improved since launch", "detail": "Reviewers mention 2.0 and Enhanced as clear improvements, including the story, and look forward to the DLC." }
+      ],
+      "complaints": [
+        { "title": "Crashes and failure to launch", "detail": "The single biggest English complaint: crashes on the main menu, the map or inventory, GPU hangs, and refund frustration." },
+        { "title": "Clunky controls", "detail": "Dodge and interaction feel unreliable, key bindings are limited, and there are too many steps for simple actions." },
+        { "title": "Weak story and tedious quests", "detail": "Story and characters described as boring or incoherent; side quests padded with fetching and slow NPC escorts.", "quote": "The characters are as deep as a puddle" },
+        { "title": "Puzzles and poor guidance", "detail": "Puzzles are called boring or unfair, and the game rarely tells players what to do or how systems work." },
+        { "title": "Boss design and shallow systems", "detail": "Bosses criticized for stunlocks and no proper dodge or parry; inventory limits and many shallow mechanics." }
+      ]
+    },
+    "korean": {
+      "praise": [
+        { "title": "Exploration and vast world", "detail": "Freedom to explore anywhere is the most cited strength; players say there is always more to do." },
+        { "title": "Fun and sheer amount of content", "detail": "Described as very fun overall, with strong graphics and a huge amount to do." },
+        { "title": "Developer response", "detail": "Quick patching after problems is praised, and several players bought or pre-ordered the DLC." },
+        { "title": "Story improved", "detail": "Several say the story is better after Enhanced, though it is not Red Dead 2 level." }
+      ],
+      "complaints": [
+        { "title": "Abyss and other puzzles", "detail": "The most frequent complaint: puzzles are stressful, give no clear direction and are seen as padding playtime." },
+        { "title": "Controls and combat feel", "detail": "Several reviews call the controls and responsiveness poor, on both gamepad and keyboard." },
+        { "title": "Weak story and unfriendly guidance", "detail": "Not explaining what to do, a dull story and a protagonist some find hard to connect with." },
+        { "title": "Bugs", "detail": "Reports of Kliff's voice disappearing, NPC loading blocking paths, and map loading issues." }
+      ]
+    },
+    "chinese": {
+      "praise": [
+        { "title": "Scenery and visuals", "detail": "Landscapes, towns and character models are called among the best in current open-world games." },
+        { "title": "Large world and rich content", "detail": "A vast map with lots to do and a lot of freedom: combat variety, trading, housing, dyeing and clothing." },
+        { "title": "Combat feel and builds", "detail": "Many weapons and skill options and satisfying combat for players who stick with it." },
+        { "title": "Mods and the developer's attitude", "detail": "Active mods are said to cover the control weaknesses, and the developer is credited for continued updates." }
+      ],
+      "complaints": [
+        { "title": "Puzzles without guidance", "detail": "By far the most repeated complaint: players say many puzzles cannot be solved without looking up a guide." },
+        { "title": "Story and quest quality", "detail": "The main story is called thin or filler, characters shallow, and side quests repetitive with slow follow-the-NPC sections." },
+        { "title": "Controls and interaction", "detail": "Poor response, too many key combinations, awkward gamepad lock-on, and slow climbing or interaction." },
+        { "title": "Optimization and crashes", "detail": "Freezes and crashes when opening the map or inventory, rough lighting without ray reconstruction, and performance cost." },
+        { "title": "Boss fights", "detail": "Some boss designs are called unfair or built around invincibility and attacks that are hard to avoid." }
+      ]
+    }
+  }
+}

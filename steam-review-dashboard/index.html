@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steam Review Dashboard</title>
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --panel: #242426;
+    --panel-alt: #2c2c2f;
+    --border: #3a3a3d;
+    --text: #e8e8ea;
+    --muted: #9a9a9e;
+    --accent: #7fb3ff;
+    --accent-dim: #3d5a80;
+    --ok: #6fcf97;
+    --warn: #ffb450;
+    --bad: #ff5c5c;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', 'Microsoft YaHei', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; font-size: 14px; line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 0.25rem; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+  .card .hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  label { font-size: 12px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 4px; }
+  button { padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-family: inherit; transition: background 0.15s, border-color 0.15s; }
+  button:hover { border-color: var(--accent-dim); }
+  .btn-primary { background: var(--accent-dim); color: #fff; border-color: var(--accent-dim); }
+  .btn-primary:hover { background: #4a6d94; border-color: #4a6d94; }
+  .btn-danger:hover { border-color: var(--bad); color: var(--bad); }
+  button:disabled { background: #33383e; border-color: #33383e; color: var(--muted); cursor: default; }
+  select, input[type="text"], input[type="date"], input[type="number"] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; font-family: inherit; background: var(--panel-alt); color: var(--text); outline: none; color-scheme: dark; }
+  select:focus, input:focus { border-color: var(--accent-dim); }
+  input:disabled { opacity: 0.45; }
+  .row { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+  .row + .row { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .field { display: flex; flex-direction: column; }
+  .radio-group { display: flex; gap: 14px; align-items: center; height: 35px; }
+  .radio-group label { display: flex; align-items: center; gap: 5px; margin: 0; font-size: 13px; color: var(--text); cursor: pointer; }
+  .grow { flex: 1; }
+  .status { font-size: 12px; color: var(--muted); }
+  .banner { border: 1px solid var(--warn); background: rgba(255,180,80,0.08); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 1rem; font-size: 13px; }
+  .banner.err { border-color: var(--bad); background: rgba(255,92,92,0.08); color: var(--bad); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 1rem; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat .v { font-size: 26px; font-weight: 600; line-height: 1.2; }
+  .stat .l { font-size: 12px; color: var(--muted); }
+  .stat .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .pos { color: var(--ok); } .neg { color: var(--bad); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #2f2f32; }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.total td { font-weight: 600; border-top: 1px solid var(--border); }
+  .pt-table { max-width: 520px; }
+  .pt-table td.ratio { text-align: center; font-weight: 600; color: #1c1c1e; }
+  .pt-table th { background: var(--panel-alt); text-align: center; }
+  .pt-table th.neg-h { background: #e8a07a; color: #1c1c1e; } .pt-table th.pos-h { background: #a9d18e; color: #1c1c1e; } .pt-table th.ratio-h { background: #d9d9d9; color: #1c1c1e; }
+  .pt-table td:first-child { text-align: center; }
+  .pt-table td.cnt { text-align: center; }
+
+  .heat { text-align: right; font-variant-numeric: tabular-nums; min-width: 90px; }
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover td { background: rgba(127,179,255,0.06); }
+  tr.selected td { box-shadow: inset 0 0 0 9999px rgba(127,179,255,0.10); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 820px) { .split { grid-template-columns: 1fr; } body { padding: 1rem; } }
+  .bar-cell { position: relative; }
+  .bar-cell .bar { position: absolute; left: 0; top: 2px; bottom: 2px; border-radius: 3px; opacity: 0.22; }
+  .bar-cell span { position: relative; }
+  .kw-pos .bar { background: var(--ok); } .kw-neg .bar { background: var(--bad); }
+
+  .samples { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .sample { background: var(--panel-alt); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+  .sample .meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .sample .meta a { color: var(--accent); text-decoration: none; }
+  .sample mark { background: rgba(127,179,255,0.28); color: inherit; border-radius: 2px; padding: 0 1px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+  .badge.up { background: rgba(111,207,151,0.18); color: var(--ok); } .badge.down { background: rgba(255,92,92,0.18); color: var(--bad); }
+  .badge.script { background: var(--panel); color: var(--muted); border: 1px solid var(--border); }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
+
+  .summary-list { list-style: none; }
+  .summary-list li { padding: 9px 0; border-bottom: 1px solid #2f2f32; }
+  .summary-list li:last-child { border-bottom: none; }
+  .summary-list b { display: block; margin-bottom: 2px; }
+  .summary-list .q { color: var(--muted); font-size: 12px; font-style: italic; margin-top: 3px; }
+  h3 { font-size: 14px; margin-bottom: 8px; }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; padding: 1.5rem; z-index: 50; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 960px; max-height: 90vh; display: flex; flex-direction: column; }
+  .modal header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal .body { display: grid; grid-template-columns: 220px 1fr; flex: 1; overflow: hidden; min-height: 380px; }
+  .modal .side { border-right: 1px solid var(--border); padding: 10px; overflow-y: auto; }
+  .modal .side button { display: block; width: 100%; text-align: left; margin-bottom: 6px; background: transparent; }
+  .modal .side button.active { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+  .modal .main { padding: 16px 18px; overflow-y: auto; }
+  .modal footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 14px; padding: 3px 4px 3px 10px; font-size: 13px; }
+  .chip .n { font-size: 11px; color: var(--muted); }
+  .chip .x { border: none; background: transparent; padding: 0 6px; font-size: 15px; line-height: 1; color: var(--muted); }
+  .chip .x:hover { color: var(--bad); }
+  @media (max-width: 700px) { .modal .body { grid-template-columns: 1fr; } .modal .side { border-right: none; border-bottom: 1px solid var(--border); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 data-i18n="title"></h1>
+  <p class="subtitle" data-i18n="subtitle"></p>
+
+  <section class="card" id="controls">
+    <div class="row">
+      <div class="field">
+        <label for="appId" data-i18n="ctl.app"></label>
+        <input type="text" id="appId" size="12">
+      </div>
+      <button id="loadBtn" data-i18n="ctl.load"></button>
+      <div class="field">
+        <label for="syncDays" data-i18n="ctl.download"></label>
+        <select id="syncDays"></select>
+      </div>
+      <button id="syncBtn" class="btn-primary" data-i18n="ctl.update"></button>
+      <div class="status grow" id="syncStatus"></div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="scope" data-i18n="ctl.language"></label>
+        <select id="scope"></select>
+      </div>
+      <div class="field">
+        <label data-i18n="ctl.dates"></label>
+        <div class="radio-group">
+          <label><input type="radio" name="dateMode" value="all" checked> <span data-i18n="ctl.allTime"></span></label>
+          <label><input type="radio" name="dateMode" value="range"> <span data-i18n="ctl.range"></span></label>
+        </div>
+      </div>
+      <div class="field"><label for="dFrom" data-i18n="ctl.from"></label><input type="date" id="dFrom"></div>
+      <div class="field"><label for="dTo" data-i18n="ctl.to"></label><input type="date" id="dTo"></div>
+      <div class="grow"></div>
+      <button id="topicsBtn" data-i18n="ctl.topics"></button>
+      <button id="exportBtn" data-i18n="ctl.export"></button>
+    </div>
+  </section>
+
+  <div id="banner" class="banner" hidden></div>
+  <section class="cards" id="cards"></section>
+
+  <section class="card">
+    <h2 data-i18n="time.title"></h2>
+    <div class="hint" id="timeHint"></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i><span data-i18n="positive"></span></span><span><i style="background:var(--bad)"></i><span data-i18n="negative"></span></span></div>
+    <div id="timeChart"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-i18n="pt.title"></h2>
+    <div class="hint" data-i18n="pt.hint"></div>
+    <table class="pt-table" id="ptTable"></table>
+  </section>
+
+  <section class="card">
+    <h2 data-i18n="topics.title"></h2>
+    <div class="hint" data-i18n="topics.hint"></div>
+    <div style="overflow-x:auto"><table id="topicTable"></table></div>
+    <div class="samples" id="samples" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="border:none;margin:0;padding:0;align-items:flex-start">
+      <div class="grow"><h2 data-i18n="kw.title"></h2><div class="hint" data-i18n="kw.hint"></div></div>
+      <div class="field" id="kwLangBox"><label for="kwLang" data-i18n="kw.lang"></label><select id="kwLang"></select></div>
+    </div>
+    <div class="split" id="kwTables"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-i18n="sum.title"></h2>
+    <div class="hint" id="sumHint"></div>
+    <div class="split" id="sumBody"></div>
+  </section>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <header><h2 data-i18n="tm.title"></h2><button id="tmClose" data-i18n="tm.done"></button></header>
+    <div class="body">
+      <div class="side" id="tmSide"></div>
+      <div class="main" id="tmMain"></div>
+    </div>
+    <footer>
+      <button id="tmReset" data-i18n="tm.reset"></button>
+      <button id="tmExport" data-i18n="tm.export"></button>
+      <button id="tmImport" data-i18n="tm.import"></button>
+      <input type="file" id="tmFile" accept=".json" hidden>
+      <span class="status" data-i18n="tm.saved"></span>
+    </footer>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ---------- text (all UI strings live here so another language can be added later) ---------- */
+const I18N = {
+  en: {
+    'title': 'Steam Review Dashboard',
+    'subtitle': 'Analyze Steam reviews by language, date range, playtime and game content.',
+    'ctl.app': 'Steam App ID', 'ctl.load': 'Load', 'ctl.download': 'Download window', 'ctl.update': 'Update reviews',
+    'ctl.language': 'Review language', 'ctl.dates': 'Date range', 'ctl.allTime': 'All time', 'ctl.range': 'Select range',
+    'ctl.from': 'From', 'ctl.to': 'To', 'ctl.topics': 'Manage topics', 'ctl.export': 'Download Excel',
+    'win.3': 'Last 3 days', 'win.7': 'Last 7 days', 'win.14': 'Last 14 days', 'win.30': 'Last 30 days', 'win.0': 'Everything',
+    'scope.all': 'All languages', 'scope.english': 'English only', 'scope.korean': 'Korean only', 'scope.chinese': 'Chinese only',
+    'positive': 'Positive', 'negative': 'Negative', 'reviews': 'reviews',
+    'err.noserver': 'Cannot reach the local helper. Start it with run.bat (or "python server.py") and open http://localhost:8765/ instead of opening this file directly.',
+    'err.nodata': 'No reviews cached for this app yet. Pick a download window and press "Update reviews".',
+    'err.empty': 'No reviews match the current filters.',
+    'sync.starting': 'Starting download…', 'sync.progress': 'Downloading… page {0}, {1} new reviews, reached {2}',
+    'sync.done': 'Done: {0} new reviews added.', 'sync.error': 'Download failed: {0}',
+    'sync.cached': 'Cached {0} reviews ({1} to {2}) · last updated {3}',
+    'sync.partial': 'History before {0} not downloaded yet.',
+    'card.total': 'Total reviews', 'card.pos': 'Positive', 'card.neg': 'Negative', 'card.score': 'Positive rate',
+    'card.steam': 'Steam shows {0} in total ({1}% positive)',
+    'time.title': 'Reviews over time', 'time.hour': 'Per hour', 'time.day': 'Per day',
+    'pt.title': 'Positive / negative ratio by playtime', 'pt.hint': 'Playtime is the hours played when the review was written. P/R ratio = positive reviews divided by negative reviews.',
+    'pt.playtime': 'Playtime', 'pt.neg': 'Negative', 'pt.pos': 'Positive', 'pt.ratio': 'P/R ratio', 'pt.total': 'Total',
+    'topics.title': 'Content topics', 'topics.hint': 'How many reviews mention each topic (by keyword match). Click a topic to see sample reviews. Edit keywords with "Manage topics".',
+    'topics.topic': 'Topic', 'topics.mentions': 'Reviews mentioning', 'topics.share': '% of all reviews', 'topics.posM': 'In positive', 'topics.negM': 'In negative', 'topics.posRate': '% positive',
+    'samples.title': 'Sample reviews: {0}', 'samples.shuffle': 'Shuffle', 'samples.none': 'No matching reviews.',
+    'kw.title': 'Most mentioned words', 'kw.hint': 'Number of reviews containing each word, separately for positive and negative reviews. Very common filler words are hidden.',
+    'kw.lang': 'Words from', 'kw.pos': 'In positive reviews', 'kw.neg': 'In negative reviews', 'kw.word': 'Word', 'kw.count': 'Reviews', 'kw.analyzing': 'Analyzing…',
+    'kw.en': 'English', 'kw.ko': 'Korean', 'kw.zh': 'Chinese',
+    'sum.title': 'What players praise and complain about', 'sum.praise': 'Praised', 'sum.complain': 'Complaints',
+    'sum.hint': 'Written from reading a sample of {0} reviews ({1} to {2}), analyzed on {3}. Does not change with the date filter.',
+    'sum.none': 'No written analysis saved for this app yet.',
+    'sum.fallback': 'No analysis for this language, showing the all-languages summary.',
+    'tm.title': 'Manage topics', 'tm.done': 'Done', 'tm.add': '+ Add topic', 'tm.name': 'Topic name', 'tm.keywords': 'Keywords',
+    'tm.addKw': 'Add keywords (separate with commas, press Enter)', 'tm.matches': 'Matches {0} reviews ({1}%) in the current filters.',
+    'tm.delete': 'Delete topic', 'tm.reset': 'Reset to defaults', 'tm.export': 'Export topics', 'tm.import': 'Import topics',
+    'tm.saved': 'Changes are saved in this browser automatically.', 'tm.confirmDelete': 'Delete the topic "{0}"?',
+    'tm.confirmReset': 'Replace all topics with the defaults?', 'tm.newTopic': 'New topic', 'tm.bad': 'Could not read that topics file.',
+    'tm.hint': 'Latin keywords match whole words (and plurals); Korean and Chinese keywords match anywhere in the text.',
+    'x.preparing': 'Preparing Excel file…', 'x.noxlsx': 'Excel library could not be loaded (offline?), saved as CSV instead.',
+    'x.none': 'Nothing to export.'
+  }
+};
+const UI_LANG = 'en';
+const t = (k, ...a) => { let s = (I18N[UI_LANG] || {})[k] ?? I18N.en[k] ?? k; a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; };
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = n => Number(n).toLocaleString('en-US');
+const pct = (a, b) => b ? (100 * a / b).toFixed(1) : '0.0';
+const pad = n => String(n).padStart(2, '0');
+const ymd = ts => { const d = new Date(ts * 1000); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const ymdhms = ts => { const d = new Date(ts * 1000); return `${ymd(ts)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+
+/* ---------- state ---------- */
+const SCOPES = { all: null, english: ['english'], korean: ['koreana'], chinese: ['schinese', 'tchinese'] };
+const S = { app: '', reviews: [], meta: null, scope: 'all', dateMode: 'all', from: '', to: '', idx: [], topics: [], defaults: [], maskCache: {}, sel: null, seed: 1, tmSel: null, kwCountCache: new Map(), analysis: null, kwLang: 'en' };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('srd.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('srd.' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+};
+
+/* ---------- static text ---------- */
+document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+$('syncDays').innerHTML = [3, 7, 14, 30, 0].map(d => `<option value="${d}">${t('win.' + d)}</option>`).join('');
+$('scope').innerHTML = Object.keys(SCOPES).map(k => `<option value="${k}">${t('scope.' + k)}</option>`).join('');
+$('kwLang').innerHTML = ['en', 'ko', 'zh'].map(k => `<option value="${k}">${t('kw.' + k)}</option>`).join('');
+
+/* ---------- loading ---------- */
+function banner(msg, isErr) { const b = $('banner'); if (!msg) { b.hidden = true; return; } b.textContent = msg; b.className = 'banner' + (isErr ? ' err' : ''); b.hidden = false; }
+
+async function loadTopics() {
+  try { S.defaults = (await (await fetch('topics.default.json')).json()).topics; } catch (e) { S.defaults = []; }
+  const saved = store.get('topics', null);
+  S.topics = (saved || S.defaults).map(mkTopic);
+  S.tmSel = S.topics[0]?.id || null;
+}
+let topicSeq = 0;
+const mkTopic = tp => ({ id: 't' + (++topicSeq), name: tp.name, keywords: [...tp.keywords] });
+const saveTopics = () => store.set('topics', S.topics.map(({ name, keywords }) => ({ name, keywords })));
+
+async function loadApp(app) {
+  S.app = app; store.set('app', app);
+  $('appId').value = app;
+  S.maskCache = {}; S.kwCountCache.clear();
+  try {
+    const r = await fetch('/api/data?app=' + encodeURIComponent(app));
+    if (!r.ok) throw new Error('bad status');
+    const d = await r.json();
+    S.reviews = d.reviews || []; S.meta = d;
+  } catch (e) {
+    S.reviews = []; S.meta = null; banner(t('err.noserver'), true); renderAll(); return;
+  }
+  try {
+    const a = await fetch('analysis/' + app + '.json');
+    S.analysis = a.ok ? await a.json() : null;
+  } catch (e) { S.analysis = null; }
+  if (S.reviews.length) {
+    const lo = ymd(S.reviews[S.reviews.length - 1].c), hi = ymd(S.reviews[0].c);
+    if (!S.from || S.from < lo || S.from > hi) S.from = lo;
+    if (!S.to || S.to > hi || S.to < lo) S.to = hi;
+    $('dFrom').value = S.from; $('dTo').value = S.to;
+  }
+  renderAll();
+}
+
+/* ---------- filters ---------- */
+function applyFilters() {
+  const langs = SCOPES[S.scope];
+  let from = -Infinity, to = Infinity;
+  if (S.dateMode === 'range') {
+    if (S.from) from = new Date(S.from + 'T00:00:00').getTime() / 1000;
+    if (S.to) to = new Date(S.to + 'T23:59:59').getTime() / 1000;
+  }
+  S.idx = [];
+  for (let i = 0; i < S.reviews.length; i++) {
+    const r = S.reviews[i];
+    if (langs && !langs.includes(r.l)) continue;
+    if (r.c < from || r.c > to) continue;
+    S.idx.push(i);
+  }
+}
+const filterSig = () => [S.scope, S.dateMode, S.from, S.to, S.reviews.length].join('|');
+
+/* ---------- rendering ---------- */
+function renderAll() {
+  applyFilters();
+  renderSyncInfo(); renderCards(); renderTime(); renderPlaytime(); renderTopics(); renderSummary();
+  $('kwTables').innerHTML = `<div class="status">${t('kw.analyzing')}</div>`;
+  clearTimeout(renderAll.kwTimer);
+  renderAll.kwTimer = setTimeout(renderKeywords, 20);
+  if (!S.reviews.length && S.meta) banner(t('err.nodata'));
+  else if (S.reviews.length && !S.idx.length) banner(t('err.empty'));
+  else if (S.meta && !$('banner').classList.contains('err')) banner('');
+}
+
+function renderSyncInfo() {
+  if (!S.reviews.length) { $('syncStatus').textContent = ''; return; }
+  const m = S.meta, lo = ymd(S.reviews[S.reviews.length - 1].c), hi = ymd(S.reviews[0].c);
+  let s = t('sync.cached', fmt(S.reviews.length), lo, hi, ymdhms(m.updated));
+  if (m.covered) s += ' · ' + t('sync.partial', ymd(m.covered));
+  if (!syncing) $('syncStatus').textContent = s;
+}
+
+function renderCards() {
+  const n = S.idx.length; let up = 0;
+  for (const i of S.idx) up += S.reviews[i].u;
+  const sm = S.meta && S.meta.summary;
+  const steam = sm ? `<div class="s">${t('card.steam', fmt(sm.total_reviews), pct(sm.total_positive, sm.total_reviews))}</div>` : '';
+  $('cards').innerHTML = `
+    <div class="stat"><div class="v">${fmt(n)}</div><div class="l">${t('card.total')}</div>${steam}</div>
+    <div class="stat"><div class="v pos">${fmt(up)}</div><div class="l">${t('card.pos')}</div></div>
+    <div class="stat"><div class="v neg">${fmt(n - up)}</div><div class="l">${t('card.neg')}</div></div>
+    <div class="stat"><div class="v">${pct(up, n)}%</div><div class="l">${t('card.score')}</div></div>`;
+}
+
+function renderTime() {
+  const el = $('timeChart');
+  if (!S.idx.length) { el.innerHTML = ''; $('timeHint').textContent = ''; return; }
+  let lo = Infinity, hi = -Infinity;
+  for (const i of S.idx) { const c = S.reviews[i].c; if (c < lo) lo = c; if (c > hi) hi = c; }
+  const hourly = (hi - lo) <= 4 * 86400;
+  $('timeHint').textContent = hourly ? t('time.hour') : t('time.day');
+  const keyOf = ts => { const d = new Date(ts * 1000); return hourly ? `${ymd(ts)} ${pad(d.getHours())}:00` : ymd(ts); };
+  const map = new Map();
+  const start = new Date(lo * 1000); if (hourly) start.setMinutes(0, 0, 0); else start.setHours(0, 0, 0, 0);
+  for (let d = new Date(start); d.getTime() / 1000 <= hi; hourly ? d.setHours(d.getHours() + 1) : d.setDate(d.getDate() + 1)) map.set(keyOf(d.getTime() / 1000), [0, 0]);
+  for (const i of S.idx) { const r = S.reviews[i]; const b = map.get(keyOf(r.c)); if (b) b[r.u ? 0 : 1]++; }
+  const keys = [...map.keys()], max = Math.max(1, ...keys.map(k => map.get(k)[0] + map.get(k)[1]));
+  const W = 1100, H = 220, L = 40, B = 24, T = 8, bw = (W - L) / keys.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">`;
+  for (let g = 0; g <= 4; g++) {
+    const y = T + (H - B - T) * (1 - g / 4);
+    svg += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="#3a3a3d" stroke-width="1"/><text x="${L - 6}" y="${y + 4}" fill="#9a9a9e" font-size="11" text-anchor="end">${Math.round(max * g / 4)}</text>`;
+  }
+  const step = Math.ceil(keys.length / 12);
+  keys.forEach((k, i) => {
+    const [p, n] = map.get(k), x = L + i * bw, ph = (H - B - T) * p / max, nh = (H - B - T) * n / max;
+    svg += `<g><title>${k}: ${p} positive, ${n} negative</title>`;
+    svg += `<rect x="${x + 1}" y="${H - B - ph}" width="${Math.max(1, bw - 2)}" height="${ph}" fill="#6fcf97"/>`;
+    svg += `<rect x="${x + 1}" y="${H - B - ph - nh}" width="${Math.max(1, bw - 2)}" height="${nh}" fill="#ff5c5c"/></g>`;
+    if (i % step === 0) svg += `<text x="${x + bw / 2}" y="${H - 6}" fill="#9a9a9e" font-size="11" text-anchor="middle">${hourly ? k.slice(5) : k.slice(5)}</text>`;
+  });
+  el.innerHTML = svg + '</svg>';
+}
+
+const PT_EDGES = [2, 3, 4, 5, 7, 10, 15, 20, 30, 40, 50, 70, 100, 150, 200, 300, 400, 500];
+const ptBucket = h => { for (let i = 0; i < PT_EDGES.length; i++) if (h < PT_EDGES[i]) return i; return PT_EDGES.length; };
+const ptLabel = i => i === 0 ? `< ${PT_EDGES[0]}h` : i === PT_EDGES.length ? `${PT_EDGES[i - 1]}h +` : `${PT_EDGES[i - 1]} – ${PT_EDGES[i]}h`;
+function heatColor(v, min, mid, max) {
+  const lo = [248, 105, 107], md = [255, 235, 132], hi = [99, 190, 123];
+  const mix = (a, b, f) => a.map((x, i) => Math.round(x + (b[i] - x) * f));
+  let c;
+  if (v <= mid) c = mix(lo, md, mid === min ? 1 : (v - min) / (mid - min)); else c = mix(md, hi, max === mid ? 1 : (v - mid) / (max - mid));
+  return `rgb(${c.join(',')})`;
+}
+function renderPlaytime() {
+  const rows = PT_EDGES.map(() => [0, 0]).concat([[0, 0]]); // [negative, positive]
+  for (const i of S.idx) { const r = S.reviews[i]; rows[ptBucket(r.p / 60)][r.u ? 1 : 0]++; }
+  const ratios = rows.map(([n, p]) => n ? p / n : null);
+  const fin = ratios.filter(v => v != null).sort((a, b) => a - b);
+  const min = fin[0], max = fin[fin.length - 1], mid = fin.length ? fin[Math.floor(fin.length / 2)] : 0;
+  const totN = rows.reduce((s, r) => s + r[0], 0), totP = rows.reduce((s, r) => s + r[1], 0);
+  let h = `<tr><th>${t('pt.playtime')}</th><th class="neg-h">${t('pt.neg')}</th><th class="pos-h">${t('pt.pos')}</th><th class="ratio-h">${t('pt.ratio')}</th></tr>`;
+  rows.forEach(([n, p], i) => {
+    const r = ratios[i];
+    const cell = r == null ? (p ? '∞' : '–') : r.toFixed(2);
+    const bg = r == null ? (p ? 'rgb(99,190,123)' : 'transparent') : heatColor(r, min, mid, max);
+    h += `<tr><td>${ptLabel(i)}</td><td class="cnt">${n || ''}</td><td class="cnt">${p || ''}</td><td class="ratio" style="background:${bg};${r == null && !p ? 'color:#9a9a9e' : ''}">${cell}</td></tr>`;
+  });
+  h += `<tr class="total"><td>${t('pt.total')}</td><td class="cnt">${totN}</td><td class="cnt">${totP}</td><td class="cnt">${totN ? (totP / totN).toFixed(2) : '–'}</td></tr>`;
+  $('ptTable').innerHTML = h;
+}
+
+/* ----- topic matching ----- */
+const isCJK = s => /[぀-ヿ㐀-鿿가-힯]/.test(s);
+const scriptOf = s => /[가-힯]/.test(s) ? 'KO' : /[㐀-鿿]/.test(s) ? 'ZH' : /[぀-ヿ]/.test(s) ? 'JA' : 'EN';
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+function buildRegex(keywords, flags = 'iu') {
+  const lat = [], cjk = [];
+  for (const k of keywords) { const kk = k.trim(); if (!kk) continue; (isCJK(kk) ? cjk : lat).push(reEsc(kk)); }
+  const parts = [];
+  if (lat.length) parts.push(`(?<![\\p{L}\\p{N}])(?:${lat.join('|')})(?:s|es|ed|ing)?(?![\\p{L}\\p{N}])`);
+  if (cjk.length) parts.push(`(?:${cjk.join('|')})`);
+  return parts.length ? new RegExp(parts.join('|'), flags) : null;
+}
+function topicMask(tp) {
+  const sig = tp.keywords.join('\u0001'), c = S.maskCache[tp.id];
+  if (c && c.sig === sig && c.n === S.reviews.length) return c.arr;
+  const re = buildRegex(tp.keywords), arr = new Uint8Array(S.reviews.length);
+  if (re) for (let i = 0; i < S.reviews.length; i++) arr[i] = re.test(S.reviews[i].t) ? 1 : 0;
+  S.maskCache[tp.id] = { sig, n: S.reviews.length, arr };
+  return arr;
+}
+
+function renderTopics() {
+  const n = S.idx.length;
+  const stats = S.topics.map(tp => {
+    const mask = topicMask(tp); let up = 0, down = 0;
+    for (const i of S.idx) if (mask[i]) { if (S.reviews[i].u) up++; else down++; }
+    return { tp, up, down, all: up + down };
+  });
+  const mx = k => Math.max(1, ...stats.map(s => s[k]));
+  const mAll = mx('all'), mUp = mx('up'), mDown = mx('down'), mShare = Math.max(0.001, ...stats.map(s => s.all / (n || 1)));
+  const shade = (v, m, rgb) => `background:rgba(${rgb},${(0.08 + 0.55 * v / m).toFixed(2)})`;
+  let h = `<tr><th>${t('topics.topic')}</th><th class="num">${t('topics.mentions')}</th><th class="num">${t('topics.share')}</th><th class="num">${t('topics.posM')}</th><th class="num">${t('topics.negM')}</th><th class="num">${t('topics.posRate')}</th></tr>`;
+  const base = S.idx.length ? S.idx.reduce((s, i) => s + S.reviews[i].u, 0) / S.idx.length : 0;
+  for (const s of stats) {
+    const rate = s.all ? s.up / s.all : null;
+    const rateBg = rate == null ? '' : `background:${heatColor(rate, Math.min(0.5, base), base, 1).replace('rgb', 'rgba').replace(')', ',0.55)')}`;
+    h += `<tr class="clickable${S.sel === s.tp.id ? ' selected' : ''}" data-id="${s.tp.id}"><td><b>${esc(s.tp.name)}</b></td>
+      <td class="heat" style="${shade(s.all, mAll, '127,179,255')}">${fmt(s.all)}</td>
+      <td class="heat" style="${shade(s.all / (n || 1), mShare, '127,179,255')}">${pct(s.all, n)}%</td>
+      <td class="heat" style="${shade(s.up, mUp, '111,207,151')}">${fmt(s.up)}</td>
+      <td class="heat" style="${shade(s.down, mDown, '255,92,92')}">${fmt(s.down)}</td>
+      <td class="heat" style="${rateBg}">${rate == null ? '–' : (rate * 100).toFixed(1) + '%'}</td></tr>`;
+  }
+  $('topicTable').innerHTML = h;
+  $('topicTable').querySelectorAll('tr.clickable').forEach(tr => tr.onclick = () => { S.sel = S.sel === tr.dataset.id ? null : tr.dataset.id; renderTopics(); });
+  renderSamples();
+}
+
+function cleanText(s) { return s.replace(/\[\/?[a-z0-9*]+(?:=[^\]]*)?\]/gi, ' ').replace(/https?:\/\/\S+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function highlight(text, re) {
+  if (!re) return esc(text);
+  let out = '', last = 0;
+  for (const m of text.matchAll(re)) { if (!m[0]) continue; out += esc(text.slice(last, m.index)) + '<mark>' + esc(m[0]) + '</mark>'; last = m.index + m[0].length; }
+  return out + esc(text.slice(last));
+}
+function renderSamples() {
+  const box = $('samples'), tp = S.topics.find(x => x.id === S.sel);
+  if (!tp) { box.hidden = true; return; }
+  const mask = topicMask(tp), re = buildRegex(tp.keywords, 'giu');
+  const pick = up => {
+    const all = S.idx.filter(i => mask[i] && S.reviews[i].u === up);
+    const good = all.filter(i => { const l = cleanText(S.reviews[i].t).length; return l >= 60 && l <= 700; });
+    const pool = (good.length >= 4 ? good : all).map(i => [i, Math.sin(i * 12.9898 + S.seed * 78.233) * 43758.5453 % 1]).sort((a, b) => a[1] - b[1]);
+    return pool.slice(0, 4).map(x => x[0]);
+  };
+  const card = i => {
+    const r = S.reviews[i], txt = cleanText(r.t), short = txt.length > 600 ? txt.slice(0, 600) + '…' : txt;
+    return `<div class="sample"><div class="meta"><span class="badge ${r.u ? 'up' : 'down'}">${t(r.u ? 'positive' : 'negative')}</span><span>${esc(r.l)}</span><span>${(r.p / 60).toFixed(1)}h</span><span>${ymd(r.c)}</span><a href="https://steamcommunity.com/profiles/${r.s}/recommended/${S.app}/" target="_blank" rel="noopener">link</a></div>${highlight(short, re)}</div>`;
+  };
+  const col = (title, ids) => `<div><h3>${title}</h3>${ids.length ? ids.map(card).join('') : `<div class="status">${t('samples.none')}</div>`}</div>`;
+  box.hidden = false;
+  box.innerHTML = `<div class="row" style="border:none;margin:0 0 8px;padding:0"><h3 class="grow" style="margin:0">${t('samples.title', esc(tp.name))}</h3><button id="shuf">${t('samples.shuffle')}</button></div>
+    <div class="split">${col(t('positive'), pick(1))}${col(t('negative'), pick(0))}</div>`;
+  $('shuf').onclick = () => { S.seed++; renderSamples(); };
+}
+
+/* ----- word frequency ----- */
+const STOP_EN = new Set(('a about after again all also am an and any are as at be because been before being but by can could did do does doing done down even for from get got had has have having he her here him his how i if in into is it its just like me more most much my no not now of off on once one only or other our out over own really s same she should so some such than that the their them then there these they this those through to too up us very was we were what when where which while who why will with would you your ' +
+  'game games play played playing player players still make makes made lot many go going well even way thing things im ive dont doesnt didnt cant isnt thats it\'s don\'t i\'m i\'ve can\'t ' +
+  'hours hour time tried pretty bit actually around also get got feel').split(' '));
+const STOP_KO = new Set(['정말', '너무', '진짜', '그냥', '이거', '그리고', '하지만', '근데', '있는', '있다', '있어', '없는', '같아요', '합니다', '입니다', '게임', '게임이', '게임은', '게임을']);
+const STOP_ZH = new Set(['游戏', '这个', '一个', '就是', '没有', '不是', '可以', '但是', '因为', '所以', '还是', '什么', '自己', '我们', '他们', '真的', '感觉', '非常', '已经', '而且', '如果', '这样', '那个', '一下', '有点']);
+const SEG = {};
+const segmenter = g => SEG[g] || (SEG[g] = new Intl.Segmenter(g === 'en' ? 'en' : g, { granularity: 'word' }));
+const langGroup = l => l === 'koreana' ? 'ko' : (l === 'schinese' || l === 'tchinese') ? 'zh' : l === 'english' ? 'en' : 'other';
+function renderKeywords() {
+  const scopeGroup = { english: 'en', korean: 'ko', chinese: 'zh' }[S.scope];
+  $('kwLangBox').style.display = scopeGroup ? 'none' : '';
+  const g = scopeGroup || S.kwLang;
+  const stop = g === 'ko' ? STOP_KO : g === 'zh' ? STOP_ZH : STOP_EN, minLen = g === 'en' ? 3 : 2, seg = segmenter(g);
+  const maps = [new Map(), new Map()], totals = [0, 0];
+  for (const i of S.idx) {
+    const r = S.reviews[i]; if (langGroup(r.l) !== g) continue;
+    const side = r.u ? 1 : 0; totals[side]++;
+    const seen = new Set();
+    for (const s of seg.segment(cleanText(r.t).toLowerCase())) {
+      if (!s.isWordLike) continue;
+      const w = s.segment;
+      if (w.length < minLen || /^\d+$/.test(w) || stop.has(w)) continue;
+      seen.add(w);
+    }
+    for (const w of seen) maps[side].set(w, (maps[side].get(w) || 0) + 1);
+  }
+  const table = (side, cls, title) => {
+    const top = [...maps[side]].sort((a, b) => b[1] - a[1]).slice(0, 25), mx = top.length ? top[0][1] : 1;
+    return `<div><h3>${title} <span class="status">(${fmt(totals[side])} ${t('reviews')})</span></h3><table class="${cls}"><tr><th>${t('kw.word')}</th><th class="num">${t('kw.count')}</th></tr>` +
+      top.map(([w, c]) => `<tr><td>${esc(w)}</td><td class="num bar-cell"><div class="bar" style="width:${(100 * c / mx).toFixed(0)}%"></div><span>${c} <small class="status">(${pct(c, totals[side])}%)</small></span></td></tr>`).join('') + '</table></div>';
+  };
+  $('kwTables').innerHTML = table(1, 'kw-pos', t('kw.pos')) + table(0, 'kw-neg', t('kw.neg'));
+}
+
+/* ----- written summary ----- */
+function renderSummary() {
+  const a = S.analysis, body = $('sumBody');
+  if (!a) { $('sumHint').textContent = ''; body.innerHTML = `<div class="status">${t('sum.none')}</div>`; return; }
+  const key = S.scope, entry = a.scopes && a.scopes[key], use = entry || (a.scopes && a.scopes.all);
+  $('sumHint').textContent = t('sum.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?', a.analyzed || '?') + (entry || key === 'all' ? '' : ' ' + t('sum.fallback'));
+  if (!use) { body.innerHTML = `<div class="status">${t('sum.none')}</div>`; return; }
+  const list = items => '<ul class="summary-list">' + items.map(x => `<li><b>${esc(x.title)}</b>${esc(x.detail || '')}${x.quote ? `<div class="q">“${esc(x.quote)}”</div>` : ''}</li>`).join('') + '</ul>';
+  body.innerHTML = `<div><h3 class="pos">${t('sum.praise')}</h3>${list(use.praise || [])}</div><div><h3 class="neg">${t('sum.complain')}</h3>${list(use.complaints || [])}</div>`;
+}
+
+/* ---------- sync ---------- */
+let syncing = false;
+async function startSync() {
+  if (syncing) return;
+  syncing = true; $('syncBtn').disabled = true; $('syncStatus').textContent = t('sync.starting'); banner('');
+  try {
+    await fetch(`/api/sync?app=${encodeURIComponent(S.app)}&days=${$('syncDays').value}`);
+    for (;;) {
+      await new Promise(r => setTimeout(r, 1000));
+      const st = await (await fetch('/api/status')).json();
+      if (st.error) { $('syncStatus').textContent = t('sync.error', st.error); break; }
+      if (st.running) { $('syncStatus').textContent = t('sync.progress', st.pages, fmt(st.new), st.oldest ? ymd(st.oldest) : '…'); continue; }
+      $('syncStatus').textContent = t('sync.done', fmt(st.new)); break;
+    }
+  } catch (e) { banner(t('err.noserver'), true); }
+  syncing = false; $('syncBtn').disabled = false;
+  await loadApp(S.app);
+}
+
+/* ---------- Excel export ---------- */
+function exportExcel() {
+  if (!S.idx.length) { banner(t('x.none')); return; }
+  $('exportBtn').disabled = true; $('syncStatus').textContent = t('x.preparing');
+  setTimeout(() => {
+    const head = ['Review Number', 'Review Link', 'Games Owned', 'Reviews Posted', 'Playtime at Review (Hours)', 'Language', 'Review', 'Date Posted', 'Game Purchased', 'Game Received Free', 'Type'];
+    const rows = S.idx.map(i => { const r = S.reviews[i]; return [Number(r.i), `https://steamcommunity.com/profiles/${r.s}/recommended/${S.app}/`, r.g, r.n, Math.round(r.p / 60 * 100) / 100, r.l, r.t, ymdhms(r.c), r.b ? 'Yes' : 'No', r.r ? 'Yes' : 'No', r.u ? 'positive' : 'negative']; });
+    const name = `SteamReviews_${S.app}_${S.scope}_${ymd(Date.now() / 1000)}`;
+    if (window.XLSX) {
+      const ws = XLSX.utils.aoa_to_sheet([head, ...rows]);
+      ws['!cols'] = [15, 14, 14, 15, 9, 9, 45, 18, 16, 19, 8].map(wch => ({ wch }));
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Worksheet');
+      XLSX.writeFile(wb, name + '.xlsx');
+    } else {
+      const csv = [head, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = name + '.csv'; a.click();
+      banner(t('x.noxlsx'));
+    }
+    $('exportBtn').disabled = false; renderSyncInfo();
+  }, 30);
+}
+
+/* ---------- topic manager ---------- */
+async function kwCount(kw) {
+  const key = filterSig() + '|' + kw;
+  if (S.kwCountCache.has(key)) return S.kwCountCache.get(key);
+  const re = buildRegex([kw]); let c = 0;
+  if (re) for (const i of S.idx) if (re.test(S.reviews[i].t)) c++;
+  S.kwCountCache.set(key, c); return c;
+}
+function renderTM() {
+  $('tmSide').innerHTML = S.topics.map(tp => `<button data-id="${tp.id}" class="${tp.id === S.tmSel ? 'active' : ''}">${esc(tp.name)}</button>`).join('') + `<button id="tmAdd" style="border-style:dashed">${t('tm.add')}</button>`;
+  $('tmSide').querySelectorAll('button[data-id]').forEach(b => b.onclick = () => { S.tmSel = b.dataset.id; renderTM(); });
+  $('tmAdd').onclick = () => { const tp = mkTopic({ name: t('tm.newTopic'), keywords: [] }); S.topics.push(tp); S.tmSel = tp.id; saveTopics(); renderTM(); };
+  const tp = S.topics.find(x => x.id === S.tmSel), main = $('tmMain');
+  if (!tp) { main.innerHTML = ''; return; }
+  main.innerHTML = `<label>${t('tm.name')}</label><input type="text" id="tmName" value="${esc(tp.name)}" style="width:100%;max-width:360px">
+    <div class="status" id="tmMatch" style="margin-top:10px"></div>
+    <label style="margin-top:14px">${t('tm.keywords')}</label>
+    <div class="chips" id="tmChips"></div>
+    <input type="text" id="tmKw" placeholder="${esc(t('tm.addKw'))}" style="width:100%">
+    <div class="status" style="margin-top:6px">${t('tm.hint')}</div>
+    <div style="margin-top:18px"><button class="btn-danger" id="tmDel">${t('tm.delete')}</button></div>`;
+  $('tmName').oninput = e => { tp.name = e.target.value; saveTopics(); $('tmSide').querySelector('button.active').textContent = tp.name; };
+  $('tmName').onchange = () => renderTopics();
+  const addKw = () => {
+    const inp = $('tmKw'), parts = inp.value.split(/[,\n]/).map(s => s.trim()).filter(s => s && !tp.keywords.includes(s));
+    if (!parts.length) return; tp.keywords.push(...parts); inp.value = ''; saveTopics(); renderTM(); renderTopics(); $('tmKw').focus();
+  };
+  $('tmKw').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addKw(); } };
+  $('tmKw').onblur = addKw;
+  $('tmDel').onclick = () => {
+    if (!confirm(t('tm.confirmDelete', tp.name))) return;
+    S.topics = S.topics.filter(x => x !== tp); if (S.sel === tp.id) S.sel = null; S.tmSel = S.topics[0]?.id || null; saveTopics(); renderTM(); renderTopics();
+  };
+  const mask = topicMask(tp); let c = 0; for (const i of S.idx) if (mask[i]) c++;
+  $('tmMatch').textContent = t('tm.matches', fmt(c), pct(c, S.idx.length));
+  const chips = $('tmChips');
+  chips.innerHTML = tp.keywords.map((k, i) => `<span class="chip" data-i="${i}"><span class="badge script">${scriptOf(k)}</span>${esc(k)} <span class="n" data-kw="${esc(k)}"></span><button class="x" title="remove">×</button></span>`).join('');
+  chips.querySelectorAll('.chip').forEach(ch => ch.querySelector('.x').onclick = () => { tp.keywords.splice(+ch.dataset.i, 1); saveTopics(); renderTM(); renderTopics(); });
+  chips.querySelectorAll('.n').forEach(async el => { const n = await kwCount(el.dataset.kw); el.textContent = n; });
+}
+function openTM() { $('modalBg').classList.add('open'); renderTM(); }
+function closeTM() { $('modalBg').classList.remove('open'); renderTopics(); }
+
+/* ---------- wiring ---------- */
+$('loadBtn').onclick = () => { const v = $('appId').value.trim(); if (/^\d+$/.test(v)) { S.from = S.to = ''; loadApp(v); } };
+$('appId').onkeydown = e => { if (e.key === 'Enter') $('loadBtn').click(); };
+$('syncBtn').onclick = startSync;
+$('scope').onchange = e => { S.scope = e.target.value; store.set('scope', S.scope); renderAll(); };
+$('kwLang').onchange = e => { S.kwLang = e.target.value; renderKeywords(); };
+document.querySelectorAll('input[name=dateMode]').forEach(r => r.onchange = () => { S.dateMode = r.value; syncDateInputs(); renderAll(); });
+$('dFrom').onchange = e => { S.from = e.target.value; renderAll(); };
+$('dTo').onchange = e => { S.to = e.target.value; renderAll(); };
+function syncDateInputs() { const off = S.dateMode !== 'range'; $('dFrom').disabled = off; $('dTo').disabled = off; }
+$('exportBtn').onclick = exportExcel;
+$('topicsBtn').onclick = openTM;
+$('tmClose').onclick = closeTM;
+$('modalBg').onclick = e => { if (e.target === $('modalBg')) closeTM(); };
+$('tmReset').onclick = () => { if (!confirm(t('tm.confirmReset'))) return; S.topics = S.defaults.map(mkTopic); S.tmSel = S.topics[0]?.id || null; S.sel = null; saveTopics(); renderTM(); };
+$('tmExport').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ version: 1, topics: S.topics.map(({ name, keywords }) => ({ name, keywords })) }, null, 2)], { type: 'application/json' }));
+  a.download = 'steam-review-topics.json'; a.click();
+};
+$('tmImport').onclick = () => $('tmFile').click();
+$('tmFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    if (!Array.isArray(j.topics) || j.topics.some(x => typeof x.name !== 'string' || !Array.isArray(x.keywords))) throw new Error('shape');
+    S.topics = j.topics.map(mkTopic); S.tmSel = S.topics[0]?.id || null; S.sel = null; saveTopics(); renderTM();
+  } catch (err) { alert(t('tm.bad')); }
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modalBg').classList.contains('open')) closeTM(); });
+
+(async function init() {
+  if (location.protocol === 'file:') banner(t('err.noserver'), true);
+  S.scope = store.get('scope', 'all'); if (!SCOPES[S.scope] && S.scope !== 'all') S.scope = 'all';
+  $('scope').value = S.scope; syncDateInputs();
+  await loadTopics();
+  if (location.protocol !== 'file:') await loadApp(store.get('app', '3321460')); else renderAll();
+})();
+</script>
+</body>
+</html>

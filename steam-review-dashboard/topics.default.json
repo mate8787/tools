@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "topics": [
+    {
+      "name": "Quest & Story",
+      "keywords": ["quest", "questline", "story", "storyline", "main story", "side quest", "narrative", "plot", "kliff quest", "oongka quest", "oonga quest", "damiane quest", "ocean quest",
+        "퀘스트", "스토리", "메인퀘", "서브퀘", "줄거리", "클리프 퀘스트", "웅카 퀘스트", "데미안 퀘스트",
+        "任务", "剧情", "故事", "主线", "支线"]
+    },
+    {
+      "name": "Ocean",
+      "keywords": ["ocean", "sea", "underwater", "diving", "ship", "sailing", "sail", "boat", "naval", "pioneering island", "pioneer island", "ocean combat", "sea combat", "sea exploration", "island",
+        "바다", "해양", "수중", "바닷속", "잠수", "항해", "선박", "해전", "개척 섬", "개척섬",
+        "海洋", "海底", "水下", "潜水", "航海", "船", "海战", "海岛", "岛屿", "开拓岛", "海上"]
+    },
+    {
+      "name": "Housing",
+      "keywords": ["housing", "house", "furniture", "decorate", "decorating", "decoration", "interior", "castle", "greymane", "base building", "homestead", "build a house", "house customization", "home customization",
+        "하우징", "건축", "집짓기", "인테리어", "가구", "그레이메인", "거점",
+        "房屋", "房子", "住宅", "家具", "装饰", "建房", "城堡"]
+    },
+    {
+      "name": "Romance",
+      "keywords": ["romance", "romantic", "wedding", "marry", "marriage", "love interest", "dating", "courtship", "spouse", "girlfriend", "boyfriend", "waifu", "npc interaction",
+        "로맨스", "연애", "결혼", "웨딩", "데이트", "호감도", "애정",
+        "恋爱", "浪漫", "婚礼", "结婚", "好感度", "约会"]
+    },
+    {
+      "name": "Management",
+      "keywords": ["management", "restaurant", "smithy", "blacksmith", "workshop", "tavern", "innkeeper", "shopkeeping", "tycoon", "business sim", "run a shop",
+        "경영", "식당", "레스토랑", "대장간", "가게", "장사",
+        "经营", "餐厅", "饭店", "铁匠", "商店"]
+    },
+    {
+      "name": "Garden of Trials",
+      "keywords": ["garden of trials", "trial garden", "boss rush", "trials",
+        "시련의 정원", "시련의정원", "보스 러쉬",
+        "试炼花园", "试炼之园"]
+    }
+  ]
+}
