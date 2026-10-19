@@ -86,6 +86,17 @@
   }
   .chip.warn { color: var(--warn); border-color: var(--warn); }
   .row-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  input[type=text] {
+    width: 150px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 8px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  input[type=text]:focus { outline: none; border-color: var(--accent-dim); }
   select {
     background: var(--panel-alt);
     border: 1px solid var(--border);
@@ -208,7 +219,7 @@
 <body>
 <div class="wrap">
   <h1>SRT Gap Filler</h1>
-  <p class="subtitle">Upload the SRT file of every language. One is the complete base (usually EN). Cues that are missing from the other languages are found by timecode and shown as blank boxes so you can type them in — then download each fixed file.</p>
+  <p class="subtitle">Upload the SRT file of every language. One is the complete base (usually EN). Cues are matched by order: the base cues listed as missing (default 12-18 and 24-25) get a blank box in every other language, and all the remaining base cues line up one-to-one with that language's own cues. Type the missing text in, then download each fixed file.</p>
 
   <div class="drop" id="drop">
     Drop all your .srt files here, or <label class="pick" for="fileInput">choose files</label>
@@ -220,6 +231,8 @@
     <div class="row-actions">
       <span>Base file (complete):</span>
       <select id="baseSelect" onchange="setBase(this.value)"></select>
+      <span>Base cues the other languages don't have:</span>
+      <input type="text" id="skipInput" value="12-18, 24-25" oninput="setSkip(this.value)">
       <button class="btn-secondary btn-small" style="padding:5px 10px;font-size:12px" onclick="clearAll()">Clear all files</button>
     </div>
     <div style="height:18px"></div>
@@ -243,6 +256,7 @@ let baseIdx = -1;
 let A = {};          // A[fileIdx] = { map: [baseCue -> otherCue | -1], extras: [otherCue], missing: [baseCue] }
 let fills = {};      // fills[fileIdx][baseCueIdx] = typed text
 let activeIdx = -1;
+let missingSpec = '12-18, 24-25';   // base cue numbers the other languages don't have
 
 // ---------- reading ----------
 function decodeBuffer(buf) {
@@ -333,31 +347,45 @@ function pickBase() {
   return best;
 }
 
-// Match each base cue to the other file's cue that overlaps it in time the most.
-function align(base, other) {
-  const map = new Array(base.length).fill(-1);
-  const used = new Set();
-  base.forEach((b, i) => {
-    let bestJ = -1, bestOv = 0;
-    other.forEach((o, j) => {
-      if (used.has(j)) return;
-      const ov = Math.min(b.end, o.end) - Math.max(b.start, o.start);
-      if (ov <= 0) return;
-      const need = 0.5 * Math.min(b.end - b.start, o.end - o.start);
-      if (ov >= need && ov > bestOv) { bestOv = ov; bestJ = j; }
-    });
-    if (bestJ >= 0) { map[i] = bestJ; used.add(bestJ); }
+// "12-18, 24-25" -> Set of base cue numbers (1-based) that the other languages don't have.
+function parseSpec(spec) {
+  const set = new Set();
+  spec.replace(/\s*[-–—]\s*/g, '-').split(/[,\s;]+/).forEach(tok => {
+    const m = tok.match(/^(\d+)(?:-(\d+))?$/);
+    if (!m) return;
+    const a = parseInt(m[1], 10), b = m[2] ? parseInt(m[2], 10) : a;
+    for (let n = Math.min(a, b); n <= Math.max(a, b) && n < 100000; n++) set.add(n);
   });
-  const extras = other.map((_, j) => j).filter(j => !used.has(j));
+  return set;
+}
+
+// Match by position: base cues named in `skip` have no counterpart; every other base cue
+// takes the next cue of the other file, in order.
+function align(base, other, skip) {
+  const map = new Array(base.length).fill(-1);
+  let j = 0;
+  base.forEach((_, i) => {
+    if (skip.has(i + 1)) return;
+    if (j < other.length) map[i] = j++;
+  });
+  const extras = [];
+  for (; j < other.length; j++) extras.push(j);
   const missing = base.map((_, i) => i).filter(i => map[i] === -1);
-  return { map, extras, missing };
+  const expected = base.filter((_, i) => !skip.has(i + 1)).length;
+  return { map, extras, missing, expected };
 }
 
 function realign() {
   A = {};
   const base = files[baseIdx];
-  files.forEach((f, i) => { if (i !== baseIdx) A[i] = align(base.cues, f.cues); });
+  const skip = parseSpec(missingSpec);
+  files.forEach((f, i) => { if (i !== baseIdx) A[i] = align(base.cues, f.cues, skip); });
   Object.keys(fills).forEach(i => { if (!A[i]) delete fills[i]; });
+}
+
+function setSkip(v) {
+  missingSpec = v;
+  refreshAll();
 }
 
 function setBase(v) {
@@ -366,7 +394,7 @@ function setBase(v) {
   refreshAll();
 }
 
-function cueNo(base, i) { return base.cues[i].n != null ? base.cues[i].n : i + 1; }
+function cueNo(base, i) { return i + 1; }
 
 function ranges(nums) {
   const out = [];
@@ -435,16 +463,15 @@ function buildPanels() {
     const i = +k, f = files[i], a = A[i];
     const matched = base.cues.length - a.missing.length;
     const miss = a.missing.map(ci => cueNo(base, ci));
-    const noOverlap = matched === 0;
+    const off = f.cues.length !== a.expected;
     return `
     <div class="lang-panel${i === activeIdx ? ' active' : ''}" id="panel_${i}">
       <div class="panel">
         <h2>${esc(f.label)} — ${esc(f.name)}</h2>
-        ${noOverlap ? '<div class="warning">None of this file\'s cues overlap the base in time — are these the same video? Check the base file selection.</div>' : ''}
+        ${off ? `<div class="warning">This file has ${f.cues.length} cues but ${a.expected} were expected (${esc(base.label)} has ${base.cues.length}, minus the ${base.cues.length - a.expected} missing ones). Cues are matched purely by order, so check the missing list at the top and this file.</div>` : ''}
         <div class="summary">
-          <span class="ok">${matched} matched</span> ·
-          <span class="${a.missing.length ? 'bad' : 'ok'}">${a.missing.length} missing${miss.length ? ' (cue ' + ranges(miss) + ')' : ''}</span> ·
-          ${a.extras.length} extra cue(s) not in the base (kept)
+          <span class="ok">${matched} matched by order</span> ·
+          <span class="${a.missing.length ? 'bad' : 'ok'}">${a.missing.length} missing${miss.length ? ' (cue ' + ranges(miss) + ')' : ''}</span>${a.extras.length ? ` · ${a.extras.length} extra cue(s) at the end (kept)` : ''}
         </div>
         ${a.missing.map(ci => {
           const b = base.cues[ci];
@@ -494,7 +521,6 @@ function buildSrt(i) {
     }
   });
   a.extras.forEach(j => items.push(own(f.cues[j])));
-  items.sort((x, y) => x.start - y.start);
   const eol = f.eol;
   return items.map((c, k) =>
     `${k + 1}${eol}${c.s} --> ${c.e}${c.extra ? ' ' + c.extra : ''}${eol}${c.text.replace(/\n/g, eol)}`
