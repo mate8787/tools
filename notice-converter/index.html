@@ -116,9 +116,8 @@
   }
   .base-status.ok { color: var(--ok); }
   .base-status.err { color: var(--warn); }
-  .segment-preview {
-    margin-top: 12px;
-  }
+
+  .segment-preview { margin-top: 12px; }
   .segment-preview-item {
     display: flex;
     align-items: center;
@@ -139,24 +138,13 @@
     width: 34px;
     text-align: right;
   }
-  .segment-preview-item .idx.idx-skip { color: var(--muted); }
   .segment-preview-item .seg-text {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .merge-opt {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 12px 0 0;
-    font-size: 12px;
-    color: var(--text);
-    cursor: pointer;
-  }
-  .merge-opt input { margin: 0; }
-  .segment-preview-item .seg-fmt {
+  .segment-preview-item .seg-chip {
     flex: none;
     font-size: 10px;
     color: var(--accent);
@@ -164,13 +152,16 @@
     border-radius: 3px;
     padding: 0 5px;
   }
-  .fmt-note { color: var(--accent); font-size: 11px; }
-  .segment-preview-item.ignored { opacity: 0.5; }
-  .segment-preview-item.ignored .seg-text { text-decoration: line-through; }
-  .segment-preview-item .seg-ignore {
-    flex: none;
-    padding: 3px 9px;
+  .segment-preview-item .seg-chip.bad { color: var(--bad); border-color: var(--bad); }
+  .segment-preview-item.unmatched { border-color: var(--bad); }
+  .segment-preview-item.muted { opacity: 0.6; }
+  .segment-preview-item.muted .idx { color: var(--muted); }
+  .seg-sub {
+    color: var(--muted);
     font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 14px 0 6px;
   }
 
   .tabbar {
@@ -211,15 +202,6 @@
   }
   .tab.complete .dot { opacity: 1; background: var(--ok); }
   .tab.partial .dot { opacity: 1; background: var(--bad); }
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-  @media (max-width: 900px) {
-    .grid { grid-template-columns: 1fr; }
-  }
   .panel {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -241,6 +223,8 @@
     margin: 14px 0 4px;
   }
   label:first-of-type { margin-top: 0; }
+  .field-note { color: var(--accent); font-size: 11px; }
+  .field-note.bad { color: var(--bad); }
   .source-text {
     background: var(--panel-alt);
     border-left: 2px solid var(--accent-dim);
@@ -266,7 +250,6 @@
     outline: none;
     border-color: var(--accent-dim);
   }
-  .rawPaste { height: 130px; font-family: var(--mono); font-size: 12px; }
   .field-textarea { height: 52px; }
   button {
     cursor: pointer;
@@ -290,15 +273,6 @@
   .btn-secondary:hover { border-color: var(--accent-dim); }
   .btn-small { padding: 5px 10px; font-size: 12px; }
   .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  .parse-status {
-    margin-top: 8px;
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 5px;
-    display: none;
-  }
-  .parse-status.ok { display: block; background: rgba(111,207,151,0.12); color: var(--ok); }
-  .parse-status.warn { display: block; background: rgba(255,180,80,0.12); color: var(--warn); }
   pre.output {
     background: var(--panel-alt);
     border: 1px solid var(--border);
@@ -353,7 +327,7 @@
 <body>
 <div class="wrap">
   <h1>Notice Generator BETA</h1>
-  <p class="subtitle">Paste the real source code once. The tool auto-detects every bit of visible text and turns it into a field — tags, links, and image URLs are never touched.</p>
+  <p class="subtitle">Paste the notice HTML once, then paste the translation table from Excel. Only the plain text is replaced — every tag, link, image and bit of styling stays exactly as it is.</p>
 
   <div class="base-section" id="baseSection">
     <div class="base-header" onclick="toggleBase()">
@@ -362,19 +336,14 @@
     </div>
     <div class="base-body">
       <p class="base-hint">
-        Paste the exact current notice HTML here, as-is, with its real English text still in it. No markup or tokens needed — anything that isn't inside a tag (like text between <code>&lt;div&gt;</code> and <code>&lt;/div&gt;</code>) is automatically detected as translatable. Everything inside tags — links, image sources, styling — is left byte-for-byte identical across every language.
+        Paste the exact current notice HTML here, as-is. It should contain the real text of one of the language columns in your sheet (normally KR or EN) — that is how the tool knows which text belongs to which segment. Everything inside tags — links, image sources, colours, fonts — is left byte-for-byte identical in every language.
       </p>
       <textarea id="baseTemplate" placeholder="Paste the current notice HTML here..."></textarea>
-      <label class="merge-opt">
-        <input type="checkbox" id="mergeInline" checked onchange="toggleMerge()">
-        Treat text split only by inline formatting (bold, italic, span, font…) as one segment
-      </label>
       <div class="actions">
         <button class="btn-primary" onclick="saveTemplate()">Save template</button>
         <button class="btn-secondary" onclick="resetTemplate()">Clear template</button>
       </div>
       <div class="base-status" id="baseStatus"></div>
-      <div class="segment-preview" id="segmentPreview"></div>
     </div>
   </div>
 
@@ -385,18 +354,18 @@
     </div>
     <div class="base-body">
       <p class="base-hint">
-        Paste a table copied straight from your translation sheet. The first row is the
-        language codes; every row after that is one text segment, columns separated by tabs.
-        Recognised codes: <code>EN&nbsp; KR&nbsp; DE&nbsp; ES-ES&nbsp; ES-MX&nbsp; FR&nbsp; IT&nbsp; PL&nbsp; PT-BR&nbsp; TR&nbsp; RU&nbsp; CN&nbsp; TW&nbsp; JP</code>.
-        Blank rows and <code>[bracket-only]</code> placeholder rows (like image markers) are skipped automatically,
-        just as in the per-language boxes. Every language tab is filled and all sources are generated below.
+        Paste the table straight from Excel. The first row holds the language codes
+        (<code>KR&nbsp; EN&nbsp; DE&nbsp; FR&nbsp; ES&nbsp; MX&nbsp; IT&nbsp; PL&nbsp; BR&nbsp; TR&nbsp; RU&nbsp; CN&nbsp; TW&nbsp; JP</code>).
+        Put a <code>◆</code> in column A on the first row of every segment — everything up to the next
+        <code>◆</code> is one segment. Blank rows are ignored. Every language tab is filled and all sources are generated below.
       </p>
-      <textarea id="bulkPaste" placeholder="EN&#9;KR&#9;DE&#9;ES-ES&#9;ES-MX&#9;...&#10;First English segment&#9;First Korean segment&#9;...&#10;Second English segment&#9;Second Korean segment&#9;..."></textarea>
+      <textarea id="bulkPaste" placeholder="&#9;KR&#9;EN&#9;DE&#9;...&#10;◆&#9;Korean segment 1&#9;English segment 1&#9;German segment 1&#9;...&#10;◆&#9;Korean segment 2&#9;English segment 2&#9;German segment 2&#9;..."></textarea>
       <div class="actions">
         <button class="btn-primary" onclick="bulkSplit()">Split &amp; generate all languages</button>
         <button class="btn-secondary" onclick="clearBulk()">Clear</button>
       </div>
       <div class="base-status" id="bulkStatus"></div>
+      <div class="segment-preview" id="bulkSegments"></div>
     </div>
   </div>
 
@@ -414,128 +383,23 @@
 <div class="toast" id="toast">Copied!</div>
 
 <script>
-const LANGS = ['EN','KR','DE','ES','MX','FR','IT','PL','BR','TR','RU','CN','TW','JP'];
+const LANGS = ['KR','EN','DE','FR','ES','MX','IT','PL','BR','TR','RU','CN','TW','JP'];
+const MARKER = '◆';
 
 let CURRENT_TEMPLATE = '';
-let SEGMENTS = [];          // full parsed template: [{type:'tag', raw} | {type:'text', raw, leading, core, trailing, editable}]
-let EDITABLE_INDICES = [];  // every detected translatable text segment (indices into SEGMENTS)
-let IGNORED = new Set();    // subset of EDITABLE_INDICES the user chose to skip
-let ACTIVE_INDICES = [];    // EDITABLE_INDICES minus IGNORED — the ones that become fields
-const state = {};           // state[lang] = { raw: '', values: { segIndex: text } }
+let TOKENS = [];     // template split into tags and text pieces
+let NODE_IDX = [];   // token indices of the text pieces that hold real text
+let SEGS = [];       // segments from the sheet: { src, group: [token idx] | null, primary, rowwise }
+let LEFTOVER = [];   // token indices of template text no segment covered (left unchanged)
+const state = {};    // state[lang] = { values: { segIndex: text } }
 let activeLang = LANGS[0];
 
-const IGNORED_KEY = 'cd_notice_ignored_segments_v2';
-const MERGE_KEY = 'cd_notice_merge_inline';
-let IGNORED_KEYS = new Set();   // ignored segments, remembered by their text so they survive re-parsing
-let MERGE_INLINE = true;        // treat text split only by inline formatting tags as one segment
+const $ = id => document.getElementById(id);
 
-// Stable identity of a segment: its text plus which occurrence of that text it is.
-function segKey(i) {
-  const core = SEGMENTS[i].core;
-  let n = 0;
-  for (const j of EDITABLE_INDICES) {
-    if (j === i) break;
-    if (SEGMENTS[j].core === core) n++;
-  }
-  return core + '\u0001' + n;
-}
-
-function recomputeActive() {
-  IGNORED = new Set(EDITABLE_INDICES.filter(i => IGNORED_KEYS.has(segKey(i))));
-  ACTIVE_INDICES = EDITABLE_INDICES.filter(i => !IGNORED.has(i));
-}
-
-function persistIgnored() {
-  IGNORED_KEYS = new Set([...IGNORED].map(segKey));
-  try { localStorage.setItem(IGNORED_KEY, JSON.stringify([...IGNORED_KEYS])); } catch (e) {}
-}
-
-function isBracketOnly(s) {
-  return /^\[[^\]]*\]$/.test(s.trim());
-}
-
-// Tags that only change how text looks (bold, size, colour...) and never split a sentence.
-const INLINE_TAGS = new Set(['b','strong','i','em','u','s','strike','del','ins','mark','small','big','sub','sup','span','font']);
-
-function inlineTagInfo(tag) {
-  const m = tag.match(/^<\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>$/);
-  if (!m || m[3] || !INLINE_TAGS.has(m[2].toLowerCase())) return null;
-  return { name: m[2].toLowerCase(), closing: m[1] === '/' };
-}
-
-// How many inline tags inside toks[a..b] are left unclosed / have no opener inside the range.
-function inlineBalance(toks, a, b) {
-  const stack = [];
-  let strayClose = 0;
-  for (let k = a; k <= b; k++) {
-    const inl = toks[k].kind === 'tag' ? toks[k].inline : null;
-    if (!inl) continue;
-    if (!inl.closing) stack.push(inl.name);
-    else if (stack.length && stack[stack.length - 1] === inl.name) stack.pop();
-    else strayClose++;
-  }
-  return { strayClose, open: stack.length };
-}
-
-// Split HTML into tag / text segments. Only text OUTSIDE of tags is ever treated as
-// translatable — attribute values and tag names are untouched. With `merge` on, text that is
-// separated only by inline formatting tags (e.g. a sentence with a bold phrase in the middle)
-// becomes ONE segment whose text keeps those inline tags.
-function parseSegments(html, merge) {
-  const toks = html.split(/(<[^>]*>)/g).filter(p => p !== '').map(part => {
-    if (/^<[^>]*>$/.test(part)) return { kind: 'tag', raw: part, inline: inlineTagInfo(part) };
-    const t = part.trim();
-    return { kind: 'text', raw: part, blank: t.length === 0, bracket: t.length > 0 && isBracketOnly(t) };
-  });
-
-  const segs = [];
-  let i = 0;
-  while (i < toks.length) {
-    const t = toks[i];
-    if (t.kind === 'tag') { segs.push({ type: 'tag', raw: t.raw, inline: t.inline }); i++; continue; }
-    if (t.blank || t.bracket) { segs.push({ type: 'text', raw: t.raw, editable: false, blank: t.blank }); i++; continue; }
-
-    // an editable run starts here; extend it across inline formatting tags to the last text
-    let end = i;
-    if (merge) {
-      for (let j = i + 1; j < toks.length; j++) {
-        const u = toks[j];
-        if (u.kind === 'tag') { if (!u.inline) break; }
-        else if (!u.blank) end = j;
-      }
-    }
-
-    // keep the group's inline tags balanced by pulling in adjacent openers / closers
-    const { strayClose, open } = inlineBalance(toks, i, end);
-    let prefix = '';
-    for (let need = strayClose; need > 0 && segs.length;) {
-      const last = segs[segs.length - 1];
-      if (last.type === 'tag' && last.inline && !last.inline.closing) { prefix = last.raw + prefix; segs.pop(); need--; }
-      else if (last.type === 'text' && last.blank) { prefix = last.raw + prefix; segs.pop(); }
-      else break;
-    }
-    let suffix = '';
-    let k = end + 1;
-    for (let need = open; need > 0 && k < toks.length; k++) {
-      const u = toks[k];
-      if (u.kind === 'tag' && u.inline && u.inline.closing) { suffix += u.raw; need--; }
-      else if (u.kind === 'text' && u.blank) suffix += u.raw;
-      else break;
-    }
-
-    const raw = prefix + toks.slice(i, end + 1).map(x => x.raw).join('') + suffix;
-    const leading = raw.match(/^\s*/)[0];
-    const trailing = raw.match(/\s*$/)[0];
-    const core = raw.substring(leading.length, raw.length - trailing.length);
-    segs.push({ type: 'text', raw, leading, core, trailing, editable: true, hasTags: /<[^>]+>/.test(core) });
-    i = k;
-  }
-  return segs;
-}
-
-// Strip attributes from tags so long style="..." values don't clutter the preview.
-function prettyCore(core) {
-  return core.replace(/<(\/?[a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, '<$1>');
+function esc(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
 }
 
 function truncate(s, n) {
@@ -543,65 +407,91 @@ function truncate(s, n) {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-function resetState() {
-  LANGS.forEach(l => {
-    state[l] = { raw: '', values: {} };
-    EDITABLE_INDICES.forEach(i => {
-      state[l].values[i] = (l === 'EN') ? SEGMENTS[i].core : '';
-    });
+function isBracketOnly(s) {
+  return /^\[[^\]]*\]$/.test(s.trim());
+}
+
+// Text comparison key: entities decoded, quotes unified, all whitespace dropped.
+function normText(s) {
+  const ta = document.createElement('textarea');
+  ta.innerHTML = s;
+  return ta.value
+    .replace(/[‘’‛′]/g, "'")
+    .replace(/[“”„]/g, '"')
+    .replace(/[\s ​-‍﻿]+/g, '');
+}
+
+// ---- Template ----
+// Split HTML into tags and text pieces. Tags are never touched; only text pieces get replaced.
+function tokenize(html) {
+  return html.split(/(<[^>]*>)/g).filter(p => p !== '').map(part => {
+    if (/^<[^>]*>$/.test(part)) return { kind: 'tag', raw: part };
+    const core = part.trim();
+    if (!core) return { kind: 'text', raw: part, leading: part, core: '', trailing: '', norm: '' };
+    const leading = part.match(/^\s*/)[0];
+    const trailing = part.match(/\s*$/)[0];
+    return { kind: 'text', raw: part, leading, core, trailing, norm: normText(core) };
   });
 }
 
-function toggleBase() {
-  document.getElementById('baseSection').classList.toggle('open');
+function toggleBase() { $('baseSection').classList.toggle('open'); }
+function toggleBulk() { $('bulkSection').classList.toggle('open'); }
+
+function resetState() {
+  LANGS.forEach(l => { state[l] = { values: {} }; });
 }
 
-function toggleBulk() {
-  document.getElementById('bulkSection').classList.toggle('open');
+function applyTemplateChange() {
+  TOKENS = tokenize(CURRENT_TEMPLATE);
+  NODE_IDX = TOKENS.map((t, i) => (t.kind === 'text' && t.norm) ? i : -1).filter(i => i !== -1);
+  SEGS = [];
+  LEFTOVER = [];
+  resetState();
+  buildTabs();
+  buildPanels();
+  $('allOutputs').innerHTML = '';
+  $('bulkSegments').innerHTML = '';
 }
 
-async function loadTemplate() {
-  const statusEl = document.getElementById('baseStatus');
+function loadTemplate() {
+  const statusEl = $('baseStatus');
   try {
-    const ig = localStorage.getItem(IGNORED_KEY);
-    if (ig) IGNORED_KEYS = new Set(JSON.parse(ig).filter(s => typeof s === 'string'));
-  } catch (e) {}
-  try {
-    if (localStorage.getItem(MERGE_KEY) === '0') MERGE_INLINE = false;
-  } catch (e) {}
-  document.getElementById('mergeInline').checked = MERGE_INLINE;
-  try {
+    // drop settings from the removed ignore / merge features
+    ['cd_notice_ignored_segments', 'cd_notice_ignored_segments_v2', 'cd_notice_merge_inline']
+      .forEach(k => localStorage.removeItem(k));
     const saved = localStorage.getItem('cd_notice_base_template');
     if (saved) {
       CURRENT_TEMPLATE = saved;
-      document.getElementById('baseTemplate').value = CURRENT_TEMPLATE;
-      statusEl.className = 'base-status ok';
-      statusEl.textContent = 'Loaded saved template.';
+      $('baseTemplate').value = saved;
       applyTemplateChange();
+      statusEl.className = 'base-status ok';
+      statusEl.textContent = `Loaded saved template — ${NODE_IDX.length} text piece(s) found.`;
       return;
     }
   } catch (e) {
     // localStorage unavailable or empty
   }
   CURRENT_TEMPLATE = '';
-  document.getElementById('baseTemplate').value = '';
-  statusEl.className = 'base-status';
-  statusEl.textContent = 'No template saved yet — paste the current source code below and click Save.';
+  $('baseTemplate').value = '';
   applyTemplateChange();
+  statusEl.className = 'base-status';
+  statusEl.textContent = 'No template saved yet — paste the current source code above and click Save.';
+  $('baseSection').classList.add('open');
 }
 
-async function saveTemplate() {
-  const val = document.getElementById('baseTemplate').value;
-  const statusEl = document.getElementById('baseStatus');
+function saveTemplate() {
+  const val = $('baseTemplate').value;
+  const statusEl = $('baseStatus');
 
   CURRENT_TEMPLATE = val;
   applyTemplateChange();
 
-  if (EDITABLE_INDICES.length === 0) {
+  if (NODE_IDX.length === 0) {
     statusEl.className = 'base-status err';
-    statusEl.textContent = '⚠ No translatable text detected in this HTML — check that you pasted the full source code.';
+    statusEl.textContent = '⚠ No text found in this HTML — check that you pasted the full source code.';
   } else {
-    setSavedStatus();
+    statusEl.className = 'base-status ok';
+    statusEl.textContent = `✓ Template saved — ${NODE_IDX.length} text piece(s) found.`;
   }
 
   try {
@@ -610,29 +500,19 @@ async function saveTemplate() {
     statusEl.className = 'base-status err';
     statusEl.textContent = '⚠ Could not save template (storage error). It will still work for this session.';
   }
+
+  // the template changed, so redo the split if a table is already pasted
+  if (NODE_IDX.length && $('bulkPaste').value.trim()) bulkSplit();
 }
 
-function setSavedStatus() {
-  const statusEl = document.getElementById('baseStatus');
-  if (EDITABLE_INDICES.length === 0) return;
-  statusEl.className = 'base-status ok';
-  if (IGNORED.size) {
-    statusEl.textContent = `✓ Template saved — ${ACTIVE_INDICES.length} active segment(s), ${IGNORED.size} ignored (${EDITABLE_INDICES.length} detected).`;
-  } else {
-    statusEl.textContent = `✓ Template saved — detected ${EDITABLE_INDICES.length} translatable text segment(s).`;
-  }
-}
-
-async function resetTemplate() {
+function resetTemplate() {
   CURRENT_TEMPLATE = '';
-  document.getElementById('baseTemplate').value = '';
-  IGNORED = new Set();
-  persistIgnored();
-  const statusEl = document.getElementById('baseStatus');
+  $('baseTemplate').value = '';
+  const statusEl = $('baseStatus');
   try {
     localStorage.removeItem('cd_notice_base_template');
     statusEl.className = 'base-status';
-    statusEl.textContent = 'Template cleared. Paste the current source code below and click Save.';
+    statusEl.textContent = 'Template cleared. Paste the current source code above and click Save.';
   } catch (e) {
     statusEl.className = 'base-status';
     statusEl.textContent = 'Template cleared (not saved to storage).';
@@ -640,66 +520,9 @@ async function resetTemplate() {
   applyTemplateChange();
 }
 
-function applyTemplateChange() {
-  SEGMENTS = parseSegments(CURRENT_TEMPLATE, MERGE_INLINE);
-  EDITABLE_INDICES = SEGMENTS.map((s, i) => (s.type === 'text' && s.editable) ? i : -1).filter(i => i !== -1);
-  recomputeActive();
-  renderSegmentPreview();
-  resetState();
-  buildTabs();
-  buildPanels();
-  const ao = document.getElementById('allOutputs');
-  if (ao) ao.innerHTML = '';
-}
-
-function toggleMerge() {
-  MERGE_INLINE = document.getElementById('mergeInline').checked;
-  try { localStorage.setItem(MERGE_KEY, MERGE_INLINE ? '1' : '0'); } catch (e) {}
-  applyTemplateChange();       // segmentation changed, so fields are rebuilt from scratch
-  setSavedStatus();
-}
-
-function toggleIgnore(i) {
-  if (IGNORED.has(i)) IGNORED.delete(i); else IGNORED.add(i);
-  persistIgnored();
-  recomputeActive();
-  renderSegmentPreview();
-  buildTabs();
-  buildPanels();               // reads current values from state, so entered text is kept
-  LANGS.forEach(updateDot);
-  setSavedStatus();
-  const ao = document.getElementById('allOutputs');
-  if (ao && ao.children.length) {
-    const langs = [...ao.querySelectorAll('.panel > h2')].map(h => h.textContent);
-    renderAllOutputs(langs);
-  }
-}
-
-function renderSegmentPreview() {
-  const el = document.getElementById('segmentPreview');
-  if (EDITABLE_INDICES.length === 0) {
-    el.innerHTML = '';
-    return;
-  }
-  let active = 0;
-  el.innerHTML = EDITABLE_INDICES.map(i => {
-    const ignored = IGNORED.has(i);
-    const badge = ignored
-      ? '<span class="idx idx-skip">skip</span>'
-      : `<span class="idx">${++active}</span>`;
-    return `<div class="segment-preview-item${ignored ? ' ignored' : ''}">
-      ${badge}
-      <span class="seg-text">${escapeHtml(truncate(prettyCore(SEGMENTS[i].core), 120))}</span>
-      ${SEGMENTS[i].hasTags ? '<span class="seg-fmt" title="Contains inline formatting tags — keep them in the translation">formatting</span>' : ''}
-      <button class="btn-secondary btn-small seg-ignore" onclick="toggleIgnore(${i})">${ignored ? 'Include' : 'Ignore'}</button>
-    </div>`;
-  }).join('');
-}
-
 // ---- Tabs / panels ----
 function buildTabs() {
-  const tabbar = document.getElementById('tabbar');
-  tabbar.innerHTML = LANGS.map(l => `
+  $('tabbar').innerHTML = LANGS.map(l => `
     <div class="tab ${l === activeLang ? 'active' : ''}" id="tabbtn_${l}" onclick="switchTab('${l}')">
       ${l}<span class="dot"></span>
     </div>
@@ -708,125 +531,69 @@ function buildTabs() {
 }
 
 function buildPanels() {
-  const container = document.getElementById('langPanels');
-
-  if (EDITABLE_INDICES.length === 0) {
-    container.innerHTML = `<div class="no-tokens-warning">No translatable text detected yet — paste the current notice HTML into the Base Template section above and click Save.</div>`;
-    return;
-  }
-  if (ACTIVE_INDICES.length === 0) {
-    container.innerHTML = `<div class="no-tokens-warning">Every detected segment is set to “Ignore”. Include at least one segment in the Base template section to start translating.</div>`;
+  const container = $('langPanels');
+  if (SEGS.length === 0) {
+    container.innerHTML = `<div class="no-tokens-warning">Save the base template, then paste the translation table above and click “Split &amp; generate all languages”.</div>`;
     return;
   }
 
   container.innerHTML = LANGS.map(l => `
     <div class="lang-panel ${l === activeLang ? 'active' : ''}" id="panel_${l}">
       <div class="panel">
-        <h2>1. Paste translated block — ${l}</h2>
-        <textarea class="rawPaste" id="raw_${l}" placeholder="Paste the full translated text here, one segment per line, in the same order as the ${ACTIVE_INDICES.length} fields shown below." oninput="onRawInput('${l}')"></textarea>
-        <div class="actions">
-          <button class="btn-primary" onclick="autoSplit('${l}')">Auto-split into fields ↓</button>
-          <button class="btn-secondary btn-small" onclick="clearRaw('${l}')">Clear</button>
-        </div>
-        <div id="status_${l}" class="parse-status"></div>
-
-        <h2 style="margin-top:20px;">2. Review / edit fields</h2>
-        ${ACTIVE_INDICES.map((i, n) => {
-          const v = (state[l] && state[l].values[i] != null && state[l].values[i] !== '')
-            ? state[l].values[i]
-            : (l === 'EN' ? SEGMENTS[i].core : '');
-          return `
-          <label>Field ${n + 1}${SEGMENTS[i].hasTags ? ' <span class="fmt-note">· contains formatting tags — keep them in the translation</span>' : ''}</label>
-          <div class="source-text">${escapeHtml(SEGMENTS[i].core)}</div>
-          <textarea class="field-textarea" id="fld_${i}_${l}" placeholder="Translation..." oninput="onFieldInput('${l}')">${escapeHtml(v)}</textarea>`;
-        }).join('')}
+        <h2>1. Review / edit fields — ${l}</h2>
+        ${SEGS.map((seg, s) => `
+          <label>Field ${s + 1}${seg.group ? '' : ' <span class="field-note bad">· not found in the template — this text is not used</span>'}${seg.group && seg.group.length > 1 ? ` <span class="field-note">· sits in ${seg.group.length} text pieces in the template</span>` : ''}</label>
+          <div class="source-text">${esc(seg.src)}</div>
+          <textarea class="field-textarea" id="fld_${s}_${l}" placeholder="Translation..." oninput="onFieldInput('${l}')">${esc(state[l].values[s] || '')}</textarea>
+        `).join('')}
       </div>
 
       <div class="panel">
-        <h2>3. Generated HTML source — ${l}</h2>
+        <h2>2. Generated HTML source — ${l}</h2>
         <div class="actions" style="margin-top:0; margin-bottom:12px;">
-          <button class="btn-primary" onclick="generateAndCopy('${l}')">Copy code</button>
+          <button class="btn-primary" onclick="copyCode('${l}')">Copy code</button>
         </div>
-        <pre class="output" id="output_${l}"><span class="empty-hint">Generated HTML will appear here.</span></pre>
+        <pre class="output" id="output_${l}"></pre>
       </div>
     </div>
   `).join('');
-}
-
-function escapeHtml(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
+  LANGS.forEach(refreshOutput);
 }
 
 function switchTab(l) {
   activeLang = l;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  const btn = document.getElementById('tabbtn_' + l);
+  const btn = $('tabbtn_' + l);
   if (btn) btn.classList.add('active');
   document.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('active'));
-  const panel = document.getElementById('panel_' + l);
+  const panel = $('panel_' + l);
   if (panel) panel.classList.add('active');
 }
 
-function onRawInput(l) {
-  state[l].raw = document.getElementById('raw_' + l).value;
+function hasValues(l) {
+  return SEGS.some((_, s) => (state[l].values[s] || '').trim());
 }
 
 function onFieldInput(l) {
-  ACTIVE_INDICES.forEach(i => {
-    const el = document.getElementById('fld_' + i + '_' + l);
-    if (el) state[l].values[i] = el.value;
+  SEGS.forEach((_, s) => {
+    const el = $('fld_' + s + '_' + l);
+    if (el) state[l].values[s] = el.value;
   });
   updateDot(l);
+  refreshOutput(l);
 }
 
 function updateDot(l) {
-  const tab = document.getElementById('tabbtn_' + l);
+  const tab = $('tabbtn_' + l);
   if (!tab) return;
-  const total = ACTIVE_INDICES.length;
-  const filled = ACTIVE_INDICES.filter(i => state[l].values[i] && state[l].values[i].trim().length > 0).length;
+  const total = SEGS.length;
+  const filled = SEGS.filter((_, s) => (state[l].values[s] || '').trim()).length;
   tab.classList.remove('partial', 'complete');
-  if (total === 0 || filled === 0) return; // untouched — no dot
-  if (filled < total) tab.classList.add('partial');   // some fields missing — red dot
-  else tab.classList.add('complete');                 // every field filled — green dot
+  if (total === 0 || filled === 0) return;            // untouched — no dot
+  tab.classList.add(filled < total ? 'partial' : 'complete');  // red = some field missing, green = all filled
 }
 
-function clearRaw(l) {
-  const el = document.getElementById('raw_' + l);
-  if (el) el.value = '';
-  state[l].raw = '';
-}
-
-function autoSplit(l) {
-  const raw = document.getElementById('raw_' + l).value;
-  const rawLines = raw.split(/\r?\n/);
-  const lines = rawLines.map(x => x.trim()).filter(x => x.length > 0 && !isBracketOnly(x));
-
-  const statusEl = document.getElementById('status_' + l);
-  const expected = ACTIVE_INDICES.length;
-
-  ACTIVE_INDICES.forEach((i, n) => {
-    const val = lines[n] || '';
-    const el = document.getElementById('fld_' + i + '_' + l);
-    if (el) el.value = val;
-    state[l].values[i] = val;
-  });
-  updateDot(l);
-
-  if (lines.length === expected) {
-    statusEl.className = 'parse-status ok';
-    statusEl.textContent = `✓ Parsed ${lines.length} line(s) successfully. Review the fields below before generating.`;
-  } else if (lines.length > expected) {
-    statusEl.className = 'parse-status warn';
-    statusEl.textContent = `⚠ Found ${lines.length} lines, expected ${expected}. Check fields manually — extra content may need merging.`;
-  } else {
-    statusEl.className = 'parse-status warn';
-    statusEl.textContent = `⚠ Found only ${lines.length} lines, expected ${expected}. Some fields are empty — fill them in manually.`;
-  }
-}
-
-// ---- Bulk paste: whole translation table at once ----
+// ---- Reading the Excel paste ----
 const HEADER_ALIASES = {
   'EN':'EN','ENG':'EN','EN-US':'EN','EN-GB':'EN',
   'KR':'KR','KO':'KR','KO-KR':'KR','KOR':'KR',
@@ -848,136 +615,249 @@ function normHeader(h) {
   return h.trim().toUpperCase().replace(/\s+/g, '').replace(/_/g, '-');
 }
 
-function dequote(s) {
-  s = String(s == null ? '' : s).replace(/\r/g, '');
-  if (s.length >= 2 && s.charAt(0) === '"' && s.charAt(s.length - 1) === '"') {
-    return s.slice(1, -1).replace(/""/g, '"');
+// Tab-separated text as Excel copies it. Cells containing line breaks / tabs / quotes arrive
+// wrapped in "..." with inner quotes doubled, so rows can't simply be split on newlines.
+function parseTSV(text) {
+  const rows = [];
+  let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; }
+        else inQ = false;
+      } else cell += c;
+    } else if (c === '"' && cell === '') {
+      inQ = true;
+    } else if (c === '\t') {
+      row.push(cell); cell = '';
+    } else if (c === '\n') {
+      row.push(cell); rows.push(row); row = []; cell = '';
+    } else if (c !== '\r') {
+      cell += c;
+    }
   }
-  return s;
+  row.push(cell);
+  rows.push(row);
+  return rows;
+}
+
+// Walk the template's text pieces in order and find, for each segment, the run of consecutive
+// pieces whose combined text equals the segment's text. Pieces nothing matches are skipped.
+function alignTargets(nodes, targets) {
+  const groups = [];
+  let p = 0, matched = 0;
+  targets.forEach(t => {
+    let hit = null;
+    if (t) {
+      for (let q = p; q < nodes.length && !hit; q++) {
+        let acc = '';
+        for (let r = q; r < nodes.length; r++) {
+          acc += nodes[r].norm;
+          if (acc === t) { hit = [q, r]; break; }
+          if (!t.startsWith(acc)) break;
+        }
+      }
+    }
+    if (hit) {
+      groups.push(Array.from({ length: hit[1] - hit[0] + 1 }, (_, k) => hit[0] + k));
+      p = hit[1] + 1;
+      matched++;
+    } else groups.push(null);
+  });
+  return { groups, matched };
 }
 
 function clearBulk() {
-  document.getElementById('bulkPaste').value = '';
-  const s = document.getElementById('bulkStatus');
+  $('bulkPaste').value = '';
+  const s = $('bulkStatus');
   s.className = 'base-status';
   s.textContent = '';
-  document.getElementById('allOutputs').innerHTML = '';
+  $('bulkSegments').innerHTML = '';
+  $('allOutputs').innerHTML = '';
+}
+
+function bulkFail(msg) {
+  const statusEl = $('bulkStatus');
+  statusEl.className = 'base-status err';
+  statusEl.textContent = '⚠ ' + msg;
 }
 
 function bulkSplit() {
-  const statusEl = document.getElementById('bulkStatus');
-  const raw = document.getElementById('bulkPaste').value;
+  const statusEl = $('bulkStatus');
 
-  if (EDITABLE_INDICES.length === 0) {
-    statusEl.className = 'base-status err';
-    statusEl.textContent = '⚠ Save a base template first — there are no fields to fill yet.';
-    return;
-  }
-  if (ACTIVE_INDICES.length === 0) {
-    statusEl.className = 'base-status err';
-    statusEl.textContent = '⚠ Every detected segment is set to “Ignore” — include at least one before pasting translations.';
-    return;
-  }
+  if (NODE_IDX.length === 0) return bulkFail('Save a base template first — there is no template text to replace yet.');
 
-  const allLines = raw.split(/\r?\n/);
-  const headerIdx = allLines.findIndex(l => l.trim().length > 0);
-  if (headerIdx === -1) {
-    statusEl.className = 'base-status err';
-    statusEl.textContent = '⚠ Nothing pasted.';
-    return;
-  }
+  const rows = parseTSV($('bulkPaste').value).filter(r => r.some(c => c.trim() !== ''));
+  if (rows.length === 0) return bulkFail('Nothing pasted.');
 
-  const headerCells = allLines[headerIdx].split('\t');
-  if (headerCells.length < 2) {
-    statusEl.className = 'base-status err';
-    statusEl.textContent = '⚠ The first row has no tab-separated columns. Copy the block straight out of your spreadsheet so the columns stay tab-separated.';
-    return;
-  }
+  const header = rows[0];
+  if (header.length < 2) return bulkFail('The first row has no tab-separated columns. Copy the block straight out of Excel so the columns stay tab-separated.');
 
-  const colToLang = {};
-  const recognized = [];
+  // column holding the ◆ markers (normally column A)
+  const markerCounts = {};
+  rows.slice(1).forEach(r => r.forEach((c, i) => { if (c.trim() === MARKER) markerCounts[i] = (markerCounts[i] || 0) + 1; }));
+  const markerCols = Object.keys(markerCounts).sort((a, b) => markerCounts[b] - markerCounts[a]);
+  if (markerCols.length === 0) return bulkFail(`No ${MARKER} markers found — put a ${MARKER} in column A on the first row of every segment.`);
+  const markerCol = parseInt(markerCols[0], 10);
+
+  // if the header row lost its blank first cell on paste, header cells sit one column left of the data
+  const atMarker = header[markerCol] != null ? HEADER_ALIASES[normHeader(header[markerCol])] : null;
+  const shiftFrom = atMarker ? markerCol : -1;
+  const colOf = k => (shiftFrom !== -1 && k >= shiftFrom) ? k + 1 : k;
+
+  const langCol = {};
   const unknown = [];
-  headerCells.forEach((h, idx) => {
+  header.forEach((h, k) => {
     const key = normHeader(h);
-    if (!key) return;
+    if (!key || (k === markerCol && !atMarker)) return;
     const lang = HEADER_ALIASES[key];
-    if (lang && LANGS.indexOf(lang) !== -1) {
-      if (!(idx in colToLang) && recognized.indexOf(lang) === -1) {
-        colToLang[idx] = lang;
-        recognized.push(lang);
-      }
-    } else {
-      unknown.push(h.trim());
+    if (lang) { if (!(lang in langCol)) langCol[lang] = colOf(k); }
+    else unknown.push(h.trim());
+  });
+  const langs = Object.keys(langCol);
+  if (langs.length === 0) return bulkFail('No column header in the first row matched a known language (KR, EN, DE, FR, ES, MX, IT, PL, BR, TR, RU, CN, TW, JP).');
+
+  // group rows into segments: a ◆ starts a new one, following rows continue it
+  const segRows = [];
+  let cur = null;
+  rows.slice(1).forEach(r => {
+    if ((r[markerCol] || '').trim() === MARKER) { cur = []; segRows.push(cur); }
+    if (cur) cur.push(r);
+  });
+
+  const cellsOf = (rs, col) => rs
+    .map(r => (r[col] || '').replace(/\s*[\r\n]+\s*/g, ' ').trim())
+    .filter(v => v && !isBracketOnly(v));
+  const segData = segRows
+    .map(rs => { const c = {}; langs.forEach(l => { c[l] = cellsOf(rs, langCol[l]); }); return c; })
+    .filter(c => langs.some(l => c[l].length));
+  if (segData.length === 0) return bulkFail(`No text found next to the ${MARKER} markers.`);
+
+  // match segments to template text using whichever language column lines up best
+  const nodes = NODE_IDX.map(i => ({ idx: i, norm: TOKENS[i].norm }));
+  let best = null;
+  langs.forEach(l => {
+    const targets = segData.map(c => c[l].length ? normText(c[l].join(' ')) : '');
+    const res = alignTargets(nodes, targets);
+    if (!best || res.matched > best.res.matched) best = { lang: l, res };
+  });
+  let byPosition = false;
+  if (best.res.matched < segData.length && nodes.length === segData.length) {
+    best.res = { groups: nodes.map((_, i) => [i]), matched: nodes.length };   // same count: pair them in order
+    byPosition = true;
+  }
+  if (best.res.matched === 0) {
+    return bulkFail('Could not match any segment to the template text. The template must contain the text of one of the language columns (normally KR or EN) so the tool can tell which text belongs to which segment.');
+  }
+
+  resetState();
+  SEGS = segData.map((c, s) => {
+    const g = best.res.groups[s];
+    const group = g ? g.map(n => nodes[n].idx) : null;
+    const src = c[best.lang].length ? c[best.lang] : (langs.map(l => c[l]).find(a => a.length) || []);
+    let primary = null, rowwise = false;
+    if (group) {
+      // the translation goes into the piece holding most of the text; the rest are emptied
+      primary = group.reduce((a, b) => TOKENS[b].norm.length > TOKENS[a].norm.length ? b : a, group[0]);
+      // one sheet row per template piece (e.g. lines split by <br>): keep them paired up
+      rowwise = group.length > 1 && src.length === group.length && src.every((v, i) => normText(v) === TOKENS[group[i]].norm);
     }
+    return { src: src.join(' '), group, primary, rowwise };
   });
-
-  if (recognized.length === 0) {
-    statusEl.className = 'base-status err';
-    statusEl.textContent = '⚠ No column header in the first row matched a known language (EN, KR, DE, ES-ES, ES-MX, FR, IT, PL, PT-BR, TR, RU, CN, TW, JP).';
-    return;
-  }
-
-  const dataRows = [];
-  for (let i = headerIdx + 1; i < allLines.length; i++) {
-    dataRows.push(allLines[i].split('\t'));
-  }
-
-  const expected = ACTIVE_INDICES.length;
-  const perLangCount = {};
-  const filledLangs = [];
-
-  Object.keys(colToLang).forEach(colStr => {
-    const col = parseInt(colStr, 10);
-    const lang = colToLang[col];
-    // same filtering rule as the per-language auto-split: skip blank and bracket-only cells
-    const cells = dataRows
-      .map(r => dequote(r[col]).trim())
-      .filter(v => v.length > 0 && !isBracketOnly(v));
-    perLangCount[lang] = cells.length;
-
-    ACTIVE_INDICES.forEach((segIdx, n) => {
-      const val = cells[n] || '';
-      state[lang].values[segIdx] = val;
-      const fld = document.getElementById('fld_' + segIdx + '_' + lang);
-      if (fld) fld.value = val;
+  langs.forEach(l => {
+    SEGS.forEach((seg, s) => {
+      const cells = segData[s][l];
+      state[l].values[s] = cells.length ? cells.join(seg.rowwise ? '\n' : ' ') : '';
     });
-    updateDot(lang);
-    if (cells.length > 0) filledLangs.push(lang);
   });
 
-  const orderedFilled = recognized.filter(l => filledLangs.indexOf(l) !== -1);
-  renderAllOutputs(orderedFilled);
+  const covered = new Set();
+  SEGS.forEach(seg => (seg.group || []).forEach(i => covered.add(i)));
+  LEFTOVER = NODE_IDX.filter(i => !covered.has(i));
 
+  buildTabs();
+  buildPanels();
+  const filled = langs.filter(hasValues);
+  renderAllOutputs(filled);
+  renderBulkSegments();
+
+  // status
   const problems = [];
-  const mismatched = Object.keys(perLangCount).filter(l => perLangCount[l] !== expected);
-  if (mismatched.length) {
-    problems.push('segment count off for ' + mismatched.map(l => `${l} (${perLangCount[l]}/${expected})`).join(', '));
-  }
-  const tagLoss = [];
-  ACTIVE_INDICES.forEach((segIdx, n) => {
-    if (!SEGMENTS[segIdx].hasTags) return;
-    const missing = orderedFilled.filter(l => {
-      const v = state[l].values[segIdx] || '';
-      return v && !/<[^>]+>/.test(v);
-    });
-    if (missing.length) tagLoss.push(`#${n + 1} (${missing.join(', ')})`);
+  const lost = SEGS.map((seg, s) => seg.group ? null : s + 1).filter(Boolean);
+  if (lost.length) problems.push(`segment(s) ${lost.join(', ')} not found in the template`);
+  langs.forEach(l => {
+    if (!hasValues(l)) { problems.push(`no text for ${l}`); return; }
+    const missing = SEGS.map((_, s) => (state[l].values[s] || '').trim() ? null : s + 1).filter(Boolean);
+    if (missing.length) problems.push(`${l} is missing segment(s) ${missing.join(', ')}`);
   });
-  if (tagLoss.length) problems.push('segment(s) with formatting tags in the source have none in the translation: ' + tagLoss.join('; ') + ' — bold/styling is lost unless the tags are in the sheet cell');
   if (unknown.length) problems.push('ignored column(s): ' + unknown.join(', '));
-  const emptyLangs = recognized.filter(l => filledLangs.indexOf(l) === -1);
-  if (emptyLangs.length) problems.push('no text for ' + emptyLangs.join(', '));
+
+  const combined = SEGS.filter(seg => seg.group && seg.group.length > 1).length;
+  const how = byPosition ? 'paired with the template by position' : `matched to the template using the ${best.lang} column`;
+  let msg = `${SEGS.length} segment(s) ${how}`;
+  if (combined) msg += `; ${combined} of them span several text pieces (only the plain text is replaced, tags stay)`;
+  msg += `. Generated ${filled.length} language(s).`;
 
   if (problems.length) {
     statusEl.className = 'base-status err';
-    statusEl.textContent = `⚠ Filled ${orderedFilled.length} language(s), expected ${expected} segments each — ` + problems.join('; ') + '. Check those tabs before using the output.';
+    statusEl.textContent = '⚠ ' + msg + ' Check: ' + problems.join('; ') + '.';
   } else {
     statusEl.className = 'base-status ok';
-    statusEl.textContent = `✓ Filled all ${orderedFilled.length} languages with ${expected} segments each. Generated sources are below; the tabs are populated too.`;
+    statusEl.textContent = '✓ ' + msg + ' Sources are below; the tabs are filled in too.';
   }
 }
 
+function renderBulkSegments() {
+  const el = $('bulkSegments');
+  if (!SEGS.length) { el.innerHTML = ''; return; }
+  let html = SEGS.map((seg, s) => `
+    <div class="segment-preview-item${seg.group ? '' : ' unmatched'}">
+      <span class="idx">${s + 1}</span>
+      <span class="seg-text">${esc(truncate(seg.src, 120))}</span>
+      ${seg.group && seg.group.length > 1 ? `<span class="seg-chip" title="This segment's text sits in ${seg.group.length} separate text pieces in the template (split by tags). The translation goes into the largest piece, the others are emptied, and every tag stays as is.">${seg.group.length} pieces</span>` : ''}
+      ${seg.group ? '' : '<span class="seg-chip bad">not in template</span>'}
+    </div>`).join('');
+  if (LEFTOVER.length) {
+    const shown = LEFTOVER.slice(0, 12);
+    html += `<div class="seg-sub">Template text not in the sheet — left unchanged (${LEFTOVER.length})</div>` +
+      shown.map(i => `<div class="segment-preview-item muted"><span class="idx">–</span><span class="seg-text">${esc(truncate(TOKENS[i].core, 120))}</span></div>`).join('') +
+      (LEFTOVER.length > shown.length ? `<div class="seg-sub">…and ${LEFTOVER.length - shown.length} more</div>` : '');
+  }
+  el.innerHTML = html;
+}
+
+// ---- Output ----
+function generate(l) {
+  const out = TOKENS.map(t => t.raw);
+  SEGS.forEach((seg, s) => {
+    if (!seg.group) return;
+    const lines = (state[l].values[s] || '').split('\n').map(x => x.trim()).filter(Boolean);
+    if (seg.rowwise && lines.length === seg.group.length) {
+      seg.group.forEach((t, i) => { out[t] = TOKENS[t].leading + lines[i] + TOKENS[t].trailing; });
+    } else {
+      const text = lines.join(' ');
+      seg.group.forEach(t => { out[t] = TOKENS[t].leading + (t === seg.primary ? text : '') + TOKENS[t].trailing; });
+    }
+  });
+  return out.join('');
+}
+
+function refreshOutput(l) {
+  const out = $('output_' + l);
+  const box = $('alloutput_' + l);
+  if (!hasValues(l)) {
+    if (out) out.innerHTML = '<span class="empty-hint">No translation pasted for this language yet.</span>';
+    return '';
+  }
+  const html = generate(l);
+  if (out) out.textContent = html;
+  if (box) box.textContent = html;
+  return html;
+}
+
 function renderAllOutputs(langs) {
-  const el = document.getElementById('allOutputs');
+  const el = $('allOutputs');
   if (!langs || langs.length === 0) { el.innerHTML = ''; return; }
   el.innerHTML = '<h2>All generated sources</h2>' +
     '<p class="hint">One box per language, in sheet order. Each Copy button copies that language\'s full HTML source.</p>' +
@@ -985,55 +865,26 @@ function renderAllOutputs(langs) {
       <div class="panel" style="margin-top:14px;">
         <h2>${l}</h2>
         <div class="actions" style="margin-top:0; margin-bottom:10px;">
-          <button class="btn-primary btn-small" onclick="copyOutput('${l}')">Copy ${l} source</button>
+          <button class="btn-primary btn-small" onclick="copyCode('${l}')">Copy ${l} source</button>
         </div>
         <pre class="output" id="alloutput_${l}"></pre>
       </div>
     `).join('');
-  langs.forEach(l => {
-    const html = generate(l);
-    const box = document.getElementById('alloutput_' + l);
-    if (box) box.textContent = html;
-  });
+  langs.forEach(refreshOutput);
 }
 
-function generate(l) {
-  let html = '';
-  SEGMENTS.forEach((seg, i) => {
-    if (seg.type === 'tag') {
-      html += seg.raw;
-    } else if (!seg.editable || IGNORED.has(i)) {
-      html += seg.raw;   // ignored segments keep the original template text in every language
-    } else {
-      const el = document.getElementById('fld_' + i + '_' + l);
-      const val = el ? el.value : (state[l].values[i] || '');
-      html += seg.leading + val + seg.trailing;
-    }
-  });
-  document.getElementById('output_' + l).textContent = html;
-  return html;
-}
-
-function generateAndCopy(l) {
-  const text = generate(l);
-  navigator.clipboard.writeText(text).then(() => showToast(`Copied ${l} source!`));
-}
-
-function copyOutput(l) {
-  let text = document.getElementById('output_' + l).textContent;
-  if (!text || text.includes('Generated HTML will appear here')) {
-    text = generate(l);
-  }
-  navigator.clipboard.writeText(text).then(() => showToast(`Copied ${l} source!`));
+function copyCode(l) {
+  const html = refreshOutput(l);
+  if (!html) { showToast(`No translation for ${l} yet`); return; }
+  navigator.clipboard.writeText(html).then(() => showToast(`Copied ${l} source!`));
 }
 
 function downloadAll() {
-  const filled = LANGS.filter(l => ACTIVE_INDICES.some(i => state[l].values[i] && state[l].values[i].trim().length > 0));
+  const filled = LANGS.filter(hasValues);
   if (filled.length === 0) { showToast('No languages filled in yet'); return; }
   let out = '';
   filled.forEach(l => {
-    const html = generate(l);
-    out += `===== ${l} =====\n\n${html}\n\n\n`;
+    out += `===== ${l} =====\n\n${generate(l)}\n\n\n`;
   });
   const blob = new Blob([out], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
@@ -1047,7 +898,7 @@ function downloadAll() {
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  const t = $('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 1600);
