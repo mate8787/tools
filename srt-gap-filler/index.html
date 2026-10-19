@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRT Gap Filler</title>
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --panel: #242426;
+    --panel-alt: #2c2c2f;
+    --border: #3a3a3d;
+    --text: #e8e8ea;
+    --muted: #9a9a9e;
+    --accent: #7fb3ff;
+    --accent-dim: #3d5a80;
+    --ok: #6fcf97;
+    --warn: #ffb450;
+    --bad: #ff5c5c;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); margin: 0 0 18px; font-size: 13px; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  .panel h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 26px 18px;
+    text-align: center;
+    color: var(--muted);
+    background: var(--panel);
+    margin-bottom: 18px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .drop.over { border-color: var(--accent); background: var(--panel-alt); color: var(--text); }
+  .drop input[type=file] { display: none; }
+  .drop .pick { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+  .files { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .file-item .lbl { font-weight: 600; width: 54px; flex: none; }
+  .file-item .nm { flex: 1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item .cnt { flex: none; color: var(--muted); }
+  .chip {
+    flex: none;
+    font-size: 10px;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    border-radius: 3px;
+    padding: 0 5px;
+  }
+  .chip.warn { color: var(--warn); border-color: var(--warn); }
+  .row-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  select {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 8px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+
+  .tabbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+  .tab {
+    padding: 7px 14px;
+    border-radius: 6px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); border-color: var(--accent-dim); }
+  .tab.active { background: var(--accent-dim); color: #fff; border-color: var(--accent-dim); }
+  .tab .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+    background: var(--ok);
+  }
+  .tab.todo .dot { background: var(--bad); }
+  .tab .left { font-size: 11px; opacity: 0.8; margin-left: 4px; }
+
+  .lang-panel { display: none; }
+  .lang-panel.active { display: block; }
+  .summary { font-size: 13px; margin-bottom: 14px; }
+  .summary .ok { color: var(--ok); }
+  .summary .bad { color: var(--warn); }
+  .cue-row { margin-bottom: 16px; }
+  .cue-head { display: flex; gap: 12px; align-items: baseline; margin-bottom: 4px; font-size: 12px; }
+  .cue-n { font-weight: 600; color: var(--accent); }
+  .cue-time { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+  .source-text {
+    background: var(--panel-alt);
+    border-left: 2px solid var(--accent-dim);
+    border-radius: 4px;
+    padding: 6px 9px;
+    font-size: 12.5px;
+    color: #c7c7ca;
+    margin-bottom: 5px;
+    white-space: pre-wrap;
+  }
+  textarea {
+    width: 100%;
+    height: 56px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--accent-dim); }
+  .extras { margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .extras div { font-family: var(--mono); font-size: 11px; margin-top: 2px; }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent-dim); color: #fff; }
+  .btn-primary:hover { background: #4a6d94; }
+  .btn-secondary { background: var(--panel-alt); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent-dim); }
+  .actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .warning {
+    background: rgba(255,180,80,0.12);
+    color: var(--warn);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ok);
+    color: #10261a;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SRT Gap Filler</h1>
+  <p class="subtitle">Upload the SRT file of every language. One is the complete base (usually EN). Cues that are missing from the other languages are found by timecode and shown as blank boxes so you can type them in — then download each fixed file.</p>
+
+  <div class="drop" id="drop">
+    Drop all your .srt files here, or <label class="pick" for="fileInput">choose files</label>
+    <input type="file" id="fileInput" accept=".srt,.txt,text/plain" multiple>
+  </div>
+
+  <div id="filesWrap" style="display:none">
+    <div class="files" id="files"></div>
+    <div class="row-actions">
+      <span>Base file (complete):</span>
+      <select id="baseSelect" onchange="setBase(this.value)"></select>
+      <button class="btn-secondary btn-small" style="padding:5px 10px;font-size:12px" onclick="clearAll()">Clear all files</button>
+    </div>
+    <div style="height:18px"></div>
+  </div>
+
+  <div class="tabbar" id="tabbar"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+
+const KNOWN = new Set(['KR','EN','DE','FR','ES','MX','IT','PL','BR','TR','RU','CN','TW','JP',
+  'KO','JA','PT','ZH','ES-ES','ES-MX','PT-BR','ZH-CN','ZH-TW','EN-US','EN-GB','AR','TH','VI']);
+
+let files = [];      // { name, label, cues, bom, eol, enc }
+let baseIdx = -1;
+let A = {};          // A[fileIdx] = { map: [baseCue -> otherCue | -1], extras: [otherCue], missing: [baseCue] }
+let fills = {};      // fills[fileIdx][baseCueIdx] = typed text
+let activeIdx = -1;
+
+// ---------- reading ----------
+function decodeBuffer(buf) {
+  const u8 = new Uint8Array(buf);
+  let enc = 'utf-8', off = 0, bom = false;
+  if (u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) { off = 3; bom = true; }
+  else if (u8[0] === 0xFF && u8[1] === 0xFE) { enc = 'utf-16le'; off = 2; bom = true; }
+  else if (u8[0] === 0xFE && u8[1] === 0xFF) { enc = 'utf-16be'; off = 2; bom = true; }
+  try {
+    return { text: new TextDecoder(enc, { fatal: true }).decode(u8.subarray(off)), bom, enc };
+  } catch (e) {
+    return { text: new TextDecoder('windows-1252').decode(u8), bom: false, enc: 'windows-1252 (guessed)' };
+  }
+}
+
+function toMs(h, m, s, ms) {
+  return (+h) * 3600000 + (+m) * 60000 + (+s) * 1000 + parseInt((ms + '00').slice(0, 3), 10);
+}
+
+function parseSrt(text) {
+  text = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+  const cues = [];
+  text.split(/\n[ \t]*\n/).forEach(block => {
+    const lines = block.split('\n');
+    const t = lines.findIndex(l => l.indexOf('-->') !== -1);
+    if (t === -1) return;
+    const m = lines[t].match(/(\d+):(\d+):(\d+)[,.](\d{1,3})\s*-->\s*(\d+):(\d+):(\d+)[,.](\d{1,3})(.*)$/);
+    if (!m) return;
+    const numLine = t > 0 ? lines[t - 1].trim() : '';
+    cues.push({
+      n: /^\d+$/.test(numLine) ? parseInt(numLine, 10) : null,
+      start: toMs(m[1], m[2], m[3], m[4]),
+      end: toMs(m[5], m[6], m[7], m[8]),
+      startStr: `${m[1].padStart(2, '0')}:${m[2]}:${m[3]},${(m[4] + '00').slice(0, 3)}`,
+      endStr: `${m[5].padStart(2, '0')}:${m[6]}:${m[7]},${(m[8] + '00').slice(0, 3)}`,
+      extra: m[9].trim(),
+      text: lines.slice(t + 1).join('\n').replace(/^\n+|\n+$/g, '')
+    });
+  });
+  return cues;
+}
+
+function labelFromName(name) {
+  const base = name.replace(/\.[^.]+$/, '');
+  const tokens = base.split(/[\s._]+/).filter(Boolean);
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const t = tokens[i].toUpperCase();
+    if (KNOWN.has(t)) return t;
+    const parts = t.split('-');
+    for (let k = parts.length - 1; k >= 0; k--) if (KNOWN.has(parts[k])) return parts[k];
+  }
+  return base;
+}
+
+async function addFiles(fileList) {
+  for (const f of fileList) {
+    const { text, bom, enc } = decodeBuffer(await f.arrayBuffer());
+    ingest(f.name, text, bom, enc);
+  }
+  refreshAll();
+}
+
+function ingest(name, text, bom, enc) {
+  const cues = parseSrt(text);
+  const rec = { name, cues, bom: !!bom, enc: enc || 'utf-8', eol: text.indexOf('\r\n') !== -1 ? '\r\n' : '\n' };
+  let label = labelFromName(name);
+  const same = files.findIndex(x => x.name === name);
+  if (same !== -1) { rec.label = files[same].label; files[same] = rec; delete fills[same]; return; }
+  let uniq = label, k = 2;
+  while (files.some(x => x.label === uniq)) uniq = label + '#' + k++;
+  rec.label = uniq;
+  files.push(rec);
+}
+
+function clearAll() {
+  files = []; baseIdx = -1; A = {}; fills = {}; activeIdx = -1;
+  refreshAll();
+}
+
+// ---------- aligning ----------
+function pickBase() {
+  if (files.length === 0) return -1;
+  if (baseIdx >= 0 && baseIdx < files.length) return baseIdx;
+  const en = files.findIndex(f => /^EN(-|$)/.test(f.label));
+  if (en !== -1) return en;
+  let best = 0;
+  files.forEach((f, i) => { if (f.cues.length > files[best].cues.length) best = i; });
+  return best;
+}
+
+// Match each base cue to the other file's cue that overlaps it in time the most.
+function align(base, other) {
+  const map = new Array(base.length).fill(-1);
+  const used = new Set();
+  base.forEach((b, i) => {
+    let bestJ = -1, bestOv = 0;
+    other.forEach((o, j) => {
+      if (used.has(j)) return;
+      const ov = Math.min(b.end, o.end) - Math.max(b.start, o.start);
+      if (ov <= 0) return;
+      const need = 0.5 * Math.min(b.end - b.start, o.end - o.start);
+      if (ov >= need && ov > bestOv) { bestOv = ov; bestJ = j; }
+    });
+    if (bestJ >= 0) { map[i] = bestJ; used.add(bestJ); }
+  });
+  const extras = other.map((_, j) => j).filter(j => !used.has(j));
+  const missing = base.map((_, i) => i).filter(i => map[i] === -1);
+  return { map, extras, missing };
+}
+
+function realign() {
+  A = {};
+  const base = files[baseIdx];
+  files.forEach((f, i) => { if (i !== baseIdx) A[i] = align(base.cues, f.cues); });
+  Object.keys(fills).forEach(i => { if (!A[i]) delete fills[i]; });
+}
+
+function setBase(v) {
+  baseIdx = parseInt(v, 10);
+  fills = {};
+  refreshAll();
+}
+
+function cueNo(base, i) { return base.cues[i].n != null ? base.cues[i].n : i + 1; }
+
+function ranges(nums) {
+  const out = [];
+  for (let i = 0; i < nums.length; i++) {
+    let j = i;
+    while (j + 1 < nums.length && nums[j + 1] === nums[j] + 1) j++;
+    out.push(j > i ? `${nums[i]}–${nums[j]}` : `${nums[i]}`);
+    i = j;
+  }
+  return out.join(', ');
+}
+
+// ---------- UI ----------
+function refreshAll() {
+  baseIdx = pickBase();
+  $('filesWrap').style.display = files.length ? 'block' : 'none';
+  if (files.length) realign();
+  if (!(activeIdx in A)) activeIdx = Object.keys(A).length ? +Object.keys(A)[0] : -1;
+
+  $('files').innerHTML = files.map((f, i) => `
+    <div class="file-item">
+      <span class="lbl">${esc(f.label)}</span>
+      <span class="nm">${esc(f.name)}</span>
+      ${i === baseIdx ? '<span class="chip">BASE</span>' : ''}
+      ${f.enc !== 'utf-8' ? `<span class="chip warn" title="Will be saved as UTF-8">read as ${esc(f.enc)}</span>` : ''}
+      ${f.cues.length === 0 ? '<span class="chip warn">no cues found</span>' : ''}
+      <span class="cnt">${f.cues.length} cues</span>
+    </div>`).join('');
+  $('baseSelect').innerHTML = files.map((f, i) =>
+    `<option value="${i}"${i === baseIdx ? ' selected' : ''}>${esc(f.label)} — ${esc(f.name)}</option>`).join('');
+
+  buildTabs();
+  buildPanels();
+}
+
+function blanksLeft(i) {
+  const a = A[i];
+  return a.missing.filter(ci => !((fills[i] || {})[ci] || '').trim()).length;
+}
+
+function buildTabs() {
+  $('tabbar').innerHTML = Object.keys(A).map(k => {
+    const i = +k;
+    const left = blanksLeft(i);
+    return `<div class="tab${i === activeIdx ? ' active' : ''}${left ? ' todo' : ''}" id="tab_${i}" onclick="switchTab(${i})">${esc(files[i].label)}<span class="dot"></span>${left ? `<span class="left">${left}</span>` : ''}</div>`;
+  }).join('');
+}
+
+function updateTab(i) {
+  const left = blanksLeft(i);
+  const tab = $('tab_' + i);
+  if (tab) {
+    tab.classList.toggle('todo', left > 0);
+    tab.innerHTML = `${esc(files[i].label)}<span class="dot"></span>${left ? `<span class="left">${left}</span>` : ''}`;
+  }
+  const hint = $('hint_' + i);
+  if (hint) hint.textContent = left ? `${left} empty box(es) will be left out of the file.` : 'All boxes filled.';
+}
+
+function buildPanels() {
+  const el = $('panels');
+  if (files.length === 0) { el.innerHTML = ''; return; }
+  if (files.length === 1) { el.innerHTML = '<div class="warning">Upload at least one more file to compare against the base.</div>'; return; }
+  const base = files[baseIdx];
+  el.innerHTML = Object.keys(A).map(k => {
+    const i = +k, f = files[i], a = A[i];
+    const matched = base.cues.length - a.missing.length;
+    const miss = a.missing.map(ci => cueNo(base, ci));
+    const noOverlap = matched === 0;
+    return `
+    <div class="lang-panel${i === activeIdx ? ' active' : ''}" id="panel_${i}">
+      <div class="panel">
+        <h2>${esc(f.label)} — ${esc(f.name)}</h2>
+        ${noOverlap ? '<div class="warning">None of this file\'s cues overlap the base in time — are these the same video? Check the base file selection.</div>' : ''}
+        <div class="summary">
+          <span class="ok">${matched} matched</span> ·
+          <span class="${a.missing.length ? 'bad' : 'ok'}">${a.missing.length} missing${miss.length ? ' (cue ' + ranges(miss) + ')' : ''}</span> ·
+          ${a.extras.length} extra cue(s) not in the base (kept)
+        </div>
+        ${a.missing.map(ci => {
+          const b = base.cues[ci];
+          return `
+          <div class="cue-row">
+            <div class="cue-head"><span class="cue-n">Cue ${cueNo(base, ci)}</span><span class="cue-time">${b.startStr} → ${b.endStr}</span></div>
+            <div class="source-text">${esc(b.text)}</div>
+            <textarea id="fill_${i}_${ci}" placeholder="${esc(f.label)} text for this cue…" oninput="onFill(${i},${ci})">${esc((fills[i] || {})[ci] || '')}</textarea>
+          </div>`;
+        }).join('')}
+        ${a.missing.length === 0 ? '<div class="hint" style="margin-bottom:10px">Nothing is missing in this file.</div>' : ''}
+        ${a.extras.length ? `<div class="extras">Extra cues kept as they are:${a.extras.map(j => `<div>${f.cues[j].startStr} — ${esc(f.cues[j].text.replace(/\n/g, ' / '))}</div>`).join('')}</div>` : ''}
+        <div class="actions">
+          <button class="btn-primary" onclick="download(${i})">Download ${esc(f.name)}</button>
+          <span class="hint" id="hint_${i}"></span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  Object.keys(A).forEach(k => updateTab(+k));
+}
+
+function switchTab(i) {
+  activeIdx = i;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const t = $('tab_' + i); if (t) t.classList.add('active');
+  document.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('active'));
+  const p = $('panel_' + i); if (p) p.classList.add('active');
+}
+
+function onFill(i, ci) {
+  (fills[i] = fills[i] || {})[ci] = $('fill_' + i + '_' + ci).value;
+  updateTab(i);
+}
+
+// ---------- writing ----------
+function buildSrt(i) {
+  const f = files[i], a = A[i], base = files[baseIdx];
+  const items = [];
+  const own = c => ({ start: c.start, s: c.startStr, e: c.endStr, extra: c.extra, text: c.text });
+  base.cues.forEach((b, ci) => {
+    const j = a.map[ci];
+    if (j >= 0) items.push(own(f.cues[j]));
+    else {
+      const t = ((fills[i] || {})[ci] || '').replace(/\r\n?/g, '\n').trim();
+      if (t) items.push({ start: b.start, s: b.startStr, e: b.endStr, extra: '', text: t });
+    }
+  });
+  a.extras.forEach(j => items.push(own(f.cues[j])));
+  items.sort((x, y) => x.start - y.start);
+  const eol = f.eol;
+  return items.map((c, k) =>
+    `${k + 1}${eol}${c.s} --> ${c.e}${c.extra ? ' ' + c.extra : ''}${eol}${c.text.replace(/\n/g, eol)}`
+  ).join(eol + eol) + eol;
+}
+
+function download(i) {
+  const f = files[i];
+  const out = (f.bom ? '﻿' : '') + buildSrt(i);
+  const url = URL.createObjectURL(new Blob([out], { type: 'text/plain;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = f.name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Downloaded ${f.name}`);
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ---------- wiring ----------
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+$('fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+</script>
+</body>
+</html>
