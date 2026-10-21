@@ -69,6 +69,28 @@ def fetch_page(app, cursor):
     raise RuntimeError('Steam request failed: %s' % last)
 
 
+def app_info(app):
+    """Name and type of a Steam app (from the store API), cached in memory."""
+    if app in names:
+        return names[app]
+    try:
+        req = urllib.request.Request(
+            'https://store.steampowered.com/api/appdetails?filters=basic&appids=' + app,
+            headers={'User-Agent': 'Mozilla/5.0 SteamReviewDashboard'})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            entry = json.loads(resp.read().decode('utf-8')).get(app, {})
+        if entry.get('success'):
+            names[app] = {'name': entry['data'].get('name'), 'type': entry['data'].get('type')}
+        else:
+            names[app] = {'name': None, 'type': None}
+    except Exception:
+        return {'name': None, 'type': None, 'error': True}  # do not cache failures
+    return names[app]
+
+
+names = {}
+
+
 def compact(r):
     a = r.get('author', {})
     return {
@@ -164,8 +186,10 @@ class Handler(SimpleHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(url.query)
         app = (q.get('app') or [''])[0]
-        if url.path in ('/api/data', '/api/sync') and not app.isdigit():
+        if url.path in ('/api/data', '/api/sync', '/api/appinfo') and not app.isdigit():
             return self.send_json({'error': 'bad app id'}, 400)
+        if url.path == '/api/appinfo':
+            return self.send_json(app_info(app))
         if url.path == '/api/data':
             try:
                 with open(data_path(app), 'rb') as f:
