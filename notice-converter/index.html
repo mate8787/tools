@@ -756,14 +756,12 @@ function bulkSplit() {
     const g = best.res.groups[s];
     const group = g ? g.map(n => nodes[n].idx) : null;
     const src = c[best.lang].length ? c[best.lang] : (langs.map(l => c[l]).find(a => a.length) || []);
-    let primary = null, rowwise = false;
+    let rowwise = false;
     if (group) {
-      // the translation goes into the piece holding most of the text; the rest are emptied
-      primary = group.reduce((a, b) => TOKENS[b].norm.length > TOKENS[a].norm.length ? b : a, group[0]);
       // one sheet row per template piece (e.g. lines split by <br>): keep them paired up
       rowwise = group.length > 1 && src.length === group.length && src.every((v, i) => normText(v) === TOKENS[group[i]].norm);
     }
-    return { src: src.join(' '), group, primary, rowwise };
+    return { src: src.join(' '), group, rowwise };
   });
   langs.forEach(l => {
     SEGS.forEach((seg, s) => {
@@ -791,6 +789,16 @@ function bulkSplit() {
     const missing = SEGS.map((_, s) => (state[l].values[s] || '').trim() ? null : s + 1).filter(Boolean);
     if (missing.length) problems.push(`${l} is missing segment(s) ${missing.join(', ')}`);
   });
+  // link text that couldn't be found in a translation keeps the template's wording
+  const keptLinks = {};
+  SEGS.forEach((seg, s) => {
+    if (!seg.group || seg.group.length < 2 || seg.rowwise) return;
+    langs.forEach(l => {
+      const text = (state[l].values[s] || '').split('\n').map(x => x.trim()).filter(Boolean).join(' ');
+      if (text && planPieces(seg, text).kept.length) (keptLinks[s + 1] = keptLinks[s + 1] || []).push(l);
+    });
+  });
+  Object.keys(keptLinks).forEach(n => problems.push(`segment ${n}: the link text isn't in the translation for ${keptLinks[n].join(', ')} — the template's link text was kept (put it in the cell exactly as in the template, e.g. LINK)`));
   if (unknown.length) problems.push('ignored column(s): ' + unknown.join(', '));
 
   const combined = SEGS.filter(seg => seg.group && seg.group.length > 1).length;
@@ -815,7 +823,7 @@ function renderBulkSegments() {
     <div class="segment-preview-item${seg.group ? '' : ' unmatched'}">
       <span class="idx">${s + 1}</span>
       <span class="seg-text">${esc(truncate(seg.src, 120))}</span>
-      ${seg.group && seg.group.length > 1 ? `<span class="seg-chip" title="This segment's text sits in ${seg.group.length} separate text pieces in the template (split by tags). The translation goes into the largest piece, the others are emptied, and every tag stays as is.">${seg.group.length} pieces</span>` : ''}
+      ${seg.group && seg.group.length > 1 ? `<span class="seg-chip" title="This segment's text sits in ${seg.group.length} separate text pieces in the template (split by tags). Pieces whose text appears unchanged in the translation (like LINK) keep it; the rest of the translation goes into the largest remaining piece. Every tag stays as is.">${seg.group.length} pieces</span>` : ''}
       ${seg.group ? '' : '<span class="seg-chip bad">not in template</span>'}
     </div>`).join('');
   if (LEFTOVER.length) {
@@ -828,6 +836,83 @@ function renderBulkSegments() {
 }
 
 // ---- Output ----
+function decode(s) {
+  const ta = document.createElement('textarea');
+  ta.innerHTML = s;
+  return ta.value;
+}
+
+// Find `t` in `text` as a whole word/phrase (no ASCII letters or digits glued to either end).
+function findWhole(text, t, from, preferLast) {
+  const wordCh = c => c !== undefined && /[A-Za-z0-9]/.test(c);
+  const ok = at =>
+    !(wordCh(t[0]) && wordCh(text[at - 1])) &&
+    !(wordCh(t[t.length - 1]) && wordCh(text[at + t.length]));
+  if (preferLast) {
+    for (let at = text.lastIndexOf(t); at >= from; at = at > 0 ? text.lastIndexOf(t, at - 1) : -1) {
+      if (ok(at)) return at;
+    }
+    return -1;
+  }
+  for (let at = text.indexOf(t, from); at !== -1; at = text.indexOf(t, at + 1)) {
+    if (ok(at)) return at;
+  }
+  return -1;
+}
+
+// A text piece that is the whole content of an <a>…</a> link.
+function isLinkPiece(t) {
+  const prev = TOKENS[t - 1], next = TOKENS[t + 1];
+  return !!(prev && next && prev.kind === 'tag' && /^<a[\s>]/i.test(prev.raw) && next.kind === 'tag' && /^<\/a\s*>/i.test(next.raw));
+}
+
+// Work out which part of a translation goes into which template text piece.
+// Pieces whose template text shows up unchanged in the translation (e.g. "LINK", a brand name)
+// are anchors: they keep their text and the rest of the translation is split around them.
+// texts[i] === null means "leave that piece exactly as in the template".
+function planPieces(seg, text) {
+  const k = seg.group.length;
+  const piece = gi => TOKENS[seg.group[gi]];
+  const texts = new Array(k).fill(null);
+  const kept = [];
+
+  const anchors = [];
+  let pos = 0;
+  for (let gi = 0; gi < k; gi++) {
+    const t = decode(piece(gi).core).trim();
+    if (!t) continue;
+    const at = findWhole(text, t, pos, gi === k - 1);
+    if (at >= 0) { anchors.push({ gi, start: at, end: at + t.length }); pos = at + t.length; }
+  }
+
+  const bounds = [{ gi: -1, end: 0 }, ...anchors, { gi: k, start: text.length }];
+  for (let b = 0; b + 1 < bounds.length; b++) {
+    const from = bounds[b].gi + 1, to = bounds[b + 1].gi - 1;
+    const gap = text.slice(bounds[b].end, bounds[b + 1].start).trim();
+    const cand = [];
+    for (let gi = from; gi <= to; gi++) cand.push(gi);
+
+    if (!cand.length) {
+      // text sits between two anchors that are neighbours: attach it to the nearest anchor piece
+      if (gap) {
+        const gi = b > 0 ? bounds[b].gi : bounds[b + 1].gi;
+        const own = piece(gi).core;
+        texts[gi] = b > 0 ? own + ' ' + gap : gap + ' ' + own;
+      }
+      continue;
+    }
+    const biggest = pool => pool.reduce((x, y) => piece(y).norm.length > piece(x).norm.length ? y : x, pool[0]);
+    const free = cand.filter(gi => !isLinkPiece(seg.group[gi]));
+    const recv = biggest(free.length ? free : cand);
+    cand.forEach(gi => {
+      if (gi === recv) texts[gi] = gap;
+      else if (isLinkPiece(seg.group[gi])) kept.push(gi);   // never empty a link: keep the template's text
+      else texts[gi] = '';
+    });
+  }
+  return { texts, kept };
+}
+
 function generate(l) {
   const out = TOKENS.map(t => t.raw);
   SEGS.forEach((seg, s) => {
@@ -836,8 +921,10 @@ function generate(l) {
     if (seg.rowwise && lines.length === seg.group.length) {
       seg.group.forEach((t, i) => { out[t] = TOKENS[t].leading + lines[i] + TOKENS[t].trailing; });
     } else {
-      const text = lines.join(' ');
-      seg.group.forEach(t => { out[t] = TOKENS[t].leading + (t === seg.primary ? text : '') + TOKENS[t].trailing; });
+      const { texts } = planPieces(seg, lines.join(' '));
+      seg.group.forEach((t, i) => {
+        if (texts[i] !== null) out[t] = TOKENS[t].leading + texts[i] + TOKENS[t].trailing;
+      });
     }
   });
   return out.join('');
