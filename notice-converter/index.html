@@ -790,15 +790,19 @@ function bulkSplit() {
     if (missing.length) problems.push(`${l} is missing segment(s) ${missing.join(', ')}`);
   });
   // link text that couldn't be found in a translation keeps the template's wording
-  const keptLinks = {};
+  const keptLinks = {}, readLinks = {};
   SEGS.forEach((seg, s) => {
     if (!seg.group || seg.group.length < 2 || seg.rowwise) return;
     langs.forEach(l => {
       const text = (state[l].values[s] || '').split('\n').map(x => x.trim()).filter(Boolean).join(' ');
-      if (text && planPieces(seg, text).kept.length) (keptLinks[s + 1] = keptLinks[s + 1] || []).push(l);
+      if (!text) return;
+      const plan = planPieces(seg, text);
+      if (plan.kept.length) (keptLinks[s + 1] = keptLinks[s + 1] || []).push(l);
+      plan.guessed.forEach(g => (readLinks[s + 1] = readLinks[s + 1] || []).push(`${l} “${g.text}”`));
     });
   });
-  Object.keys(keptLinks).forEach(n => problems.push(`segment ${n}: the link text isn't in the translation for ${keptLinks[n].join(', ')} — the template's link text was kept (put it in the cell exactly as in the template, e.g. LINK)`));
+  Object.keys(keptLinks).forEach(n => problems.push(`segment ${n}: couldn't tell which words are the link text in ${keptLinks[n].join(', ')} — the template's link text was kept there`));
+  const readNote = Object.keys(readLinks).map(n => `segment ${n}: ${readLinks[n].join(', ')}`).join('; ');
   if (unknown.length) problems.push('ignored column(s): ' + unknown.join(', '));
 
   const combined = SEGS.filter(seg => seg.group && seg.group.length > 1).length;
@@ -806,6 +810,7 @@ function bulkSplit() {
   let msg = `${SEGS.length} segment(s) ${how}`;
   if (combined) msg += `; ${combined} of them span several text pieces (only the plain text is replaced, tags stay)`;
   msg += `. Generated ${filled.length} language(s).`;
+  if (readNote) msg += ` Link text taken from the translation — ${readNote}.`;
 
   if (problems.length) {
     statusEl.className = 'base-status err';
@@ -875,6 +880,7 @@ function planPieces(seg, text) {
   const piece = gi => TOKENS[seg.group[gi]];
   const texts = new Array(k).fill(null);
   const kept = [];
+  const guessed = [];
 
   const anchors = [];
   let pos = 0;
@@ -901,16 +907,53 @@ function planPieces(seg, text) {
       }
       continue;
     }
+    // a link at the very end (or start) of the text: its translation is the last (first) words
+    let gapText = gap;
+    if (cand.length > 1 && b + 2 === bounds.length && isLinkPiece(seg.group[cand[cand.length - 1]])) {
+      const gi = cand[cand.length - 1];
+      const colonBefore = gi > 0 && /[:：]\s*$/.test(piece(gi - 1).core);
+      const sp = splitTail(gapText, decode(piece(gi).core), colonBefore);
+      if (sp) { texts[gi] = sp.part; guessed.push({ gi, text: sp.part }); gapText = sp.rest; cand.pop(); }
+    } else if (cand.length > 1 && b === 0 && isLinkPiece(seg.group[cand[0]])) {
+      const gi = cand[0];
+      const sp = splitHead(gapText, decode(piece(gi).core));
+      if (sp) { texts[gi] = sp.part; guessed.push({ gi, text: sp.part }); gapText = sp.rest; cand.shift(); }
+    }
+
     const biggest = pool => pool.reduce((x, y) => piece(y).norm.length > piece(x).norm.length ? y : x, pool[0]);
     const free = cand.filter(gi => !isLinkPiece(seg.group[gi]));
     const recv = biggest(free.length ? free : cand);
     cand.forEach(gi => {
-      if (gi === recv) texts[gi] = gap;
+      if (gi === recv) texts[gi] = gapText;
       else if (isLinkPiece(seg.group[gi])) kept.push(gi);   // never empty a link: keep the template's text
       else texts[gi] = '';
     });
   }
-  return { texts, kept };
+  return { texts, kept, guessed };
+}
+
+// Peel the link text off the end of a translation. After a colon in the template the link text is
+// whatever follows the translation's last colon; otherwise it is the last N words (N = words in
+// the template's link text). Returns null when there is no safe place to cut (e.g. CJK, no colon).
+function splitTail(text, src, colonBefore) {
+  if (colonBefore) {
+    const i = Math.max(text.lastIndexOf(':'), text.lastIndexOf('：'));
+    if (i >= 0 && i < text.length - 1) {
+      const part = text.slice(i + 1).trim();
+      if (part && part.length <= 30) return { rest: text.slice(0, i + 1).trim(), part };
+    }
+  }
+  const n = src.split(/\s+/).filter(Boolean).length || 1;
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > n) return { rest: words.slice(0, -n).join(' '), part: words.slice(-n).join(' ') };
+  return null;
+}
+
+function splitHead(text, src) {
+  const n = src.split(/\s+/).filter(Boolean).length || 1;
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > n) return { rest: words.slice(n).join(' '), part: words.slice(0, n).join(' ') };
+  return null;
 }
 
 function generate(l) {
