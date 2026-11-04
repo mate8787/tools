@@ -10,6 +10,7 @@ import os
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
@@ -70,6 +71,12 @@ def fetch_page(app, cursor):
                                    '(it may be rate-limiting or blocking requests right now). Try again later.')
         except RuntimeError:
             raise
+        except urllib.error.HTTPError as e:
+            if 300 <= e.code < 400:  # Steam sends us to the store homepage: retrying will not help
+                raise RuntimeError('Steam redirected the review request to its homepage (HTTP %d). '
+                                   'The review endpoint is refusing requests right now; try again later.' % e.code)
+            last = e
+            time.sleep(2 * (attempt + 1))
         except Exception as e:  # network hiccup / rate limit: back off and retry
             last = e
             time.sleep(2 * (attempt + 1))
