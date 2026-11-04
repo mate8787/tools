@@ -62,7 +62,14 @@ def fetch_page(app, cursor):
     for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode('utf-8'))
+                body = resp.read().decode('utf-8')
+            try:
+                return json.loads(body)
+            except ValueError:
+                raise RuntimeError('Steam answered with a web page instead of review data '
+                                   '(it may be rate-limiting or blocking requests right now). Try again later.')
+        except RuntimeError:
+            raise
         except Exception as e:  # network hiccup / rate limit: back off and retry
             last = e
             time.sleep(2 * (attempt + 1))
@@ -80,7 +87,8 @@ def app_info(app):
         with urllib.request.urlopen(req, timeout=15) as resp:
             entry = json.loads(resp.read().decode('utf-8')).get(app, {})
         if entry.get('success'):
-            names[app] = {'name': entry['data'].get('name'), 'type': entry['data'].get('type')}
+            d = entry['data']
+            names[app] = {'name': d.get('name'), 'type': d.get('type'), 'fullgame': d.get('fullgame')}
         else:
             names[app] = {'name': None, 'type': None}
     except Exception:
@@ -123,6 +131,8 @@ def sync(app, days):
             with lock:
                 state['pages'] = pages
             if not revs:
+                if pages == 1 and not known:
+                    raise RuntimeError('Steam has no reviews for this app. DLCs have none: load the base game instead.')
                 covered = 0  # reached the very end of Steam's list
                 break
             new = 0

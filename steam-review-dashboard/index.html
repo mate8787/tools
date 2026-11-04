@@ -227,6 +227,7 @@ const I18N = {
     'ctl.app': 'Steam App ID', 'ctl.load': 'Load', 'ctl.game': 'Loaded game',
     'game.loading': 'Loading…', 'game.unknown': 'Unknown app', 'game.error': 'Name unavailable',
     'game.dlc': 'DLC: Steam has no reviews of its own for DLCs',
+    'game.base': 'Load base game: {0} ({1})',
     'demo.status': 'Demo snapshot of {0} cached reviews, last updated {1}. Downloading new reviews is disabled in this view.',
     'ctl.download': 'Download window', 'ctl.update': 'Update reviews',
     'ctl.language': 'Review language', 'ctl.dates': 'Date range', 'ctl.allTime': 'All time', 'ctl.range': 'Select range',
@@ -315,7 +316,9 @@ function showAppName(app, info) {
   if (!info || info.error) { el.textContent = t('game.error'); return; }
   if (!info.name) { el.innerHTML = `<span class="neg">${t('game.unknown')}</span> <small>${esc(app)}</small>`; return; }
   el.innerHTML = `<a href="https://store.steampowered.com/app/${esc(app)}/" target="_blank" rel="noopener">${esc(info.name)}</a><small>${esc((info.type || '').toUpperCase())} · ${esc(app)}</small>` +
-    (info.type === 'dlc' ? `<small class="warn">${t('game.dlc')}</small>` : '');
+    (info.type === 'dlc' ? `<small class="warn">${t('game.dlc')}</small>` : '') +
+    (info.fullgame ? `<button id="baseBtn" data-app="${esc(info.fullgame.appid)}">${esc(t('game.base', info.fullgame.name, info.fullgame.appid))}</button>` : '');
+  const bb = $('baseBtn'); if (bb) bb.onclick = () => { S.from = S.to = ''; loadApp(bb.dataset.app); };
 }
 
 async function loadApp(app) {
@@ -584,19 +587,21 @@ function renderSummary() {
 let syncing = false;
 async function startSync() {
   if (syncing) return;
+  let syncError = '';
   syncing = true; $('syncBtn').disabled = true; $('syncStatus').textContent = t('sync.starting'); banner('');
   try {
     await fetch(`/api/sync?app=${encodeURIComponent(S.app)}&days=${$('syncDays').value}`);
     for (;;) {
       await new Promise(r => setTimeout(r, 1000));
       const st = await (await fetch('/api/status')).json();
-      if (st.error) { $('syncStatus').textContent = t('sync.error', st.error); break; }
+      if (st.error) { syncError = st.error; break; }
       if (st.running) { $('syncStatus').textContent = t('sync.progress', st.pages, fmt(st.new), st.oldest ? ymd(st.oldest) : '…'); continue; }
       $('syncStatus').textContent = t('sync.done', fmt(st.new)); break;
     }
   } catch (e) { banner(t('err.noserver'), true); }
   syncing = false; $('syncBtn').disabled = false;
   await loadApp(S.app);
+  if (syncError) { $('syncStatus').textContent = ''; banner(t('sync.error', syncError), true); }
 }
 
 /* ---------- Excel export ---------- */
