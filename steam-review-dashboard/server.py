@@ -132,7 +132,7 @@ def sync(app, days):
                 state['pages'] = pages
             if not revs:
                 if pages == 1 and not known:
-                    raise RuntimeError('Steam has no reviews for this app. DLCs have none: load the base game instead.')
+                    raise RuntimeError('Steam returned no reviews for this app (it may not have any yet).')
                 covered = 0  # reached the very end of Steam's list
                 break
             new = 0
