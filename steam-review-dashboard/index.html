@@ -569,7 +569,8 @@ function renderSamples() {
 /* ----- word frequency ----- */
 const STOP_EN = new Set(('a about after again all also am an and any are as at be because been before being but by can could did do does doing done down even for from get got had has have having he her here him his how i if in into is it its just like me more most much my no not now of off on once one only or other our out over own really s same she should so some such than that the their them then there these they this those through to too up us very was we were what when where which while who why will with would you your ' +
   'game games play played playing player players still make makes made lot many go going well even way thing things im ive dont doesnt didnt cant isnt thats it\'s don\'t i\'m i\'ve can\'t ' +
-  'hours hour time tried pretty bit actually around also get got feel').split(' '));
+  'hours hour time tried pretty bit actually around also get got feel ' +
+  'dlc new content abyss pearl expansion crimson back first until nothing anything know').split(' '));
 const STOP_KO = new Set(['정말', '너무', '진짜', '그냥', '이거', '그리고', '하지만', '근데', '있는', '있다', '있어', '없는', '같아요', '합니다', '입니다', '게임', '게임이', '게임은', '게임을']);
 const STOP_ZH = new Set(['游戏', '这个', '一个', '就是', '没有', '不是', '可以', '但是', '因为', '所以', '还是', '什么', '自己', '我们', '他们', '真的', '感觉', '非常', '已经', '而且', '如果', '这样', '那个', '一下', '有点']);
 const SEG = {};
