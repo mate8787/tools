@@ -90,7 +90,42 @@
             "A fantastic concept buried beneath bugs, shallow mechanics, and disappointing execution."
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "Overall the DLC is received well: players love how much it adds (an ocean to sail and dive, new story quests for all three heroes, housing, businesses and romance) and many call the price excellent. The launch was rough, though, and bugs are one of the most talked-about subjects. Many players recommend it while warning about problems, and a number of negative reviewers say they will switch their vote once fixes arrive.",
+        "positive": "The scale and variety of new things to do, the ocean and underwater exploration, ship combat, building a house or castle, running businesses and the value for money. Even positive reviews often admit day-1 bugs but trust Pearl Abyss to patch quickly.",
+        "negative": "A launch that feels untested: a progress-blocking first pioneering quest, crashes, save and graphics problems (especially on AMD Radeon cards), the Kliff desert sandstorm quest, awkward ship handling with endlessly repeating crew chatter, and changed systems such as gift giving."
+      },
+      "topicNotes": {
+        "Ocean": {
+          "positive": "Exploration scale, diving and shipwrecks, ship combat often compared to Black Flag, beautiful water and sailing music.",
+          "negative": "An ocean that feels empty in places, ship steering and wind problems, crew voice lines that repeat constantly with no mute option, endless shark and ray attacks, murky underwater visibility and FPS drops at sea."
+        },
+        "Bugs": {
+          "positive": "Many positive reviews still mention bugs, but call them not game breaking and say Pearl Abyss fixes things super fast (the Radeon graphics bug was patched in about a day).",
+          "negative": "Called untested and a buggy mess: the first pioneering quest blocks progress, crashes on launch or load, save corruption and lost items, graphics corruption on RX 9070 XT cards, frame drops and broken features."
+        },
+        "Quest & Story": {
+          "positive": "Enjoyment of the new storylines for Kliff, Damiane and Oongka and the extra boss fights; a few call the writing better than the base game.",
+          "negative": "The Kliff desert sandstorm quest is the most hated quest, the pioneering quest bug blocks the start of the DLC, and the writing is called thin, rushed or filler. This topic also catches reviews about broken quests, not only story quality."
+        },
+        "Housing": {
+          "positive": "Building and decorating a home or castle is liked as a relaxing creative layer.",
+          "negative": "Castles feel like expensive decorations or just bigger homes, placement rules are restrictive and some building bugs exist."
+        },
+        "Romance": {
+          "positive": "Courtship and marriage are a reason to buy for some, with requests for more romance options.",
+          "negative": "Gift giving became one item at a time, affinity gains were reduced, and marriage has little dialogue or content after the wedding."
+        },
+        "Management": {
+          "positive": "Running shops, workshops and dispatch missions is enjoyed as an addictive tycoon layer.",
+          "negative": "Business and dispatch quests are bugged, customers sometimes do not show up, there are too few workers, and the mode can feel like idle waiting."
+        },
+        "Garden of Trials": {
+          "positive": "",
+          "negative": "Rarely mentioned; called a hard boss rush that reuses base-game bosses."
+        }
+      }
     },
     "english": {
       "praise": [
@@ -177,7 +212,38 @@
             "A fantastic concept buried beneath bugs, shallow mechanics, and disappointing execution."
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "English reviewers praise the ocean, building and value, but are the most vocal about technical problems: bugs and performance complaints are a main reason for negative votes, and many reviewers say the DLC should have had more testing before release.",
+        "positive": "Diving, shipwrecks and sailing across a much bigger map, building houses and castles, running businesses, and a lot of content for a low price.",
+        "negative": "Game-breaking quest bugs, crashes and FPS drops (particularly AMD RX 9070 XT), the sandstorm desert quest, ship controls and looping crew voice lines, and content that feels shallow or reused."
+      },
+      "topicNotes": {
+        "Ocean": {
+          "positive": "Diving, shipwrecks, naval combat and the sheer size of the new map; many compare it to Assassin's Creed Black Flag.",
+          "negative": "Steering and wind problems, endlessly repeating crew voice lines with no mute option, an ocean that feels empty, and FPS drops at sea."
+        },
+        "Bugs": {
+          "positive": "Reviewers say there are day-1 bugs but nothing game breaking, and credit hotfixes that arrived within about a day (the AMD 9070 XT fix).",
+          "negative": "Called untested and a buggy mess: the Auronui Island quest stuck at \"awaiting completion\", save problems and lost chest items, crashes on launch, RX 9070 XT graphics corruption and FPS drops."
+        },
+        "Quest & Story": {
+          "positive": "New character quests, the boss fights and a few good storylines are enjoyed.",
+          "negative": "Most complaints are about quests more than story: the desert sandstorm quest, pioneering quest bugs, rushed new main quests and thin writing."
+        },
+        "Housing": {
+          "positive": "House and castle building and the shop system are fun.",
+          "negative": "Castles feel raw and like basic homes, placement rules are restrictive, and building bugs appear."
+        },
+        "Romance": {
+          "positive": "Romance is a draw for some (\"bought this dlc for the romance\"), with wishes for more partner options.",
+          "negative": "The marriage system is called disappointing and thin after the wedding; gift changes annoy."
+        },
+        "Management": {
+          "positive": "Running shops and businesses is addictive for some players.",
+          "negative": "Business quests are bugged, customers do not show up, and there are too few workers to staff shops, ships and expeditions."
+        }
+      }
     },
     "korean": {
       "praise": [
@@ -264,7 +330,42 @@
             "본편 출시 때 그 많은 문제점들을 검수하지 못하고 출시해버려서 대차게 까이고 평점나락도 경험해봤으면서 DLC에서도 똑같은 실수를 반복하네요."
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "Korean reviewers mostly recommend the DLC, stressing its huge volume for the price and the ocean content, while many are angry about launch bugs and the Kliff desert sandstorm quest. Bugs are the most mentioned subject, but most of the reviews that mention them are still positive.",
+        "positive": "Value for money, ocean and sailing, housing, castle and marriage content, pride in a Korean-made game, and trust in Pearl Abyss's fast patches.",
+        "negative": "The desert sandstorm quest, the progress-blocking pioneering bug, crashes and Radeon problems, ship controls, murky underwater visuals, the changed gift and affinity system, and a feeling that early buyers act as beta testers."
+      },
+      "topicNotes": {
+        "Bugs": {
+          "positive": "Many say bugs exist but will be fixed quickly: the AMD driver bug was patched within a day.",
+          "negative": "Pioneering and dispatch missions that reset or cannot finish, crashes and frame drops after the patch, broken graphics on Radeon cards, and anger that the base game's launch mistakes were repeated."
+        },
+        "Ocean": {
+          "positive": "Waves, water graphics and the feel of diving are praised, and the sea is the main draw.",
+          "negative": "Water that is too murky and dark to see in, ship steering that inverts when aiming, headwinds that stall the ship, and crews repeating the same lines."
+        },
+        "Quest & Story": {
+          "positive": "The main story and the new Damiane and Oongka storylines are called excellent in volume and quality.",
+          "negative": "The Kliff desert sandstorm quest (no visibility, hidden pillars and nails) is the loudest complaint, plus a stuck first pioneering quest and weak personal stories."
+        },
+        "Romance": {
+          "positive": "Dating, confession and marriage content is liked and pairs well with decorating a home or castle.",
+          "negative": "Gifts can only be given one at a time and affinity is harder to raise; characters other than Kliff have no voice acting or romance progress."
+        },
+        "Management": {
+          "positive": "Management and trade are called the best new addition, like an open-world Sims.",
+          "negative": "Dispatch missions that bring back nothing, forced facility placement, and prices that feel unbalanced."
+        },
+        "Housing": {
+          "positive": "Decorating a home or castle is liked (few mentions).",
+          "negative": ""
+        },
+        "Garden of Trials": {
+          "positive": "",
+          "negative": "Called unfair, with repeat boss gimmicks (few mentions)."
+        }
+      }
     },
     "chinese": {
       "praise": [
@@ -351,7 +452,38 @@
             "航海部分的剧情线几乎可以说是没有了，就只是为了添加点玩法而已"
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "Chinese-language reviews are the most critical of quest design: the Kliff desert sandstorm quest and a thin story drive many negative votes, and bugs are mentioned often. Yet most reviews that mention bugs are positive, with players saying they will wait for fixes or already changed their vote after a patch, and the price and volume are widely praised.",
+        "positive": "A huge amount of content for about 100 yuan, the ocean and its music, building and management, and quick patches that made several reviewers switch to positive.",
+        "negative": "The desert sandstorm quest, the save-breaking pioneering quest and crashes, rough and repetitive sailing, gift and affinity changes, thin marriage content and a weak story."
+      },
+      "topicNotes": {
+        "Bugs": {
+          "positive": "\"Bugs everywhere but I still like it\" is common, and several reviewers say they will wait for fixes or switched to positive after a patch.",
+          "negative": "Crashes on launch, saves that cannot load or are broken, bag corruption, the pioneering dispatch quest getting stuck, and anger that players are being used as testers."
+        },
+        "Quest & Story": {
+          "positive": "The three character storylines and the ocean storyline are called better than the base game by some, and the new quests add a lot.",
+          "negative": "The desert sandstorm light-finding quest is called the worst quest; storylines are called thin, filler, or without rewards."
+        },
+        "Ocean": {
+          "positive": "Diving and sailing feel rich, with many fish and hand-placed underwater treasure, and the sea music is loved.",
+          "negative": "Poor ship handling, treasure chests with no hints, endless shark and ray attacks, and ships that are just transport with nothing to do on board."
+        },
+        "Management": {
+          "positive": "Facility management and dispatch are enjoyed for their sim feel.",
+          "negative": "Idle-waiting mechanics, weak AI, bugged dispatch quests, and married NPCs losing their shop function."
+        },
+        "Housing": {
+          "positive": "Home and castle building is called very good (few mentions).",
+          "negative": "Castles are seen as expensive decoration (few mentions)."
+        },
+        "Romance": {
+          "positive": "",
+          "negative": "Marriage is called half-finished, with few lines of dialogue and no outfit changes (few mentions)."
+        }
+      }
     }
   }
 }

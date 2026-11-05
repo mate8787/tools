@@ -36,6 +36,12 @@
       "keywords": ["garden of trials", "trial garden", "boss rush", "trials",
         "시련의 정원", "시련의정원", "보스 러쉬",
         "试炼花园", "试炼之园"]
+    },
+    {
+      "name": "Bugs",
+      "keywords": ["bug", "buggy", "glitch", "glitchy", "glitched", "crash", "crashing", "crashed", "broken", "freeze", "freezing", "frozen", "stutter", "stuttering", "softlock", "performance", "fps", "frame drop", "optimization", "optimisation", "hotfix",
+        "버그", "튕", "렉", "프레임", "최적화", "오류", "먹통", "크래시", "멈춤", "끊김",
+        "闪退", "坏档", "死档", "卡死", "掉帧", "优化", "崩溃", "卡顿", "漏洞", "閃退", "壞檔", "卡頓", "優化"]
     }
   ]
 }

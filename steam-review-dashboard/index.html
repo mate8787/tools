@@ -98,6 +98,14 @@
   .tip[hidden] { display: none; }
   .tip .pos { color: var(--ok); } .tip .neg { color: var(--bad); }
   #timeChart g.col:hover rect:not([fill="transparent"]) { filter: brightness(1.25); }
+  #genBody h3 { font-size: 14px; margin-bottom: 6px; }
+  .gen-num { font-weight: 600; margin-bottom: 6px; }
+  .gen-p { margin: 4px 0; color: var(--text); }
+  .gen-p b.pos { color: var(--ok); } .gen-p b.neg { color: var(--bad); }
+  .gen-list { padding-left: 22px; }
+  .gen-list li { padding: 9px 0; border-bottom: 1px solid #2f2f32; }
+  .gen-list li:last-child { border-bottom: none; }
+  .gen-list li > .gen-p { margin-left: 0; font-size: 13px; }
   .summary-list { list-style: none; }
   .summary-list li { padding: 9px 0; border-bottom: 1px solid #2f2f32; }
   .summary-list li:last-child { border-bottom: none; }
@@ -197,6 +205,12 @@
     <div class="split" id="kwTables"></div>
   </section>
 
+  <section class="card" id="genCard">
+    <h2 data-i18n="gen.title"></h2>
+    <div class="hint" id="genHint"></div>
+    <div id="genBody"></div>
+  </section>
+
   <section class="card">
     <h2 data-i18n="sum.title"></h2>
     <div class="hint" id="sumHint"></div>
@@ -259,6 +273,14 @@ const I18N = {
     'kw.title': 'Most mentioned words', 'kw.hint': 'Number of reviews containing each word, separately for positive and negative reviews. Very common filler words are hidden.',
     'kw.lang': 'Words from', 'kw.pos': 'In positive reviews', 'kw.neg': 'In negative reviews', 'kw.word': 'Word', 'kw.count': 'Reviews', 'kw.analyzing': 'Analyzing…',
     'kw.en': 'English', 'kw.ko': 'Korean', 'kw.zh': 'Chinese',
+    'gen.title': 'General summary', 'gen.sentiment': 'General sentiment', 'gen.topics': 'What players talk about most',
+    'gen.hint': 'Numbers follow the current language and date filters. The explanations were written from a sample of {0} reviews ({1} to {2}) and do not change with the filters.',
+    'gen.hintNoText': 'Numbers follow the current language and date filters. No written explanation saved for this app yet.',
+    'gen.numbers': '{0} reviews: {1}% positive, {2}% negative.',
+    'gen.mention': 'is mentioned in {0}% of reviews ({1}),', 'gen.mostlyPos': 'mostly positive ({0}% positive, vs {1}% across all reviews)',
+    'gen.mostlyNeg': 'mostly negative ({0}% negative, vs {1}% across all reviews)', 'gen.mixed': 'mixed ({0}% positive, {1}% negative)',
+    'gen.few': 'too few mentions to judge ({0} positive, {1} negative)',
+    'gen.inPos': 'In positive reviews:', 'gen.inNeg': 'In negative reviews:',
     'sum.title': 'What players praise and complain about', 'sum.praise': 'Praised', 'sum.complain': 'Complaints',
     'sum.hint': 'Written from reading a sample of {0} reviews ({1} to {2}), analyzed on {3}. Does not change with the date filter.',
     'sum.none': 'No written analysis saved for this app yet.',
@@ -379,7 +401,7 @@ const filterSig = () => [S.scope, S.dateMode, S.from, S.to, S.reviews.length].jo
 /* ---------- rendering ---------- */
 function renderAll() {
   applyFilters();
-  renderSyncInfo(); renderCards(); renderTime(); renderPlaytime(); renderTopics(); renderSummary();
+  renderSyncInfo(); renderCards(); renderTime(); renderPlaytime(); renderTopics(); renderGeneral(); renderSummary();
   $('kwTables').innerHTML = `<div class="status">${t('kw.analyzing')}</div>`;
   clearTimeout(renderAll.kwTimer);
   renderAll.kwTimer = setTimeout(renderKeywords, 20);
@@ -498,7 +520,8 @@ function buildRegex(keywords, flags = 'iu') {
   const lat = [], cjk = [];
   for (const k of keywords) { const kk = k.trim(); if (!kk) continue; (isCJK(kk) ? cjk : lat).push(reEsc(kk)); }
   const parts = [];
-  if (lat.length) parts.push(`(?<![\\p{L}\\p{N}])(?:${lat.join('|')})(?:s|es|ed|ing)?(?![\\p{L}\\p{N}])`);
+  // boundaries are Latin letters/digits only, so "bug" still matches right next to Chinese or Korean text
+  if (lat.length) parts.push(`(?<![\\p{Script=Latin}\\p{N}])(?:${lat.join('|')})(?:s|es|ed|ing)?(?![\\p{Script=Latin}\\p{N}])`);
   if (cjk.length) parts.push(`(?:${cjk.join('|')})`);
   return parts.length ? new RegExp(parts.join('|'), flags) : null;
 }
@@ -511,13 +534,18 @@ function topicMask(tp) {
   return arr;
 }
 
-function renderTopics() {
-  const n = S.idx.length;
-  const stats = S.topics.map(tp => {
+// per-topic mention counts in the current filters, most mentioned first (ties keep the manager's order)
+function topicStats() {
+  return S.topics.map(tp => {
     const mask = topicMask(tp); let up = 0, down = 0;
     for (const i of S.idx) if (mask[i]) { if (S.reviews[i].u) up++; else down++; }
     return { tp, up, down, all: up + down };
-  }).sort((a, b) => b.all - a.all); // most mentioned first (ties keep the manager's order)
+  }).sort((a, b) => b.all - a.all);
+}
+
+function renderTopics() {
+  const n = S.idx.length;
+  const stats = topicStats();
   const mx = k => Math.max(1, ...stats.map(s => s[k]));
   const mAll = mx('all'), mUp = mx('up'), mDown = mx('down'), mShare = Math.max(0.001, ...stats.map(s => s.all / (n || 1)));
   const shade = (v, m, rgb) => `background:rgba(${rgb},${(0.08 + 0.55 * v / m).toFixed(2)})`;
@@ -600,6 +628,31 @@ function renderKeywords() {
       top.map(([w, c]) => `<tr><td>${esc(w)}</td><td class="num bar-cell"><div class="bar" style="width:${(100 * c / mx).toFixed(0)}%"></div><span>${c} <small class="status">(${pct(c, totals[side])}%)</small></span></td></tr>`).join('') + '</table></div>';
   };
   $('kwTables').innerHTML = table(1, 'kw-pos', t('kw.pos')) + table(0, 'kw-neg', t('kw.neg'));
+}
+
+/* ----- general summary: live numbers + written explanations ----- */
+function renderGeneral() {
+  const box = $('genBody'), n = S.idx.length, a = S.analysis;
+  if (!n) { box.innerHTML = ''; $('genHint').textContent = ''; return; }
+  const entry = a && a.scopes && (a.scopes[S.scope] || a.scopes.all), ov = entry && entry.overview;
+  const notes = {}; for (const [k, v] of Object.entries((entry && entry.topicNotes) || {})) notes[k.trim().toLowerCase()] = v;
+  $('genHint').textContent = entry ? t('gen.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?') : t('gen.hintNoText');
+  let up = 0; for (const i of S.idx) up += S.reviews[i].u;
+  const overall = 100 * up / n, para = (cls, label, txt) => txt ? `<p class="gen-p"><b class="${cls}">${label}</b> ${esc(txt)}</p>` : '';
+  let h = `<h3>${t('gen.sentiment')}</h3><p class="gen-num">${t('gen.numbers', fmt(n), pct(up, n), pct(n - up, n))}</p>`;
+  if (ov) h += (ov.text ? `<p class="gen-p">${esc(ov.text)}</p>` : '') + para('pos', t('gen.inPos'), ov.positive) + para('neg', t('gen.inNeg'), ov.negative);
+  const stats = topicStats().filter(s => s.all > 0);
+  if (stats.length) {
+    h += `<h3 style="margin-top:18px">${t('gen.topics')}</h3><ol class="gen-list">`;
+    for (const s of stats) {
+      const p = 100 * s.up / s.all, nt = notes[s.tp.name.trim().toLowerCase()];
+      const lean = s.all < 8 ? t('gen.few', s.up, s.down) : p >= 55 ? t('gen.mostlyPos', p.toFixed(0), overall.toFixed(0)) : p <= 45 ? t('gen.mostlyNeg', (100 - p).toFixed(0), (100 - overall).toFixed(0)) : t('gen.mixed', p.toFixed(0), (100 - p).toFixed(0));
+      h += `<li><b>${esc(s.tp.name)}</b> ${t('gen.mention', pct(s.all, n), fmt(s.all))} ${lean}.` +
+        (nt ? para('pos', t('gen.inPos'), nt.positive) + para('neg', t('gen.inNeg'), nt.negative) : '') + '</li>';
+    }
+    h += '</ol>';
+  }
+  box.innerHTML = h;
 }
 
 /* ----- written summary ----- */
