@@ -22,15 +22,19 @@ def main():
     data = server.load_cache(app)
     if not data['reviews']:
         sys.exit('No cached reviews for app %s. Run the dashboard and press Update reviews first.' % app)
-    try:
-        analysis = json.loads(read('analysis/%s.json' % app))
-    except OSError:
-        analysis = None
+    def load_json(path):
+        try:
+            return json.loads(read(path))
+        except OSError:
+            return None
+    analysis = load_json('analysis/%s.json' % app)
+    analysis_ko = load_json('analysis/%s.ko.json' % app)
     payload = {
         'app': app,
         'info': server.app_info(app),
         'data': data,
         'analysis': analysis,
+        'analysisKo': analysis_ko,
         'topics': json.loads(read('topics.default.json'))['topics'],
     }
     blob = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')

@@ -94,6 +94,8 @@
   .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
 
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .topbar h1 { margin-bottom: .25rem; }
   .tip { position: absolute; z-index: 5; pointer-events: none; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font-size: 12px; line-height: 1.5; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
   .tip[hidden] { display: none; }
   .tip .pos { color: var(--ok); } .tip .neg { color: var(--bad); }
@@ -133,7 +135,10 @@
 </head>
 <body>
 <div class="container">
-  <h1 data-i18n="title"></h1>
+  <div class="topbar">
+    <h1 data-i18n="title"></h1>
+    <select id="uiLang" aria-label="Language / 언어"><option value="en">English</option><option value="ko">한국어</option></select>
+  </div>
   <p class="subtitle" data-i18n="subtitle"></p>
 
   <section class="card" id="controls">
@@ -292,10 +297,70 @@ const I18N = {
     'tm.confirmReset': 'Replace all topics with the defaults?', 'tm.newTopic': 'New topic', 'tm.bad': 'Could not read that topics file.',
     'tm.hint': 'Latin keywords match whole words (and plurals); Korean and Chinese keywords match anywhere in the text.',
     'x.preparing': 'Preparing Excel file…', 'x.noxlsx': 'Excel library could not be loaded (offline?), saved as CSV instead.',
-    'x.none': 'Nothing to export.'
+    'x.none': 'Nothing to export.',
+    'samples.link': 'link', 'sum.enOnly': 'No Korean translation of this summary yet, showing the English text.'
+  },
+  ko: {
+    'title': '스팀 리뷰 대시보드',
+    'subtitle': '언어, 기간, 플레이타임, 게임 콘텐츠별로 스팀 리뷰를 분석합니다.',
+    'ctl.app': '스팀 앱 ID', 'ctl.load': '불러오기', 'ctl.game': '불러온 게임',
+    'game.loading': '불러오는 중…', 'game.unknown': '알 수 없는 앱', 'game.error': '이름을 확인할 수 없음',
+    'game.dlc': 'DLC (본편과 별도로 자체 리뷰가 있음)',
+    'game.base': '본편으로 전환: {0} ({1})',
+    'demo.status': '캐시된 리뷰 {0}개의 데모 스냅샷 (최종 업데이트 {1}). 이 화면에서는 새 리뷰를 다운로드할 수 없습니다.',
+    'ctl.download': '다운로드 범위', 'ctl.update': '리뷰 업데이트',
+    'ctl.language': '리뷰 언어', 'ctl.dates': '기간', 'ctl.allTime': '전체 기간', 'ctl.range': '기간 선택',
+    'ctl.from': '시작일', 'ctl.to': '종료일', 'ctl.topics': '토픽 관리', 'ctl.export': '엑셀 다운로드',
+    'win.3': '최근 3일', 'win.7': '최근 7일', 'win.14': '최근 14일', 'win.30': '최근 30일', 'win.0': '전체',
+    'scope.all': '모든 언어', 'scope.english': '영어만', 'scope.korean': '한국어만', 'scope.chinese': '중국어만',
+    'positive': '긍정', 'negative': '부정', 'reviews': '리뷰',
+    'err.noserver': '로컬 도우미에 연결할 수 없습니다. run.bat(또는 "python server.py")으로 실행한 뒤, 이 파일을 직접 열지 말고 http://localhost:8765/ 로 접속하세요.',
+    'err.nodata': '이 앱에 캐시된 리뷰가 아직 없습니다. 다운로드 범위를 선택하고 "리뷰 업데이트"를 누르세요.',
+    'err.empty': '현재 필터에 맞는 리뷰가 없습니다.',
+    'sync.starting': '다운로드 시작…', 'sync.progress': '다운로드 중… {0}페이지, 새 리뷰 {1}개, {2}까지 도달',
+    'sync.done': '완료: 새 리뷰 {0}개 추가됨.', 'sync.error': '다운로드 실패: {0}',
+    'sync.cached': '리뷰 {0}개 캐시됨 ({1} ~ {2}) · 최종 업데이트 {3}',
+    'sync.partial': '{0} 이전 기록은 아직 다운로드하지 않았습니다.',
+    'card.total': '전체 리뷰', 'card.pos': '긍정', 'card.neg': '부정', 'card.score': '긍정 비율',
+    'card.steam': '스팀 표시 총 {0}개 (긍정 {1}%)',
+    'time.title': '시간별 리뷰 추이', 'time.hour': '시간별', 'time.day': '일별',
+    'time.tipPos': '긍정 {0}개 ({1}%)', 'time.tipNeg': '부정 {0}개 ({1}%)',
+    'time.pct': '막대 = 리뷰 수, 노란 선(오른쪽 축) = 긍정 비율(%); 막대에 마우스를 올리면 정확한 긍정/부정 비율을 볼 수 있습니다',
+    'pt.title': '플레이타임별 긍정 / 부정 비율', 'pt.hint': '플레이타임은 리뷰 작성 시점까지의 플레이 시간입니다. P/R 비율 = 긍정 리뷰 수 ÷ 부정 리뷰 수.',
+    'pt.playtime': '플레이타임', 'pt.neg': '부정', 'pt.pos': '긍정', 'pt.ratio': 'P/R 비율', 'pt.total': '합계',
+    'topics.title': '콘텐츠 토픽', 'topics.hint': '각 토픽을 언급한 리뷰 수입니다 (키워드 매칭 기준). 토픽을 클릭하면 샘플 리뷰를 볼 수 있습니다. 키워드는 "토픽 관리"에서 수정하세요.',
+    'topics.topic': '토픽', 'topics.mentions': '언급한 리뷰', 'topics.share': '전체 리뷰 대비 %', 'topics.posM': '긍정 리뷰 중', 'topics.negM': '부정 리뷰 중', 'topics.posRate': '긍정 %',
+    'samples.title': '샘플 리뷰: {0}', 'samples.shuffle': '다시 뽑기', 'samples.none': '해당하는 리뷰가 없습니다.', 'samples.link': '링크',
+    'kw.title': '가장 많이 언급된 단어', 'kw.hint': '각 단어가 들어간 리뷰 수를 긍정/부정 리뷰별로 나타냅니다. 너무 흔한 단어는 숨겨져 있습니다.',
+    'kw.lang': '단어 언어', 'kw.pos': '긍정 리뷰', 'kw.neg': '부정 리뷰', 'kw.word': '단어', 'kw.count': '리뷰 수', 'kw.analyzing': '분석 중…',
+    'kw.en': '영어', 'kw.ko': '한국어', 'kw.zh': '중국어',
+    'gen.title': '종합 요약', 'gen.sentiment': '전반적인 평가', 'gen.topics': '가장 많이 언급된 주제',
+    'gen.hint': '수치는 현재 언어·기간 필터를 따릅니다. 설명은 리뷰 {0}개 샘플({1} ~ {2})을 읽고 작성한 것이며 필터에 따라 바뀌지 않습니다.',
+    'gen.hintNoText': '수치는 현재 언어·기간 필터를 따릅니다. 이 앱에 저장된 작성형 설명이 아직 없습니다.',
+    'gen.numbers': '리뷰 {0}개: 긍정 {1}%, 부정 {2}%.',
+    'gen.mention': '— 전체 리뷰의 {0}% ({1}개)에서 언급,', 'gen.mostlyPos': '대체로 긍정적 (긍정 {0}%, 전체 평균 {1}%)',
+    'gen.mostlyNeg': '대체로 부정적 (부정 {0}%, 전체 평균 {1}%)', 'gen.mixed': '엇갈림 (긍정 {0}%, 부정 {1}%)',
+    'gen.few': '언급이 너무 적어 판단하기 어려움 (긍정 {0}개, 부정 {1}개)',
+    'gen.inPos': '긍정 리뷰에서:', 'gen.inNeg': '부정 리뷰에서:',
+    'sum.title': '플레이어들이 칭찬하는 점과 불만인 점', 'sum.praise': '칭찬', 'sum.complain': '불만',
+    'sum.hint': '리뷰 {0}개 샘플({1} ~ {2})을 읽고 {3}에 분석한 내용입니다. 기간 필터에 따라 바뀌지 않습니다.',
+    'sum.none': '이 앱에 저장된 작성형 분석이 아직 없습니다.',
+    'sum.fallback': '이 언어에 대한 분석이 없어 모든 언어 요약을 표시합니다.',
+    'sum.enOnly': '이 앱의 요약은 아직 한국어 번역본이 없어 영어 원문을 표시합니다.',
+    'tm.title': '토픽 관리', 'tm.done': '완료', 'tm.add': '+ 토픽 추가', 'tm.name': '토픽 이름', 'tm.keywords': '키워드',
+    'tm.addKw': '키워드 추가 (쉼표로 구분, Enter로 추가)', 'tm.matches': '현재 필터에서 리뷰 {0}개 ({1}%)와 일치합니다.',
+    'tm.delete': '토픽 삭제', 'tm.reset': '기본값으로 초기화', 'tm.export': '토픽 내보내기', 'tm.import': '토픽 가져오기',
+    'tm.saved': '변경 사항은 이 브라우저에 자동 저장됩니다.', 'tm.confirmDelete': '"{0}" 토픽을 삭제할까요?',
+    'tm.confirmReset': '모든 토픽을 기본값으로 바꿀까요?', 'tm.newTopic': '새 토픽', 'tm.bad': '토픽 파일을 읽을 수 없습니다.',
+    'tm.hint': '영문 키워드는 단어 단위(복수형 포함)로 일치하고, 한국어·중국어 키워드는 텍스트 어디에서든 일치합니다.',
+    'x.preparing': '엑셀 파일 준비 중…', 'x.noxlsx': '엑셀 라이브러리를 불러올 수 없어(오프라인?) CSV로 저장했습니다.',
+    'x.none': '내보낼 내용이 없습니다.'
   }
 };
-const UI_LANG = 'en';
+// Korean display names for the default topics (custom topics keep the name you typed)
+const TOPIC_KO = { 'quest & story': '퀘스트 & 스토리', ocean: '바다', housing: '하우징', romance: '연애', management: '경영', 'garden of trials': '시련의 정원', bugs: '버그' };
+let UI_LANG = 'en';
+const tname = name => UI_LANG === 'ko' ? (TOPIC_KO[String(name).trim().toLowerCase()] || name) : name;
 const ask = msg => EMBED ? true : confirm(msg); // hosted snapshot: dialogs are blocked, so just proceed
 const EMBED = window.SRD_EMBED || null; // set by build_demo.py: a static snapshot that needs no server
 const t =(k, ...a) => { let s = (I18N[UI_LANG] || {})[k] ?? I18N.en[k] ?? k; a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; };
@@ -316,10 +381,19 @@ const store = {
 };
 
 /* ---------- static text ---------- */
-document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-$('syncDays').innerHTML = [3, 7, 14, 30, 0].map(d => `<option value="${d}">${t('win.' + d)}</option>`).join('');
-$('scope').innerHTML = Object.keys(SCOPES).map(k => `<option value="${k}">${t('scope.' + k)}</option>`).join('');
-$('kwLang').innerHTML = ['en', 'ko', 'zh'].map(k => `<option value="${k}">${t('kw.' + k)}</option>`).join('');
+function applyStaticText() {
+  document.documentElement.lang = UI_LANG;
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  const fill = (id, html) => { const el = $(id), v = el.value; el.innerHTML = html; if (v) el.value = v; };
+  fill('syncDays', [3, 7, 14, 30, 0].map(d => `<option value="${d}">${t('win.' + d)}</option>`).join(''));
+  fill('scope', Object.keys(SCOPES).map(k => `<option value="${k}">${t('scope.' + k)}</option>`).join(''));
+  fill('kwLang', ['en', 'ko', 'zh'].map(k => `<option value="${k}">${t('kw.' + k)}</option>`).join(''));
+  $('uiLang').value = UI_LANG;
+}
+UI_LANG = store.get('ui', 'en'); if (!I18N[UI_LANG]) UI_LANG = 'en';
+applyStaticText();
+$('syncDays').value = '7'; // download window defaults to the last 7 days
 
 /* ---------- loading ---------- */
 function banner(msg, isErr) { const b = $('banner'); if (!msg) { b.hidden = true; return; } b.textContent = msg; b.className = 'banner' + (isErr ? ' err' : ''); b.hidden = false; }
@@ -349,13 +423,27 @@ function showAppName(app, info) {
   const bb = $('baseBtn'); if (bb) bb.onclick = () => { S.from = S.to = ''; loadApp(bb.dataset.app); };
 }
 
+// written analysis for the current UI language (analysis/<app>.ko.json for Korean, else the English file)
+async function loadAnalysis(app) {
+  S.analysisFallback = false;
+  if (EMBED) {
+    S.analysis = (UI_LANG === 'ko' && EMBED.analysisKo) || EMBED.analysis;
+    S.analysisFallback = UI_LANG === 'ko' && !EMBED.analysisKo && !!EMBED.analysis;
+    return;
+  }
+  const get = async url => { try { const r = await fetch(url); return r.ok ? await r.json() : null; } catch (e) { return null; } };
+  let a = UI_LANG === 'ko' ? await get('analysis/' + app + '.ko.json') : null;
+  if (!a) { a = await get('analysis/' + app + '.json'); S.analysisFallback = UI_LANG === 'ko' && !!a; }
+  S.analysis = a;
+}
+
 async function loadApp(app) {
   S.app = app; store.set('app', app);
   $('appId').value = app;
   S.maskCache = {}; S.kwCountCache.clear();
   $('appName').textContent = t('game.loading');
   const infoP = loadAppInfo(app);
-  if (EMBED) { S.reviews = EMBED.data.reviews; S.meta = EMBED.data; S.analysis = EMBED.analysis; }
+  if (EMBED) { S.reviews = EMBED.data.reviews; S.meta = EMBED.data; }
   else {
     try {
       const r = await fetch('/api/data?app=' + encodeURIComponent(app));
@@ -363,14 +451,11 @@ async function loadApp(app) {
       const d = await r.json();
       S.reviews = d.reviews || []; S.meta = d;
     } catch (e) {
-      S.reviews = []; S.meta = null; banner(t('err.noserver'), true); showAppName(app, await infoP); renderAll(); return;
+      S.reviews = []; S.meta = null; banner(t('err.noserver'), true); S.info = await infoP; showAppName(app, S.info); renderAll(); return;
     }
-    try {
-      const a = await fetch('analysis/' + app + '.json');
-      S.analysis = a.ok ? await a.json() : null;
-    } catch (e) { S.analysis = null; }
   }
-  showAppName(app, await infoP);
+  await loadAnalysis(app);
+  S.info = await infoP; showAppName(app, S.info);
   if (S.reviews.length) {
     const lo = ymd(S.reviews[S.reviews.length - 1].c), hi = ymd(S.reviews[0].c);
     if (!S.from || S.from < lo || S.from > hi) S.from = lo;
@@ -554,7 +639,7 @@ function renderTopics() {
   for (const s of stats) {
     const rate = s.all ? s.up / s.all : null;
     const rateBg = rate == null ? '' : `background:${heatColor(rate, Math.min(0.5, base), base, 1).replace('rgb', 'rgba').replace(')', ',0.55)')}`;
-    h += `<tr class="clickable${S.sel === s.tp.id ? ' selected' : ''}" data-id="${s.tp.id}"><td><b>${esc(s.tp.name)}</b></td>
+    h += `<tr class="clickable${S.sel === s.tp.id ? ' selected' : ''}" data-id="${s.tp.id}"><td><b>${esc(tname(s.tp.name))}</b></td>
       <td class="heat" style="${shade(s.all, mAll, '127,179,255')}">${fmt(s.all)}</td>
       <td class="heat" style="${shade(s.all / (n || 1), mShare, '127,179,255')}">${pct(s.all, n)}%</td>
       <td class="heat" style="${shade(s.up, mUp, '111,207,151')}">${fmt(s.up)}</td>
@@ -585,11 +670,11 @@ function renderSamples() {
   };
   const card = i => {
     const r = S.reviews[i], txt = cleanText(r.t), short = txt.length > 600 ? txt.slice(0, 600) + '…' : txt;
-    return `<div class="sample"><div class="meta"><span class="badge ${r.u ? 'up' : 'down'}">${t(r.u ? 'positive' : 'negative')}</span><span>${esc(r.l)}</span><span>${(r.p / 60).toFixed(1)}h</span><span>${ymd(r.c)}</span><a href="https://steamcommunity.com/profiles/${r.s}/recommended/${S.app}/" target="_blank" rel="noopener">link</a></div>${highlight(short, re)}</div>`;
+    return `<div class="sample"><div class="meta"><span class="badge ${r.u ? 'up' : 'down'}">${t(r.u ? 'positive' : 'negative')}</span><span>${esc(r.l)}</span><span>${(r.p / 60).toFixed(1)}h</span><span>${ymd(r.c)}</span><a href="https://steamcommunity.com/profiles/${r.s}/recommended/${S.app}/" target="_blank" rel="noopener">${t('samples.link')}</a></div>${highlight(short, re)}</div>`;
   };
   const col = (title, ids) => `<div><h3>${title}</h3>${ids.length ? ids.map(card).join('') : `<div class="status">${t('samples.none')}</div>`}</div>`;
   box.hidden = false;
-  box.innerHTML = `<div class="row" style="border:none;margin:0 0 8px;padding:0"><h3 class="grow" style="margin:0">${t('samples.title', esc(tp.name))}</h3><button id="shuf">${t('samples.shuffle')}</button></div>
+  box.innerHTML = `<div class="row" style="border:none;margin:0 0 8px;padding:0"><h3 class="grow" style="margin:0">${t('samples.title', esc(tname(tp.name)))}</h3><button id="shuf">${t('samples.shuffle')}</button></div>
     <div class="split">${col(t('positive'), pick(1))}${col(t('negative'), pick(0))}</div>`;
   $('shuf').onclick = () => { S.seed++; renderSamples(); };
 }
@@ -636,19 +721,21 @@ function renderGeneral() {
   if (!n) { box.innerHTML = ''; $('genHint').textContent = ''; return; }
   const entry = a && a.scopes && (a.scopes[S.scope] || a.scopes.all), ov = entry && entry.overview;
   const notes = {}; for (const [k, v] of Object.entries((entry && entry.topicNotes) || {})) notes[k.trim().toLowerCase()] = v;
-  $('genHint').textContent = entry ? t('gen.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?') : t('gen.hintNoText');
+  $('genHint').textContent = (entry ? t('gen.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?') : t('gen.hintNoText')) + (entry && S.analysisFallback ? ' ' + t('sum.enOnly') : '');
   let up = 0; for (const i of S.idx) up += S.reviews[i].u;
   const overall = 100 * up / n, para = (cls, label, txt) => txt ? `<p class="gen-p"><b class="${cls}">${label}</b> ${esc(txt)}</p>` : '';
+  // whichever side has the larger share of reviews is shown first
+  const pair = (posTxt, negTxt, negFirst) => { const P = para('pos', t('gen.inPos'), posTxt), N = para('neg', t('gen.inNeg'), negTxt); return negFirst ? N + P : P + N; };
   let h = `<h3>${t('gen.sentiment')}</h3><p class="gen-num">${t('gen.numbers', fmt(n), pct(up, n), pct(n - up, n))}</p>`;
-  if (ov) h += (ov.text ? `<p class="gen-p">${esc(ov.text)}</p>` : '') + para('pos', t('gen.inPos'), ov.positive) + para('neg', t('gen.inNeg'), ov.negative);
+  if (ov) h += (ov.text ? `<p class="gen-p">${esc(ov.text)}</p>` : '') + pair(ov.positive, ov.negative, overall < 50);
   const stats = topicStats().filter(s => s.all > 0);
   if (stats.length) {
     h += `<h3 style="margin-top:18px">${t('gen.topics')}</h3><ol class="gen-list">`;
     for (const s of stats) {
       const p = 100 * s.up / s.all, nt = notes[s.tp.name.trim().toLowerCase()];
       const lean = s.all < 8 ? t('gen.few', s.up, s.down) : p >= 55 ? t('gen.mostlyPos', p.toFixed(0), overall.toFixed(0)) : p <= 45 ? t('gen.mostlyNeg', (100 - p).toFixed(0), (100 - overall).toFixed(0)) : t('gen.mixed', p.toFixed(0), (100 - p).toFixed(0));
-      h += `<li><b>${esc(s.tp.name)}</b> ${t('gen.mention', pct(s.all, n), fmt(s.all))} ${lean}.` +
-        (nt ? para('pos', t('gen.inPos'), nt.positive) + para('neg', t('gen.inNeg'), nt.negative) : '') + '</li>';
+      h += `<li><b>${esc(tname(s.tp.name))}</b> ${t('gen.mention', pct(s.all, n), fmt(s.all))} ${lean}.` +
+        (nt ? pair(nt.positive, nt.negative, p < 50) : '') + '</li>';
     }
     h += '</ol>';
   }
@@ -660,7 +747,7 @@ function renderSummary() {
   const a = S.analysis, body = $('sumBody');
   if (!a) { $('sumHint').textContent = ''; body.innerHTML = `<div class="status">${t('sum.none')}</div>`; return; }
   const key = S.scope, entry = a.scopes && a.scopes[key], use = entry || (a.scopes && a.scopes.all);
-  $('sumHint').textContent = t('sum.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?', a.analyzed || '?') + (entry || key === 'all' ? '' : ' ' + t('sum.fallback'));
+  $('sumHint').textContent = t('sum.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?', a.analyzed || '?') + (entry || key === 'all' ? '' : ' ' + t('sum.fallback')) + (S.analysisFallback ? ' ' + t('sum.enOnly') : '');
   if (!use) { body.innerHTML = `<div class="status">${t('sum.none')}</div>`; return; }
   const list = items => '<ul class="summary-list">' + items.map(x => `<li><b>${esc(x.title)}</b>${esc(x.detail || '')}${(x.quotes || (x.quote ? [x.quote] : [])).map(q => `<div class="q">“${esc(q)}”</div>`).join('')}</li>`).join('') + '</ul>';
   body.innerHTML = `<div><h3 class="pos">${t('sum.praise')}</h3>${list(use.praise || [])}</div><div><h3 class="neg">${t('sum.complain')}</h3>${list(use.complaints || [])}</div>`;
@@ -758,6 +845,13 @@ $('appId').onkeydown = e => { if (e.key === 'Enter') $('loadBtn').click(); };
 $('syncBtn').onclick = startSync;
 $('scope').onchange = e => { S.scope = e.target.value; store.set('scope', S.scope); renderAll(); };
 $('kwLang').onchange = e => { S.kwLang = e.target.value; renderKeywords(); };
+$('uiLang').onchange = async e => {
+  UI_LANG = e.target.value; store.set('ui', UI_LANG); applyStaticText();
+  await loadAnalysis(S.app);
+  if (S.info) showAppName(S.app, S.info);
+  renderAll();
+  if ($('modalBg').classList.contains('open')) renderTM();
+};
 document.querySelectorAll('input[name=dateMode]').forEach(r => r.onchange = () => { S.dateMode = r.value; syncDateInputs(); renderAll(); });
 $('dFrom').onchange = e => { S.from = e.target.value; renderAll(); };
 $('dTo').onchange = e => { S.to = e.target.value; renderAll(); };

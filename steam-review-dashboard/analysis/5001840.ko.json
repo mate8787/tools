@@ -1,0 +1,489 @@
+{
+  "app": "5001840",
+  "analyzed": "2026-11-05",
+  "from": "2026-10-30",
+  "to": "2026-11-04",
+  "sampleSize": 192,
+  "scopes": {
+    "all": {
+      "praise": [
+        {
+          "title": "바다: 항해, 다이빙, 훨씬 넓어진 맵",
+          "detail": "모든 언어에서 가장 많이 나온 칭찬입니다. 바다, 수중 탐험, 함선 전투(어쌔신 크리드 블랙 플래그에 자주 비교됨), 난파선과 섬을 좋아하고, 맵이 몇 배로 커졌다고 말합니다.",
+          "quotes": [
+            "the ocean biome is huge and there's a lot to discover, so if you like the base game then this seems like a no brainer.",
+            "Pearl abyss really outdid themselves with the attention to detail and just how awesome the ocean is.",
+            "The housing and ocean exploration are my favourite things!"
+          ]
+        },
+        {
+          "title": "가격에 비해 어마어마한 분량",
+          "detail": "\"DLC 이상\"이라는 평이 많습니다: 수십 GB의 용량, 새로운 지역, 세 주인공의 스토리, 보스, 새 음악. 특히 한국어·중국어 리뷰어가 가성비를 강조합니다.",
+          "quotes": [
+            "The amount of content provided in this DLC could be 3 separate games on its own - its genuinely astonishing how Pearl Abyss was able to pull this off.",
+            "Cheap for the amount of content",
+            "Great DLC from great devs, even more cool stuff to do in an already content packed game."
+          ]
+        },
+        {
+          "title": "하우징, 성, 경영, 연애",
+          "detail": "집이나 성 짓기, 상점·사업 운영, 결혼·연애가 모험 위에 얹힌 느긋한 \"오픈월드 심즈\" 요소로 호평받습니다.",
+          "quotes": [
+            "Bought this dlc for the romance, and stayed for the shipbuilding.",
+            "i think ive spent more time managing my businesses in the past 2 days then actually doing quests!",
+            "I forgot they added entire ocean with navel combat and underwater content because I was too busy playing business tycoon."
+          ]
+        },
+        {
+          "title": "빠른 패치와 개발사에 대한 신뢰",
+          "detail": "긍정 리뷰 다수가 출시 초기 버그는 사실이지만 빠르게 고쳐지고 있다고 말합니다(라데온 그래픽 버그는 하루 만에 수정). 패치 후 부정 리뷰를 긍정으로 바꾼 사람도 여럿이며, 플레이해 보기도 전에 믿음만으로 쓴 긍정 리뷰도 있습니다.",
+          "quotes": [
+            "the 9070xt graphics bug was fixed within 24 hours of being released so that is a huge props to the devs.",
+            "The graphics issues affecting the 9070 XT have been fixed and it looks great now.",
+            "Fixed this morning gotta admit that's impressive."
+          ]
+        }
+      ],
+      "complaints": [
+        {
+          "title": "진행을 막거나 세이브를 망가뜨리는 출시 버그",
+          "detail": "가장 많이 반복된 불만: 첫 섬의 개척/파견 퀘스트(Auronui)가 멈춰 DLC 진행이 막히고, 세이브 손상, 창고 아이템 삭제, 실행·로딩 시 튕김, 지도를 열 때 멈춤이 이어집니다. 출시를 2주 미뤘는데도 테스트가 부족했다는 평입니다.",
+          "quotes": [
+            "dlc is bugged, stuck at \"awaiting completion\" at Auronui island right at the begining of the DLC.",
+            "First quest is bugged as heck, i cant even use any of the new content i paid for.",
+            "Too many bugs right now; gonna wait a bit till they sort that out."
+          ]
+        },
+        {
+          "title": "그래픽 오류와 성능 (AMD 라데온 RX 9070 XT, 바다)",
+          "detail": "RX 9070 XT에서 떠다니는 산과 깨진 텍스처(핫픽스로 수정, 드라이버 롤백이 임시 해결책), 바다와 지도를 열 때의 프레임 저하와 끊김.",
+          "quotes": [
+            "I can't recommend this dlc for those who are using RX 9070 XT.",
+            "ever since the update, the performance has been noticeably worse.",
+            "Completely breaks your game, the game just crashes when turned on."
+          ]
+        },
+        {
+          "title": "클리프 사막 모래폭풍 퀘스트",
+          "detail": "주로 한국어·중국어 리뷰어가 DLC 최악의 부분으로 꼽습니다: 아무것도 보이지 않고, 명확한 표시가 없으며, 바다 콘텐츠가 시작되기도 전에 매우 긴 퍼즐처럼 느껴집니다. 여기서 그만두거나 환불한 사람도 여럿입니다.",
+          "quotes": [
+            "I expected a ship and the ocean, instead I am trapped in a ridiculous environmental desert sandstorm puzzle for 3 days trying to complete the quests.",
+            "the worst quest in history of gaming",
+            "game guides you through a sandstorm in the desert but it doesn't end."
+          ]
+        },
+        {
+          "title": "배 조작, 바람, 선원들의 반복 대사",
+          "detail": "함포 조준 시 조향이 반전되고, 타륜이 돌지 않으며, 맞바람에 배가 멈추고, 배가 가라앉으며 끌려 들어가기도 하고, 선원이 같은 대사 몇 개를 끝없이 반복하는데 끌 방법이 없습니다.",
+          "quotes": [
+            "CONSTANT yappering of the same 3 sentences on the ship with 10 crewmates.",
+            "Sails automatically dropping with no wind, deck hand takes control of ship with no way to take back control.",
+            "30 mins in and already the Steering Wheel doesn't turn when you steer and your ship very frequently goes underneath the waves as you're sailing."
+          ]
+        },
+        {
+          "title": "바뀐 시스템, 얕은 콘텐츠, 서두른 느낌",
+          "detail": "선물을 하나씩만 줄 수 있고 호감도 상승량이 줄었으며, 새 상호작용/루팅 UI, 재탕 보스, 대부분 텅 빈 바다, \"그냥 집\"인 성, 약한 스토리. 베타 테스터가 된 기분이라 더 패치될 때까지 기다리겠다는 사람도 있습니다.",
+          "quotes": [
+            "The exploration leaves a lot to be desired because most of the new map content is empty.",
+            "Overall, the whole DLC seemed rushed, unrefined and low quality.",
+            "A fantastic concept buried beneath bugs, shallow mechanics, and disappointing execution."
+          ]
+        }
+      ],
+      "overview": {
+        "text": "전반적으로 DLC는 좋은 평가를 받고 있습니다. 플레이어들은 추가된 양(항해하고 잠수할 수 있는 바다, 세 주인공의 새 스토리 퀘스트, 하우징, 사업, 연애)을 좋아하고, 많은 이들이 가격이 훌륭하다고 말합니다. 다만 출시는 매끄럽지 않았고, 버그는 가장 많이 언급되는 주제 중 하나입니다. 문제를 경고하면서도 추천하는 플레이어가 많고, 일부 부정 리뷰어는 수정되면 평가를 바꾸겠다고 말합니다.",
+        "positive": "추가된 콘텐츠의 규모와 다양성, 바다와 수중 탐험, 함선 전투, 집·성 짓기, 사업 운영, 가성비. 긍정 리뷰도 출시 첫날 버그를 인정하지만 펄어비스가 빠르게 패치할 것이라고 믿습니다.",
+        "negative": "테스트가 부족해 보이는 출시: 진행을 막는 첫 개척 퀘스트, 튕김, 세이브·그래픽 문제(특히 AMD 라데온), 클리프 사막 모래폭풍 퀘스트, 어색한 배 조작과 끝없이 반복되는 선원 대사, 선물 주기 같은 바뀐 시스템."
+      },
+      "topicNotes": {
+        "Ocean": {
+          "positive": "탐험 스케일, 다이빙과 난파선, 블랙 플래그에 자주 비교되는 함선 전투, 아름다운 물과 항해 음악.",
+          "negative": "곳곳이 텅 빈 느낌의 바다, 배 조향과 바람 문제, 끌 수 없는 선원의 반복 대사, 끝없는 상어·가오리 공격, 탁한 수중 시야와 바다에서의 FPS 저하."
+        },
+        "Bugs": {
+          "positive": "긍정 리뷰에도 버그 언급이 많지만 게임이 망가질 정도는 아니라고 하며, 펄어비스가 정말 빠르게 고친다고 말합니다(라데온 그래픽 버그는 약 하루 만에 패치).",
+          "negative": "테스트가 안 된 버그투성이라는 평: 첫 개척 퀘스트가 진행을 막고, 실행·로딩 시 튕김, 세이브 손상과 아이템 유실, RX 9070 XT 그래픽 깨짐, 프레임 저하, 고장 난 기능."
+        },
+        "Quest & Story": {
+          "positive": "클리프, 데미안, 웅카의 새 스토리와 추가 보스전을 즐긴다는 평이며, 본편보다 낫다고 하는 사람도 일부 있습니다.",
+          "negative": "클리프 사막 모래폭풍 퀘스트가 가장 싫은 퀘스트이고, 개척 퀘스트 버그가 DLC 시작을 막으며, 글이 빈약하거나 서두른 듯하고 늘리기용이라는 평입니다. 이 토픽에는 스토리 품질뿐 아니라 고장 난 퀘스트에 대한 리뷰도 포함됩니다."
+        },
+        "Housing": {
+          "positive": "집이나 성을 짓고 꾸미는 것이 느긋한 창작 요소로 호평받습니다.",
+          "negative": "성이 값비싼 장식품이나 더 큰 집처럼 느껴지고, 배치 규칙이 까다로우며 건축 관련 버그가 있습니다."
+        },
+        "Romance": {
+          "positive": "일부에게는 구매 이유가 되며, 더 많은 연애 대상을 바라는 의견이 있습니다.",
+          "negative": "선물이 한 번에 하나씩만 가능해지고 호감도 상승량이 줄었으며, 결혼식 이후 대사와 콘텐츠가 거의 없습니다."
+        },
+        "Management": {
+          "positive": "상점, 공방, 파견 운영이 중독성 있는 타이쿤 요소로 즐겁다는 평입니다.",
+          "negative": "사업과 파견 퀘스트에 버그가 있고, 손님이 오지 않을 때가 있으며, 일손이 부족하고, 방치형 대기처럼 느껴질 수 있습니다."
+        },
+        "Garden of Trials": {
+          "positive": "",
+          "negative": "거의 언급되지 않으며, 본편 보스를 재활용한 어려운 보스 러시로 평가됩니다."
+        }
+      }
+    },
+    "english": {
+      "praise": [
+        {
+          "title": "바다, 항해, 수중 탐험",
+          "detail": "다이빙, 난파선, 해전, 그리고 새 맵의 압도적인 크기가 긍정 리뷰의 주된 이유이며, 블랙 플래그와의 비교가 흔합니다.",
+          "quotes": [
+            "the ocean biome is huge and there's a lot to discover, so if you like the base game then this seems like a no brainer.",
+            "Pearl abyss really outdid themselves with the attention to detail and just how awesome the ocean is.",
+            "The housing and ocean exploration are my favourite things!"
+          ]
+        },
+        {
+          "title": "건축, 경영, 연애",
+          "detail": "집과 성 짓기, 상점과 공방, 새 연애 옵션이 호평받고, 경영 요소에 빠져들었다는 리뷰어도 여럿입니다.",
+          "quotes": [
+            "Bought this dlc for the romance, and stayed for the shipbuilding.",
+            "i think ive spent more time managing my businesses in the past 2 days then actually doing quests!",
+            "I forgot they added entire ocean with navel combat and underwater content because I was too busy playing business tycoon."
+          ]
+        },
+        {
+          "title": "엄청난 가성비",
+          "detail": "낮은 가격에 수십 시간이 추가되고, 새 보스와 음악도 있다고 말합니다.",
+          "quotes": [
+            "The amount of content provided in this DLC could be 3 separate games on its own - its genuinely astonishing how Pearl Abyss was able to pull this off.",
+            "Cheap for the amount of content",
+            "Great DLC from great devs, even more cool stuff to do in an already content packed game."
+          ]
+        },
+        {
+          "title": "개발사의 빠른 수정",
+          "detail": "9070 XT 그래픽 버그가 약 24시간 안에 수정되었고 패치 2.04.06이 상황을 개선했다고 언급하며, 남은 버그도 고쳐질 것으로 기대합니다.",
+          "quotes": [
+            "the 9070xt graphics bug was fixed within 24 hours of being released so that is a huge props to the devs.",
+            "The graphics issues affecting the 9070 XT have been fixed and it looks great now.",
+            "Fixed this morning gotta admit that's impressive."
+          ]
+        }
+      ],
+      "complaints": [
+        {
+          "title": "Auronui 섬의 진행 불가 퀘스트 버그",
+          "detail": "초반 개척/파견 퀘스트가 \"완료 대기 중\"에서 멈춰 DLC의 나머지가 잠기며, 동료가 사라지기도 합니다. 그 외: 창고 아이템 삭제, 얼굴이 없는 캐릭터, 튕김.",
+          "quotes": [
+            "dlc is bugged, stuck at \"awaiting completion\" at Auronui island right at the begining of the DLC.",
+            "Several quests are completely bugged and you can't finished them (Specifically talking about Pioneering ones).",
+            "First quest is bugged as heck, i cant even use any of the new content i paid for."
+          ]
+        },
+        {
+          "title": "튕김과 성능",
+          "detail": "실행 시 튕김, RX 9070 XT 그래픽 깨짐(떠다니는 산), 바다와 업데이트 이후의 FPS 저하와 끊김.",
+          "quotes": [
+            "I can't recommend this dlc for those who are using RX 9070 XT.",
+            "ever since the update, the performance has been noticeably worse.",
+            "Completely breaks your game, the game just crashes when turned on."
+          ]
+        },
+        {
+          "title": "배 조작, 바람, 반복되는 선원 대사",
+          "detail": "조준 중 좌우 조작이 뒤바뀌고, 바람이 계속 배를 거슬러 밀며, 끌 수 없는 선원들의 반복 대사가 가장 싫어하는 요소 중 하나입니다.",
+          "quotes": [
+            "CONSTANT yappering of the same 3 sentences on the ship with 10 crewmates.",
+            "Sails automatically dropping with no wind, deck hand takes control of ship with no way to take back control.",
+            "30 mins in and already the Steering Wheel doesn't turn when you steer and your ship very frequently goes underneath the waves as you're sailing."
+          ]
+        },
+        {
+          "title": "사막 모래폭풍 퀘스트와 억지 요구 조건",
+          "detail": "모래폭풍 기둥/불빛 퀘스트가 최악의 퀘스트 중 하나로 꼽히고, 성을 열기 위한 길고 관련 없는 잡일에 짜증 내는 사람도 있습니다.",
+          "quotes": [
+            "I expected a ship and the ocean, instead I am trapped in a ridiculous environmental desert sandstorm puzzle for 3 days trying to complete the quests.",
+            "the worst quest in history of gaming",
+            "game guides you through a sandstorm in the desert but it doesn't end."
+          ]
+        },
+        {
+          "title": "얕거나 재탕된 콘텐츠",
+          "detail": "짧은 캐릭터 퀘스트, 재탕 보스, 기존 보스로만 만든 보스 러시, 텅 빈 바다, 사실상 집일 뿐인 성. 새 UI와 루팅 텍스트를 싫어하는 사람도 있습니다.",
+          "quotes": [
+            "The exploration leaves a lot to be desired because most of the new map content is empty.",
+            "Overall, the whole DLC seemed rushed, unrefined and low quality.",
+            "A fantastic concept buried beneath bugs, shallow mechanics, and disappointing execution."
+          ]
+        }
+      ],
+      "overview": {
+        "text": "영어권 리뷰어는 바다, 건축, 가성비를 칭찬하지만 기술적 문제에 가장 목소리를 높입니다. 버그와 성능 불만이 부정 평가의 주된 이유이며, 출시 전에 더 많은 테스트가 필요했다는 의견이 많습니다.",
+        "positive": "훨씬 넓어진 맵에서의 다이빙, 난파선, 항해, 집과 성 짓기, 사업 운영, 낮은 가격에 많은 콘텐츠.",
+        "negative": "진행 불가 퀘스트 버그, 튕김과 FPS 저하(특히 AMD RX 9070 XT), 모래폭풍 사막 퀘스트, 배 조작과 반복되는 선원 대사, 얕거나 재탕된 느낌의 콘텐츠."
+      },
+      "topicNotes": {
+        "Ocean": {
+          "positive": "다이빙, 난파선, 해전, 새 맵의 압도적인 크기. 어쌔신 크리드 블랙 플래그와 비교하는 사람이 많습니다.",
+          "negative": "조향과 바람 문제, 끌 수 없는 선원의 반복 대사, 텅 빈 느낌의 바다, 바다에서의 FPS 저하."
+        },
+        "Bugs": {
+          "positive": "출시 첫날 버그는 있지만 게임을 망칠 정도는 아니라고 하며, 약 하루 만에 나온 핫픽스(AMD 9070 XT 수정)를 높이 평가합니다.",
+          "negative": "테스트가 안 된 버그투성이라는 평: Auronui 섬 퀘스트가 \"완료 대기 중\"에서 멈춤, 세이브 문제와 창고 아이템 유실, 실행 시 튕김, RX 9070 XT 그래픽 깨짐과 FPS 저하."
+        },
+        "Quest & Story": {
+          "positive": "새 캐릭터 퀘스트, 보스전, 몇몇 좋은 스토리가 호평받습니다.",
+          "negative": "불만은 스토리보다 퀘스트에 집중됩니다: 사막 모래폭풍 퀘스트, 개척 퀘스트 버그, 서두른 새 메인 퀘스트, 빈약한 글."
+        },
+        "Housing": {
+          "positive": "집과 성 짓기, 상점 시스템이 재미있습니다.",
+          "negative": "성이 미완성이고 기본적인 집 같으며, 배치 규칙이 까다롭고 건축 버그가 나타납니다."
+        },
+        "Romance": {
+          "positive": "일부에게는 연애가 구매 이유입니다(\"연애 때문에 샀다\"). 연애 대상이 더 많았으면 하는 바람도 있습니다.",
+          "negative": "결혼 시스템이 실망스럽고 결혼식 이후 내용이 빈약하며, 선물 변경이 짜증스럽다는 평입니다."
+        },
+        "Management": {
+          "positive": "가게와 사업 운영이 일부 플레이어에게는 중독적입니다.",
+          "negative": "사업 퀘스트 버그, 손님이 오지 않음, 가게·배·원정을 운영할 인력이 부족함."
+        }
+      }
+    },
+    "korean": {
+      "praise": [
+        {
+          "title": "가성비와 압도적인 분량",
+          "detail": "가장 많은 칭찬: 가격에 비해 일반 DLC보다 훨씬 많은 콘텐츠.",
+          "quotes": [
+            "버그와 아쉬운 점이 있지만 이 가격에 이 정도 규모라면 추천을 안 할 수는 없는 DLC.",
+            "이정도가격으로 이만한볼륨은 그 어디가서 못함",
+            "이거 그냥 확팩아님? DLC볼륨이 이정도라고?"
+          ]
+        },
+        {
+          "title": "항해, 바다, 물리 표현",
+          "detail": "파도, 함선 전투, 다이빙, 바다의 스케일이 호평받고, 하우징, 성 꾸미기, 경영, 결혼 콘텐츠도 좋은 평가를 받습니다.",
+          "quotes": [
+            "특히 바다는 마치 몰디브 해변에서 다이브하는 느낌이 죽여줍니다.",
+            "경영 시스템, 바다 탐험, 하우징 시스템 등등 정말 괜찮음.",
+            "더좋아진 물그래픽과 파도 확장된 세계가 엔딩 후 멈춰있던 붉은 사막에 활력을 줍니다"
+          ]
+        },
+        {
+          "title": "한국적 요소와 국산 게임에 대한 자부심",
+          "detail": "거북선과 아리랑이 언급되고, 많은 이들이 이 게임을 국산 게임의 희망이라고 부릅니다.",
+          "quotes": [
+            "와 이게 한국게임이라니 진짜 대단하네",
+            "DLC 컨텐츠까지 접근하는게 미지의 여정이다 하지만 국산게임의 희망이라는건 뭐 변함없다",
+            "특히 이번 바다 항해 콘텐츠에서 인상 깊었던 것은 한국적인 요소를 자연스럽게 녹여냈다는 점입니다."
+          ]
+        },
+        {
+          "title": "출시 버그에 대한 인내",
+          "detail": "긍정 리뷰 다수가 늘 하던 빠른 패치로 문제가 해결될 것으로 기대하며, 버그가 고쳐지면 부정 평가가 뒤집힐 것이라는 의견도 있습니다.",
+          "quotes": [
+            "AMD 드라이버 버그 바로 잡아줘서 너무 감사합니다!",
+            "역시 펄어비스 하루만에 버그패치 ㄳ",
+            "초기 패치도 하루만에 해주고 일단 가격부터 혜자인데 고봉밥이라 좋습니다 해양 컨텐츠 너무 좋아요"
+          ]
+        }
+      ],
+      "complaints": [
+        {
+          "title": "클리프의 모래폭풍 사막 퀘스트",
+          "detail": "가장 큰 불만: 시야가 전혀 없고, 뽑아야 하는 숨겨진 기둥/못과 직접 뿌려야 하는 빛 열매가 일부러 불쾌하게 만든 것처럼 느껴지며 많은 부정 리뷰의 원인입니다.",
+          "quotes": [
+            "dlc출시후에 사막미션이랑 최적화 ㅈ같이 된거때문에 극 비추함",
+            "걍 기믹사막으로 게임 이름 바꾸셈",
+            "아 사막퀘스트 만든 놈 짤라라 진짜 개스트레스 받네"
+          ]
+        },
+        {
+          "title": "버그, 튕김, 라데온 문제",
+          "detail": "초기화되거나 끝낼 수 없는 개척 퀘스트, 튕김, 지도를 열 때 프레임 저하, 라데온 그래픽 깨짐, 예약 구매 특전 중복 수령.",
+          "quotes": [
+            "그냥 묵혀뒀다가 하셈 버그가 한두개가 아니네 겜 자체는 재미있는데 버그때문에 흐름이 계속 끊겨서 못하겠다",
+            "1. 개척 버그로 진행 막힘",
+            "개척 임무 보내놓은것도 리셋되어있고 다시 임무 보내려고 해도 먹통되는 버그남"
+          ]
+        },
+        {
+          "title": "배 조작과 반복되는 선원 대사",
+          "detail": "함포 조준 시 조향 반전, 타륜 모션 없음, 얕은 물에서 배가 걸리거나 가라앉는 잔해에 끌려 들어감, 선원이 같은 대사를 계속 반복.",
+          "quotes": [
+            "측면 함포사격시 후측방쪽으로 각도를 높이면 배 방향 조작이 제멋대로 됩니다",
+            "선원들이 롤Ctrl+1 누른것마냥 같은말만 계속 옆에서",
+            "타륜이 돌아가는 모션도 없고"
+          ]
+        },
+        {
+          "title": "탁하고 어두운 수중 시야",
+          "detail": "물이 너무 푸르고 탁해서 아무것도 보이지 않으며, 색 보정이 필요하다는 불만.",
+          "quotes": [
+            "누가 퍼런거 볼라고 게임하나 물속에서 뭐가 좀 이쁘고 잘 보여야지 색보정 안하놓을 꺼야?",
+            "탁하고 어두워서 하나도 안보이는게",
+            "바다 속도 뿌옇고 빛도 안보여서 찾기 개빡세니깐 안하게됨"
+          ]
+        },
+        {
+          "title": "바뀐 호감도/선물 시스템과 출시 때 실수의 반복",
+          "detail": "선물을 한 번에 하나씩만 줄 수 있고 호감도 올리기가 어려워졌으며, 본편 출시 때의 실수를 반복했고 초기 구매자가 베타 테스터 취급을 받는다고 느끼는 사람이 많습니다.",
+          "quotes": [
+            "왜 선물주는거 바꿨냐... 다 고치면 좋아요로 바꾸겠음.",
+            "돈내고 베타 테스터 해주고 있으니",
+            "본편 출시 때 그 많은 문제점들을 검수하지 못하고 출시해버려서 대차게 까이고 평점나락도 경험해봤으면서 DLC에서도 똑같은 실수를 반복하네요."
+          ]
+        }
+      ],
+      "overview": {
+        "text": "한국어 리뷰어는 대체로 DLC를 추천하며, 가격 대비 엄청난 분량과 바다 콘텐츠를 강조합니다. 한편 출시 버그와 클리프의 사막 모래폭풍 퀘스트에 화가 난 사람도 많습니다. 버그가 가장 많이 언급되는 주제이지만, 이를 언급한 리뷰의 대다수는 여전히 긍정적입니다.",
+        "positive": "가성비, 바다와 항해, 하우징·성·결혼 콘텐츠, 국산 게임에 대한 자부심, 펄어비스의 빠른 패치에 대한 신뢰.",
+        "negative": "사막 모래폭풍 퀘스트, 진행을 막는 개척 버그, 튕김과 라데온 문제, 배 조작, 탁한 수중 시야, 바뀐 선물·호감도 시스템, 초기 구매자가 베타 테스터가 된 것 같은 느낌."
+      },
+      "topicNotes": {
+        "Bugs": {
+          "positive": "버그는 있지만 곧 빠르게 고쳐질 것이라고 말하는 리뷰가 많습니다: AMD 드라이버 버그는 하루 만에 패치되었습니다.",
+          "negative": "초기화되거나 끝낼 수 없는 개척·파견 임무, 패치 후 튕김과 프레임 저하, 라데온 그래픽 깨짐, 본편 출시 때의 실수가 반복되었다는 분노."
+        },
+        "Ocean": {
+          "positive": "파도, 물 그래픽, 다이빙의 느낌이 호평받으며 바다가 가장 큰 매력입니다.",
+          "negative": "물이 너무 탁하고 어두워 보이지 않고, 조준 시 조향이 반전되며, 맞바람에 배가 멈추고, 선원이 같은 대사를 반복합니다."
+        },
+        "Quest & Story": {
+          "positive": "메인 스토리와 데미안, 웅카의 새 스토리가 분량과 질 모두 훌륭하다는 평입니다.",
+          "negative": "클리프 사막 모래폭풍 퀘스트(시야 없음, 숨겨진 기둥과 못)가 가장 큰 불만이며, 멈춘 첫 개척 퀘스트와 약한 개인 스토리도 지적됩니다."
+        },
+        "Romance": {
+          "positive": "연애, 고백, 결혼 콘텐츠가 호평받고 집이나 성 꾸미기와 잘 어울립니다.",
+          "negative": "선물을 한 번에 하나씩만 줄 수 있고 호감도 올리기가 어려워졌으며, 클리프 외의 캐릭터는 더빙이 없고 연애 진행도 안 됩니다."
+        },
+        "Management": {
+          "positive": "경영과 무역이 가장 좋은 신규 요소로 꼽히며 오픈월드판 심즈 같다는 평입니다.",
+          "negative": "아무것도 가져오지 않는 파견 임무, 억지로 시설을 설치하게 하는 구조, 균형이 맞지 않게 느껴지는 가격."
+        },
+        "Housing": {
+          "positive": "집이나 성 꾸미기가 호평받습니다(언급 적음).",
+          "negative": ""
+        },
+        "Garden of Trials": {
+          "positive": "",
+          "negative": "불공정하다는 평이며 보스 기믹이 반복됩니다(언급 적음)."
+        }
+      }
+    },
+    "chinese": {
+      "praise": [
+        {
+          "title": "가격 대비 엄청난 콘텐츠",
+          "detail": "첫 번째로 자주 꼽힘: 약 100위안에 웬만한 정식 게임보다 큰 DLC(27~60GB)와 더 넓은 맵.",
+          "quotes": [
+            "显示更新了快60G，你这DLC赶上别人憋几年的游戏了，打开地图大了一倍",
+            "108块钱竟然有27gb内容，能下水能谈恋爱能种田",
+            "加大了地圖，更多的探索方式，航海，潛水，給三個主角都添加了新任務，量大管飽。"
+          ]
+        },
+        {
+          "title": "바다, 항해, 바다 음악",
+          "detail": "항해, 다이빙, 바다 사운드트랙이 좋은 평을 받고, 해전의 느낌을 블랙 플래그에 비교하는 사람이 많습니다.",
+          "quotes": [
+            "疯狂水世界，好玩，能开船能潜水",
+            "海下不是随便塞宝箱，是认真手搓的，探索完拿武器或珍珠挺有成就感。",
+            "海上部分的bgm属于是上大分了，扬帆起航，激情高昂。"
+          ]
+        },
+        {
+          "title": "하우징, 성, 경영, 결혼, 새 스토리 퀘스트",
+          "detail": "집 짓기와 경영이 재미있다고 평가되며, 성(병사 배치, 거주 가능)과 용병 의상에 대한 바람도 있습니다.",
+          "quotes": [
+            "家园建设部分，非常好,让我能够在战斗和冒险之余花费很多小时去探索。",
+            "还有城堡建造和模拟经营，满分",
+            "主角们新增的剧情任务，让故事更加充实，对于喜欢沉浸剧情的玩家来说非常友好"
+          ]
+        },
+        {
+          "title": "빠른 패치, 긍정으로 바뀐 리뷰",
+          "detail": "개발사가 하루 안팎에 튕김이나 세이브 버그를 고치자 부정 리뷰를 긍정으로 바꿨다는 리뷰어가 여럿입니다.",
+          "quotes": [
+            "岛屿开拓卡100%吞船员，刚准备差评就弹了一版更新修复了这个bug，更新很勤快",
+            "可怕，他们马上就改了。遵守约定改为好评。",
+            "修了bug能进去了该改好评了"
+          ]
+        }
+      ],
+      "complaints": [
+        {
+          "title": "클리프의 사막 모래폭풍 퀘스트",
+          "detail": "많은 이들이 최악의 퀘스트라고 부릅니다: 시야 없음, 명확한 표시 없음, 나침반 없음, 바다 콘텐츠가 시작되기 전에 시간을 잡아먹음.",
+          "quotes": [
+            "那个黄沙里面找灯的任务是我玩过最恶心的任务 没有之一",
+            "克里夫沙漠直接给差评了，没得谈",
+            "玩了一下午没走出这个黄沙风暴"
+          ]
+        },
+        {
+          "title": "세이브를 망가뜨리는 버그와 튕김",
+          "detail": "첫 섬의 개척(开拓) 파견 퀘스트가 세이브를 망가뜨리고, 실행 시 또는 작은 패치 후 튕김, 가방·창고 손상, 사운드카드 충돌, 지도에서 항구를 더블클릭하면 멈춤.",
+          "quotes": [
+            "买完dlc直接一开游戏就闪退",
+            "开拓奥罗努伊岛任务派遣任务直接死档了，建造完成后读档导致直接没法完成，一直卡在派遣",
+            "闪退/坏档/背包污染bug修一个带一个修一个带一个"
+          ]
+        },
+        {
+          "title": "거칠고 반복적인 항해",
+          "detail": "배가 조잡하고 배 위에서 할 일이 없으며, 타륜이 돌지 않고, 보물상자에 힌트가 없고, 상어와 가오리가 끝없이 공격합니다.",
+          "quotes": [
+            "航海是本DLC的一大主要内容，但船只却做的很粗糙，克里夫虚空打舵，舵轮都不转的。",
+            "宝箱真的是一点提示都没有 这么大的海怎么找？",
+            "整艘船的NPC一直在重複一樣的台詞"
+          ]
+        },
+        {
+          "title": "선물·호감도 변경, 빈약한 결혼 시스템",
+          "detail": "선물을 하나씩만 줄 수 있고 호감도 상승량이 줄었으며, 결혼 후 대화나 배우자 의상 변경이 없다는 의견도 있습니다.",
+          "quotes": [
+            "不是 送礼物刷好感怎么只能一个一个送了这合适吗？",
+            "送礼系统改得太垃圾了，特殊npc就几个能发展特殊关系太少了",
+            "婚后和配偶之间可以对话的内容极少，翻来覆去只有几句重复的台词"
+          ]
+        },
+        {
+          "title": "약한 스토리와 산만한 구성",
+          "detail": "캐릭터 스토리가 빈약하거나 어색하다는 평이며, 시스템들이 핵심 없이 따로 노는 느낌입니다. 받을 수 없는 트위치 드롭을 불평하는 사람도 일부 있습니다.",
+          "quotes": [
+            "主线任务剧情非常之差，玩起来非常折磨，比本体有过之而无不及。",
+            "剧情任务一堆废话流水账小学生水平",
+            "航海部分的剧情线几乎可以说是没有了，就只是为了添加点玩法而已"
+          ]
+        }
+      ],
+      "overview": {
+        "text": "중국어 리뷰는 퀘스트 디자인에 가장 비판적입니다. 클리프의 사막 모래폭풍 퀘스트와 빈약한 스토리가 많은 부정 평가의 원인이며, 버그도 자주 언급됩니다. 그래도 버그를 언급한 리뷰의 대부분은 긍정적이고, 수정을 기다리겠다거나 패치 후 이미 평가를 바꿨다는 플레이어가 있으며, 가격과 분량은 널리 호평받습니다.",
+        "positive": "약 100위안에 엄청난 분량, 바다와 그 음악, 건축과 경영, 그리고 여러 리뷰어가 긍정으로 바꾸게 만든 빠른 패치.",
+        "negative": "사막 모래폭풍 퀘스트, 세이브를 망가뜨리는 개척 퀘스트와 튕김, 거칠고 반복적인 항해, 선물·호감도 변경, 빈약한 결혼 콘텐츠와 약한 스토리."
+      },
+      "topicNotes": {
+        "Bugs": {
+          "positive": "\"버그투성이지만 그래도 좋다\"는 말이 흔하며, 수정을 기다리겠다거나 패치 후 긍정으로 바꿨다는 리뷰어가 여럿입니다.",
+          "negative": "실행 시 튕김, 불러올 수 없거나 손상된 세이브, 가방 손상, 멈춘 개척 파견 퀘스트, 그리고 플레이어를 테스터로 쓴다는 분노."
+        },
+        "Quest & Story": {
+          "positive": "세 주인공의 스토리와 바다 스토리가 본편보다 낫다는 평이 일부 있으며, 새 퀘스트가 많은 것을 더해 줍니다.",
+          "negative": "사막의 빛 찾기 퀘스트가 최악의 퀘스트로 꼽히며, 스토리는 빈약하고 늘리기용이며 보상이 없다는 평입니다."
+        },
+        "Ocean": {
+          "positive": "다이빙과 항해가 풍성하고, 물고기 종류가 많으며 수중 보물이 손수 배치되어 있고, 바다 음악이 사랑받습니다.",
+          "negative": "형편없는 배 조작, 힌트 없는 보물상자, 끝없는 상어·가오리 공격, 이동 수단 말고는 할 게 없는 배."
+        },
+        "Management": {
+          "positive": "시설 경영과 파견이 시뮬레이션 느낌으로 즐겁다는 평입니다.",
+          "negative": "방치형 대기 방식, 약한 AI, 버그가 있는 파견 퀘스트, 결혼한 NPC가 상점 기능을 잃음."
+        },
+        "Housing": {
+          "positive": "집과 성 짓기가 아주 좋다는 평입니다(언급 적음).",
+          "negative": "성이 값비싼 장식품으로 보입니다(언급 적음)."
+        },
+        "Romance": {
+          "positive": "",
+          "negative": "결혼이 미완성이며 대사가 적고 의상 변경이 없다는 평입니다(언급 적음)."
+        }
+      }
+    }
+  }
+}
