@@ -19,7 +19,9 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE, 'data')
 PORT = int(os.environ.get('PORT', '8765'))
-STEAM_URL = 'https://store.steampowered.com/appreviews/%s'
+# Steam's store page itself loads reviews from /ajaxappreviews/ (it works for DLCs too);
+# the older /appreviews/ now redirects to the store homepage.
+STEAM_URL = 'https://store.steampowered.com/ajaxappreviews/%s'
 DELAY = 0.3  # seconds between Steam requests
 
 lock = threading.Lock()
@@ -55,7 +57,7 @@ def fetch_page(app, cursor):
     q = urllib.parse.urlencode({
         'json': 1, 'filter': 'recent', 'language': 'all', 'review_type': 'all',
         'purchase_type': 'all', 'filter_offtopic_activity': 0,
-        'num_per_page': 100, 'cursor': cursor,
+        'num_per_page': 100, 'cursor': cursor, 'origin': 'https://store.steampowered.com',
     })
     req = urllib.request.Request((STEAM_URL % app) + '?' + q,
                                  headers={'User-Agent': 'Mozilla/5.0 SteamReviewDashboard'})
