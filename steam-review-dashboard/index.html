@@ -910,7 +910,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modalBg
   const offline = location.protocol === 'file:' && !readOnly;
   if (offline) banner(t('err.noserver'), true);
   if (readOnly) { for (const id of ['appId', 'loadBtn', 'syncBtn', 'syncDays']) $(id).disabled = true; if (location.protocol === 'blob:' || window.SRD_NO_DOWNLOADS) { $('exportBtn').hidden = true; $('tmExport').hidden = true; } $('syncField').hidden = true; $('syncBtn').hidden = true; }
-  let startApp = EMBED ? EMBED.app : store.get('app', '3321460');
+  let startApp = EMBED ? EMBED.app : store.get('app', WEB ? null : '3321460'); // web folder: first published game unless they picked another before
   if (WEB) {
     // published folder: pick from the games that were published instead of typing an App ID
     $('appField').hidden = true; $('loadBtn').hidden = true; $('pickField').hidden = false;
