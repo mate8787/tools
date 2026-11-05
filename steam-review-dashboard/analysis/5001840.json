@@ -1,0 +1,183 @@
+{
+  "app": "5001840",
+  "analyzed": "2026-11-05",
+  "from": "2026-10-30",
+  "to": "2026-11-04",
+  "sampleSize": 192,
+  "scopes": {
+    "all": {
+      "praise": [
+        {
+          "title": "The ocean: sailing, diving and a much bigger map",
+          "detail": "The most common praise in every language. Players love the sea, underwater exploration, ship combat (often compared to Assassin's Creed Black Flag), shipwrecks and islands, and say the map has grown several times over.",
+          "quote": "the map is now 4x bigger with a ton of stuff to explore underwater"
+        },
+        {
+          "title": "Huge amount of content for the price",
+          "detail": "Many call it a \"more than a DLC\" package: tens of GB, a new region, three character storylines, bosses, new music. Korean and Chinese reviewers especially stress the value for money.",
+          "quote": "The DLC brings enough content for 10 DLCs"
+        },
+        {
+          "title": "Housing, castles, business and romance",
+          "detail": "Building a house or castle, running shops and businesses, and marriage/romance are praised as a relaxing \"open-world Sims\" layer on top of the adventure."
+        },
+        {
+          "title": "Fast patches and trust in the developer",
+          "detail": "Many positive reviews say the launch bugs are real but are being fixed quickly (the Radeon graphics bug within a day), and several reviewers changed a negative review to positive after a patch. A number of positive reviews were written before playing, on trust alone."
+        }
+      ],
+      "complaints": [
+        {
+          "title": "Launch bugs that block progress or damage saves",
+          "detail": "The most repeated complaint: the first island's pioneering/dispatch quest (Auronui) gets stuck and blocks the DLC, plus save corruption, deleted chest items, crashes on launch or load, and a freeze when opening the map. Reviewers say it was not tested before release, despite the two-week delay.",
+          "quote": "you cannot release an expansion with a game breaking bug in the first quest of the DLC"
+        },
+        {
+          "title": "Graphics glitches and performance (AMD Radeon RX 9070 XT, ocean)",
+          "detail": "Floating mountains and broken textures on RX 9070 XT cards (fixed by a hotfix, with a driver rollback as a workaround), and frame-rate drops and stutter on the ocean and when opening the map."
+        },
+        {
+          "title": "The Kliff desert sandstorm quest",
+          "detail": "Described as the worst part of the DLC, mainly by Korean and Chinese reviewers: you cannot see anything, there are no clear markers, and it feels like a very long puzzle before the ocean content even starts. Several reviewers quit or refunded here."
+        },
+        {
+          "title": "Ship handling, wind and crew chatter",
+          "detail": "Steering reverses when aiming cannons, the wheel does not turn, headwinds stall the ship, ships can sink and drag you down, and the crew repeats the same few voice lines endlessly with no way to mute them."
+        },
+        {
+          "title": "Changed systems, shallow content and rushed feel",
+          "detail": "Gift-giving one item at a time and reduced affinity gains, a new interaction/looting UI, reskinned bosses, a mostly empty ocean, castles that are \"just homes\" and a weak story. Some players say they feel like beta testers and will wait for more patches."
+        }
+      ]
+    },
+    "english": {
+      "praise": [
+        {
+          "title": "Ocean, sailing and underwater exploration",
+          "detail": "Diving, shipwrecks, naval combat and the sheer size of the new map are the main reasons for positive reviews; the Black Flag comparison is common.",
+          "quote": "below the surface is where the fun is"
+        },
+        {
+          "title": "Building, business and romance",
+          "detail": "House and castle building, shops and workshops, and the new romance options are enjoyed, with several reviewers saying they got hooked on the management side."
+        },
+        {
+          "title": "Huge value",
+          "detail": "Players say it adds many dozens of hours for a low price, plus new bosses and music.",
+          "quote": "Cheap for the amount of content"
+        },
+        {
+          "title": "Quick fixes from the developer",
+          "detail": "Reviewers note the 9070 XT graphics bug was fixed within about 24 hours and that patch 2.04.06 improved things, and expect the remaining bugs to be fixed too."
+        }
+      ],
+      "complaints": [
+        {
+          "title": "Game-breaking quest bug on Auronui Island",
+          "detail": "The introductory pioneering/dispatch quest gets stuck at \"awaiting completion\", locking the rest of the DLC; it can also remove companions. Other bugs: deleted chest items, missing faces, crashes.",
+          "quote": "the DLC is locked behind that quest"
+        },
+        {
+          "title": "Crashes and performance",
+          "detail": "Crashes on launch, RX 9070 XT graphics corruption (floating mountains), and FPS drops and stutter on the ocean and after updates."
+        },
+        {
+          "title": "Ship controls, wind and the looping crew voice lines",
+          "detail": "Left/right controls flip while aiming, wind keeps pushing the ship against you, and the crew's repeated lines with no mute option is one of the most hated details."
+        },
+        {
+          "title": "Desert sandstorm quest and filler requirements",
+          "detail": "The sandstorm pillar/light quest is called one of the worst quests, and some are annoyed by long unrelated chores needed to unlock the castle."
+        },
+        {
+          "title": "Shallow or recycled content",
+          "detail": "Short character quest lines, reskinned bosses, a boss rush made of old bosses, a mostly empty ocean and castles that are basically homes. Some also dislike the new UI and looting text."
+        }
+      ]
+    },
+    "korean": {
+      "praise": [
+        {
+          "title": "Great value and sheer volume",
+          "detail": "The most common praise: far more content than a normal DLC for the price."
+        },
+        {
+          "title": "Sailing, ocean and the physics",
+          "detail": "Waves, ship combat, diving and the scale of the sea are praised, along with housing, castle decorating, management and marriage content."
+        },
+        {
+          "title": "Korean touches and national pride",
+          "detail": "The turtle ship and Arirang are noted, and many call the game the hope of Korean games."
+        },
+        {
+          "title": "Patience with launch bugs",
+          "detail": "Many positive reviews expect the usual fast patches to fix the problems, and some say the negative ratings will flip once bugs are fixed."
+        }
+      ],
+      "complaints": [
+        {
+          "title": "Kliff's sandstorm desert quest",
+          "detail": "The loudest complaint: zero visibility, hidden pillars/nails to pull and light fruit to scatter by hand, felt as deliberately unpleasant and the reason for many negative reviews."
+        },
+        {
+          "title": "Bugs, crashes and Radeon problems",
+          "detail": "The pioneering (개척) quest that resets or cannot be finished, crashes, frame drops when opening the map, broken graphics on Radeon cards, pre-order item duplication."
+        },
+        {
+          "title": "Ship controls and repeating crew lines",
+          "detail": "Steering inverts when aiming cannons, no wheel animation, ships get stuck in shallow water or are dragged down by sinking wrecks, and the crew repeats the same line constantly."
+        },
+        {
+          "title": "Murky, dark underwater visuals",
+          "detail": "Water is too blue and murky to see anything, with complaints that it needs colour correction."
+        },
+        {
+          "title": "Changed affinity/gift system and a repeat of launch mistakes",
+          "detail": "Gifts can only be given one at a time and affinity is harder to raise; many feel the studio repeated the base game's launch mistakes and that early buyers are treated as beta testers."
+        }
+      ]
+    },
+    "chinese": {
+      "praise": [
+        {
+          "title": "Enormous content for the price",
+          "detail": "Often the first point: a DLC bigger than many full games (27 to 60 GB), with a larger map, for about 100 yuan."
+        },
+        {
+          "title": "Ocean, sailing and the sea music",
+          "detail": "Sailing, diving and the sea soundtrack are liked, and many compare the naval feel to Black Flag."
+        },
+        {
+          "title": "Housing, castle, businesses, marriage and new story quests",
+          "detail": "Home building and management are described as fun, with a wish list for castles (soldiers, being able to live there) and mercenary outfits."
+        },
+        {
+          "title": "Quick patches, reviews flipped to positive",
+          "detail": "Several reviewers say they updated a negative review to positive after the developer fixed the crash or save bug within a day or so."
+        }
+      ],
+      "complaints": [
+        {
+          "title": "Kliff's desert sandstorm quest",
+          "detail": "Called the most disgusting quest by many: no visibility, no clear marker, no compass, and it eats hours before the sea content begins."
+        },
+        {
+          "title": "Save-breaking and crash bugs",
+          "detail": "The first island's pioneering (开拓) dispatch quest breaks the save, crashes on launch or after the small patch, bag and storage corruption, a sound-card conflict, and a freeze when double-clicking a port on the map."
+        },
+        {
+          "title": "Rough, repetitive sailing",
+          "detail": "Ships feel crude with nothing to do on board, the wheel does not turn, treasure chests have no hints, and sharks and rays attack endlessly."
+        },
+        {
+          "title": "Gifting and affinity changes, thin marriage system",
+          "detail": "Gifts can only be given one by one and affinity gain was cut; some say marriage lacks dialogue or outfit changes for the spouse."
+        },
+        {
+          "title": "Weak story and an unfocused feel",
+          "detail": "Character storylines are called thin or awkward, and the systems seem to run in parallel with no core. A few also complain about Twitch drops that cannot be claimed."
+        }
+      ]
+    }
+  }
+}
