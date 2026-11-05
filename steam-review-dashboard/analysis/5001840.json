@@ -242,6 +242,10 @@
         "Management": {
           "positive": "Running shops and businesses is addictive for some players.",
           "negative": "Business quests are bugged, customers do not show up, and there are too few workers to staff shops, ships and expeditions."
+        },
+        "Garden of Trials": {
+          "positive": "",
+          "negative": "Barely mentioned; called a hard boss rush (few mentions)."
         }
       }
     },
@@ -482,6 +486,10 @@
         "Romance": {
           "positive": "",
           "negative": "Marriage is called half-finished, with few lines of dialogue and no outfit changes (few mentions)."
+        },
+        "Garden of Trials": {
+          "positive": "",
+          "negative": "Barely mentioned; called a hard boss rush (few mentions)."
         }
       }
     }

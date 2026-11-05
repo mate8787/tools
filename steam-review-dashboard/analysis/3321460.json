@@ -90,7 +90,38 @@
             "A hodgepodge of disjointed systems and ideas."
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "Crimson Desert is received well overall: players love the huge, beautiful open world, the freedom to explore and the amount there is to do, and many credit the 2.0 / Enhanced updates and the developer's fast patches. The negative reviews are mostly about puzzles that give no guidance, clunky controls, a weak story and technical problems such as crashes and optimization. Chinese-language reviewers are the most critical group.",
+        "positive": "Exploration and immersion in a huge world, graphics and scenery, satisfying combat, hundreds of hours of content, and visible improvement since launch.",
+        "negative": "Puzzles (especially the Abyss ones) that cannot be solved without a guide, clunky controls and interaction, a thin story and padded quests, and crashes or optimization problems."
+      },
+      "topicNotes": {
+        "Quest & Story": {
+          "positive": "Many players enjoy the side activities and say the story improved after Enhanced, though even fans call it average.",
+          "negative": "The story is called weak, confusing or padded, quests are fetch tasks and slow follow-the-NPC sections, and guidance on what to do is poor. This topic also catches reviews about quests that cannot be progressed because of bugs."
+        },
+        "Bugs": {
+          "positive": "Positive reviews often mention occasional bugs or performance dips but say the game is still great, or that old problems were already fixed.",
+          "negative": "Crashes on launch, in cutscenes, in the map and in the inventory, freezes, graphical noise and ghosting, and heavy performance cost in some areas."
+        },
+        "Housing": {
+          "positive": "Having your own camp or house for storage and customization is liked (few mentions).",
+          "negative": ""
+        },
+        "Management": {
+          "positive": "Camp upgrades and companion dispatch missions add depth (few mentions).",
+          "negative": "Inventory management frustrates some players (few mentions)."
+        },
+        "Ocean": {
+          "positive": "Rarely mentioned; some look forward to the sea content of the DLC.",
+          "negative": ""
+        },
+        "Romance": {
+          "positive": "Rarely mentioned; some wish for romance and marriage, which the DLC later adds.",
+          "negative": ""
+        }
+      }
     },
     "english": {
       "praise": [
@@ -177,7 +208,38 @@
             "A hodgepodge of disjointed systems and ideas."
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "English reviewers are the most positive group. They praise the immersive open world, the visuals and combat and the hours of content, while the negatives focus on crashes and launch failures, clunky controls, a weak story and unclear puzzles.",
+        "positive": "A populated, immersive world with a huge amount to do, beautiful visuals, satisfying combat, and a game that keeps improving after launch.",
+        "negative": "Crashes on the menu, map or inventory, unreliable dodge and interaction, a boring story and padded side quests, and puzzles that are never explained."
+      },
+      "topicNotes": {
+        "Quest & Story": {
+          "positive": "Players enjoy exploring and doing side content and call the story acceptable or improved, even if it is not the main draw.",
+          "negative": "The story and characters are called shallow, forgettable or confusing, quests are padded with fetching, and the early quest sections feel slow."
+        },
+        "Bugs": {
+          "positive": "Some reviewers mention stutter or minor bugs but still recommend it; others say the common bugs have already been fixed.",
+          "negative": "Crashes when opening the map or menu, freezing in an early cutscene, crashes after updates, and a main quest that cannot be finished because of bugs."
+        },
+        "Housing": {
+          "positive": "Camp and house features are liked (few mentions).",
+          "negative": ""
+        },
+        "Management": {
+          "positive": "Camp upgrades and dispatch missions are enjoyed (few mentions).",
+          "negative": "Inventory management frustrates some players (few mentions)."
+        },
+        "Ocean": {
+          "positive": "Rarely mentioned; some look forward to the DLC's sea content.",
+          "negative": ""
+        },
+        "Romance": {
+          "positive": "Few mentions; some say romance is the one thing missing.",
+          "negative": ""
+        }
+      }
     },
     "korean": {
       "praise": [
@@ -255,7 +317,34 @@
             "미로숲 최적화나 해라"
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "Korean reviewers are the most positive about the fun of the game and the freedom to explore, and they appreciate the developer's quick patches. Complaints centre on the Abyss and other puzzles, controls, and a story that is better after Enhanced but still weak.",
+        "positive": "Freedom to explore anywhere, a huge amount to do, strong graphics, good optimization and quick patching.",
+        "negative": "Stressful puzzles with no direction, poor controls and responsiveness, a dull story with a hard-to-like protagonist, and a few bugs."
+      },
+      "topicNotes": {
+        "Quest & Story": {
+          "positive": "Many say the story is better after Enhanced and that there is plenty to do beyond the main story.",
+          "negative": "The story is called dull or weak even after the update, with some saying they could not get immersed, and sudden strong bosses break the pacing."
+        },
+        "Bugs": {
+          "positive": "Most Korean reviews that mention bugs or optimization are positive; optimization is often praised as good.",
+          "negative": "A few report Kliff's voice disappearing, NPC loading blocking paths, and poor optimization in the maze forest."
+        },
+        "Housing": {
+          "positive": "Few mentions.",
+          "negative": ""
+        },
+        "Management": {
+          "positive": "Few mentions.",
+          "negative": ""
+        },
+        "Romance": {
+          "positive": "Few mentions.",
+          "negative": ""
+        }
+      }
     },
     "chinese": {
       "praise": [
@@ -342,7 +431,34 @@
             "要么无数个小怪把你射成马蜂窝，要么逆天boss中一下就被秒杀"
           ]
         }
-      ]
+      ],
+      "overview": {
+        "text": "Chinese-language reviews are the most critical. Many love the scenery, the scale and the combat feel, but puzzles without guidance, story and quest quality, controls and crashes are repeated complaints, and several reviewers sum it up as a great world with frustrating design.",
+        "positive": "Beautiful scenery and character models, a huge world with lots to do, and satisfying combat and builds for those who stick with it.",
+        "negative": "Puzzles that cannot be solved without a guide, thin story and tedious quests, awkward controls and interaction, and crashes or poor optimization."
+      },
+      "topicNotes": {
+        "Quest & Story": {
+          "positive": "Some call the story average but acceptable, even better than other big RPGs, and say the Enhanced version flows better.",
+          "negative": "The main story and quests are called thin, guidance is poor, fetch and follow-the-NPC side quests are tedious, and some story moments are broken by bad camera placement."
+        },
+        "Bugs": {
+          "positive": "Several reviewers recommend the game despite a few bugs, or note that optimization improved a lot after updates.",
+          "negative": "Crashes after long play or when pressing Esc, quests that cannot progress, missing NPCs, save problems and a robot-summon bug; optimization is called poor."
+        },
+        "Housing": {
+          "positive": "The home system and detailed set pieces are praised (few mentions).",
+          "negative": ""
+        },
+        "Ocean": {
+          "positive": "Few mentions.",
+          "negative": ""
+        },
+        "Romance": {
+          "positive": "",
+          "negative": "The interaction key is easy to mix up with threaten, grab and gift (few mentions)."
+        }
+      }
     }
   }
 }
