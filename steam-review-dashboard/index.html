@@ -143,9 +143,13 @@
 
   <section class="card" id="controls">
     <div class="row">
-      <div class="field">
+      <div class="field" id="appField">
         <label for="appId" data-i18n="ctl.app"></label>
         <input type="text" id="appId" size="12">
+      </div>
+      <div class="field" id="pickField" hidden>
+        <label for="appPick" data-i18n="ctl.pick"></label>
+        <select id="appPick"></select>
       </div>
       <button id="loadBtn" data-i18n="ctl.load"></button>
       <div class="field">
@@ -252,7 +256,7 @@ const I18N = {
     'game.loading': 'Loading…', 'game.unknown': 'Unknown app', 'game.error': 'Name unavailable',
     'game.dlc': 'DLC (has its own reviews, separate from the base game)',
     'game.base': 'Switch to base game: {0} ({1})',
-    'demo.status': 'Demo snapshot of {0} cached reviews, last updated {1}. Downloading new reviews is disabled in this view.',
+    'demo.status': 'Read-only snapshot of {0} reviews, last updated {1}. Downloading new reviews is only possible in the local version.',
     'ctl.download': 'Download window', 'ctl.update': 'Update reviews',
     'ctl.language': 'Review language', 'ctl.dates': 'Date range', 'ctl.allTime': 'All time', 'ctl.range': 'Select range',
     'ctl.from': 'From', 'ctl.to': 'To', 'ctl.topics': 'Manage topics', 'ctl.export': 'Download Excel',
@@ -299,6 +303,7 @@ const I18N = {
     'tm.hint': 'Latin keywords match whole words (and plurals); Korean and Chinese keywords match anywhere in the text.',
     'x.preparing': 'Preparing Excel file…', 'x.noxlsx': 'Excel library could not be loaded (offline?), saved as CSV instead.',
     'x.none': 'Nothing to export.',
+    'ctl.pick': 'Game', 'err.webdata': 'Could not load the published data for app {0}. Open the page from the complete published folder (the data folder must sit next to index.html).',
     'samples.link': 'link', 'sum.enOnly': 'No Korean translation of this summary yet, showing the English text.'
   },
   ko: {
@@ -308,7 +313,7 @@ const I18N = {
     'game.loading': '불러오는 중…', 'game.unknown': '알 수 없는 앱', 'game.error': '이름을 확인할 수 없음',
     'game.dlc': 'DLC (본편과 별도로 자체 리뷰가 있음)',
     'game.base': '본편으로 전환: {0} ({1})',
-    'demo.status': '캐시된 리뷰 {0}개의 데모 스냅샷 (최종 업데이트 {1}). 이 화면에서는 새 리뷰를 다운로드할 수 없습니다.',
+    'demo.status': '리뷰 {0}개의 읽기 전용 스냅샷 (최종 업데이트 {1}). 새 리뷰 다운로드는 로컬 버전에서만 가능합니다.',
     'ctl.download': '다운로드 범위', 'ctl.update': '리뷰 업데이트',
     'ctl.language': '리뷰 언어', 'ctl.dates': '기간', 'ctl.allTime': '전체 기간', 'ctl.range': '기간 선택',
     'ctl.from': '시작일', 'ctl.to': '종료일', 'ctl.topics': '토픽 관리', 'ctl.export': '엑셀 다운로드',
@@ -355,15 +360,32 @@ const I18N = {
     'tm.confirmReset': '모든 토픽을 기본값으로 바꿀까요?', 'tm.newTopic': '새 토픽', 'tm.bad': '토픽 파일을 읽을 수 없습니다.',
     'tm.hint': '영문 키워드는 단어 단위(복수형 포함)로 일치하고, 한국어·중국어 키워드는 텍스트 어디에서든 일치합니다.',
     'x.preparing': '엑셀 파일 준비 중…', 'x.noxlsx': '엑셀 라이브러리를 불러올 수 없어(오프라인?) CSV로 저장했습니다.',
-    'x.none': '내보낼 내용이 없습니다.'
+    'x.none': '내보낼 내용이 없습니다.',
+    'ctl.pick': '게임', 'err.webdata': '앱 {0}의 게시된 데이터를 불러올 수 없습니다. 게시된 폴더 전체를 통해 여세요 (data 폴더가 index.html 옆에 있어야 합니다).'
   }
 };
 // Korean display names for the default topics (custom topics keep the name you typed)
 const TOPIC_KO = { 'quest & story': '퀘스트 & 스토리', ocean: '바다', housing: '하우징', romance: '연애', management: '경영', 'garden of trials': '시련의 정원', bugs: '버그' };
 let UI_LANG = 'en';
 const tname = name => UI_LANG === 'ko' ? (TOPIC_KO[String(name).trim().toLowerCase()] || name) : name;
-const ask = msg => EMBED ? true : confirm(msg); // hosted snapshot: dialogs are blocked, so just proceed
-const EMBED = window.SRD_EMBED || null; // set by build_demo.py: a static snapshot that needs no server
+const SNAP = window.SRD_EMBED || null; // set by build_demo.py: a single-game snapshot baked into the page
+const ask = msg => SNAP ? true : confirm(msg); // sandboxed snapshot hosts block dialogs, so just proceed
+// EMBED = the read-only data set being shown (a snapshot, or one game of a published web folder; see publish.py)
+let EMBED = SNAP;
+let WEB = null; // published web folder: window.SRD_WEB from data/index.js, games load from data/<appid>.js
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('cannot load ' + src)); document.head.appendChild(s); });
+async function detectWeb() {
+  if (SNAP) return;
+  let live = false;
+  try { live = (await fetch('api/status')).ok; } catch (e) { /* no helper: opened from a folder or a web host */ }
+  if (!live) { try { await loadScript('data/index.js'); } catch (e) { /* not a published folder either */ } }
+  WEB = window.SRD_WEB || null;
+}
+async function loadWebApp(app) {
+  window.SRD_APPS = window.SRD_APPS || {};
+  if (!window.SRD_APPS[app]) await loadScript('data/' + encodeURIComponent(app) + '.js?v=' + WEB.generated);
+  EMBED = window.SRD_APPS[app];
+}
 const t =(k, ...a) => { let s = (I18N[UI_LANG] || {})[k] ?? I18N.en[k] ?? k; a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; };
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -400,7 +422,7 @@ $('syncDays').value = '7'; // download window defaults to the last 7 days
 function banner(msg, isErr) { const b = $('banner'); if (!msg) { b.hidden = true; return; } b.textContent = msg; b.className = 'banner' + (isErr ? ' err' : ''); b.hidden = false; }
 
 async function loadTopics() {
-  if (EMBED) S.defaults = EMBED.topics;
+  if (EMBED || WEB) S.defaults = (EMBED || WEB).topics;
   else try { S.defaults = (await (await fetch('topics.default.json')).json()).topics; } catch (e) { S.defaults = []; }
   const saved = store.get('topics', null);
   S.topics = (saved || S.defaults).map(mkTopic);
@@ -420,7 +442,7 @@ function showAppName(app, info) {
   if (!info.name) { el.innerHTML = `<span class="neg">${t('game.unknown')}</span> <small>${esc(app)}</small>`; return; }
   el.innerHTML = `<a href="https://store.steampowered.com/app/${esc(app)}/" target="_blank" rel="noopener">${esc(info.name)}</a><small>${esc((info.type || '').toUpperCase())} · ${esc(app)}</small>` +
     (info.type === 'dlc' ? `<small class="warn">${t('game.dlc')}</small>` : '') +
-    (info.fullgame ? `<button id="baseBtn" data-app="${esc(info.fullgame.appid)}">${esc(t('game.base', info.fullgame.name, info.fullgame.appid))}</button>` : '');
+    (info.fullgame && (!WEB || WEB.apps.some(a => String(a.id) === String(info.fullgame.appid))) ? `<button id="baseBtn" data-app="${esc(info.fullgame.appid)}">${esc(t('game.base', info.fullgame.name, info.fullgame.appid))}</button>` : '');
   const bb = $('baseBtn'); if (bb) bb.onclick = () => { S.from = S.to = ''; loadApp(bb.dataset.app); };
 }
 
@@ -441,6 +463,10 @@ async function loadAnalysis(app) {
 async function loadApp(app) {
   S.app = app; store.set('app', app);
   $('appId').value = app;
+  if (WEB) {
+    $('appPick').value = app;
+    try { await loadWebApp(app); } catch (e) { S.reviews = []; S.meta = null; banner(t('err.webdata', app), true); renderAll(); return; }
+  }
   S.maskCache = {}; S.kwCountCache.clear();
   $('appName').textContent = t('game.loading');
   const infoP = loadAppInfo(app);
@@ -879,13 +905,23 @@ $('tmFile').onchange = async e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modalBg').classList.contains('open')) closeTM(); });
 
 (async function init() {
-  const offline = location.protocol === 'file:' && !EMBED;
+  await detectWeb();
+  const readOnly = !!(EMBED || WEB);
+  const offline = location.protocol === 'file:' && !readOnly;
   if (offline) banner(t('err.noserver'), true);
-  if (EMBED) { for (const id of ['appId', 'loadBtn', 'syncBtn', 'syncDays']) $(id).disabled = true; if (location.protocol === 'blob:' || window.SRD_NO_DOWNLOADS) { $('exportBtn').hidden = true; $('tmExport').hidden = true; } $('syncField').hidden = true; $('syncBtn').hidden = true; }
+  if (readOnly) { for (const id of ['appId', 'loadBtn', 'syncBtn', 'syncDays']) $(id).disabled = true; if (location.protocol === 'blob:' || window.SRD_NO_DOWNLOADS) { $('exportBtn').hidden = true; $('tmExport').hidden = true; } $('syncField').hidden = true; $('syncBtn').hidden = true; }
+  let startApp = EMBED ? EMBED.app : store.get('app', '3321460');
+  if (WEB) {
+    // published folder: pick from the games that were published instead of typing an App ID
+    $('appField').hidden = true; $('loadBtn').hidden = true; $('pickField').hidden = false;
+    $('appPick').innerHTML = WEB.apps.map(a => `<option value="${esc(a.id)}">${esc(a.name || a.id)} (${esc(a.id)})</option>`).join('');
+    $('appPick').onchange = e => { S.from = S.to = ''; loadApp(e.target.value); };
+    if (!WEB.apps.some(a => String(a.id) === String(startApp))) startApp = WEB.apps[0] && WEB.apps[0].id;
+  }
   S.scope = store.get('scope', 'all'); if (!SCOPES[S.scope] && S.scope !== 'all') S.scope = 'all';
   $('scope').value = S.scope; syncDateInputs();
   await loadTopics();
-  if (!offline) await loadApp(EMBED ? EMBED.app : store.get('app', '3321460')); else renderAll();
+  if (!offline && startApp) await loadApp(String(startApp)); else renderAll();
 })();
 </script>
 </body>

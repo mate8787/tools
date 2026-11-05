@@ -1,3 +1,4 @@
-data/
+/data/
 demo-fragment.html
 __pycache__/
+publish.json
