@@ -7,61 +7,341 @@
   "scopes": {
     "all": {
       "praise": [
-        { "title": "Huge, explorable open world", "detail": "The most common praise in every language: a vast, handcrafted world with endless things to discover, strong immersion, and a feeling of freedom.", "quote": "very immersive world with endless exploration" },
-        { "title": "Visuals and scenery", "detail": "Graphics and scenery are called some of the best in the genre, mostly by players with capable hardware." },
-        { "title": "Combat and variety of activities", "detail": "Fluid, satisfying combat plus a long list of side activities (crafting, trading, hunting, mini-games, housing) that keep players going for hundreds of hours." },
-        { "title": "Post-launch support", "detail": "Players notice the 2.0 / Enhanced updates, quick patches and the developer's attitude, and many look forward to the DLC.", "quote": "quality of life improvements since launch ... makes this, in my opinion, GOTY" }
+        {
+          "title": "Huge, explorable open world",
+          "detail": "The most common praise in every language: a vast, handcrafted world with endless things to discover, strong immersion, and a feeling of freedom.",
+          "quotes": [
+            "very immersive world with endless exploration",
+            "the world is truly immersive and has amazing graphics",
+            "There's so much to explore and do that the only real problem with this game is that a day only has 24 hours."
+          ]
+        },
+        {
+          "title": "Visuals and scenery",
+          "detail": "Graphics and scenery are called some of the best in the genre, mostly by players with capable hardware.",
+          "quotes": [
+            "Amazing graphics, amazing combat.",
+            "beautifully built game that just works so well and scratches that itch!",
+            "The World is full of unseen Wonders and let me tell ya its's Beautiful af."
+          ]
+        },
+        {
+          "title": "Combat and variety of activities",
+          "detail": "Fluid, satisfying combat plus a long list of side activities (crafting, trading, hunting, mini-games, housing) that keep players going for hundreds of hours.",
+          "quotes": [
+            "huge world, tons of enemy types, puzzles, boss fights, exploration, and 300 hours in still finding new stuff to do.",
+            "This is the most hours I have invested for a single player game.",
+            "Also i got 207 Hours Playtime and this is my first Playthrought so yeah this game got a lot to offer"
+          ]
+        },
+        {
+          "title": "Post-launch support",
+          "detail": "Players notice the 2.0 / Enhanced updates, quick patches and the developer's attitude, and many look forward to the DLC.",
+          "quotes": [
+            "And you have to hand it to the devs, super responsive and tons of free content and positive changes.",
+            "it looks like devs will be supporting this for a while too!",
+            "Graphics, optimization, combat, quality of life improvements since launch any many other additions makes this, in my opinion, GOTY."
+          ]
+        }
       ],
       "complaints": [
-        { "title": "Puzzles with no guidance", "detail": "Abyss and other puzzles are the most repeated complaint among Korean and Chinese reviewers and also come up in English; many say they cannot be solved without a guide.", "quote": "Greatest game with the absolute stupidest puzzle system ever." },
-        { "title": "Crashes, launch failures and optimization", "detail": "A large share of negative reviews are about crashing on launch, in the map or inventory, freezes, shimmering or blurry graphics and heavy reliance on ray reconstruction." },
-        { "title": "Controls and interaction", "detail": "Clunky, unresponsive dodge and interaction, too many key combinations, weak gamepad camera and lock-on." },
-        { "title": "Story, characters and quest design", "detail": "Story called weak or confusing even after the update; quests padded with fetch tasks and slow follow-the-NPC sections; unclear objectives." },
-        { "title": "Content feels wide but shallow", "detail": "Many mechanics but little depth, and boss fights criticized for stunlocks and one-hit mechanics.", "quote": "Wide as an ocean, deep as a puddle." }
+        {
+          "title": "Puzzles with no guidance",
+          "detail": "Abyss and other puzzles are the most repeated complaint among Korean and Chinese reviewers and also come up in English; many say they cannot be solved without a guide.",
+          "quotes": [
+            "Greatest game with the absolute stupidest puzzle system ever.",
+            "spending 50% of playtime to solve puzzles by asking google instead of exploring the world",
+            "Puzzles are stupid, rest is good."
+          ]
+        },
+        {
+          "title": "Crashes, launch failures and optimization",
+          "detail": "A large share of negative reviews are about crashing on launch, in the map or inventory, freezes, shimmering or blurry graphics and heavy reliance on ray reconstruction.",
+          "quotes": [
+            "It will crash constantly when opening the map, which seems to be a common bug that was supposedly fixed a while ago.",
+            "uninstalled it and recently tried playing it again but now it wont even launch.",
+            "Game is buggy and crashy, Main story quest is not doable."
+          ]
+        },
+        {
+          "title": "Controls and interaction",
+          "detail": "Clunky, unresponsive dodge and interaction, too many key combinations, weak gamepad camera and lock-on.",
+          "quotes": [
+            "I absolutely hate this game's fighting style, it feels super clunky.",
+            "The game is basically an unrewarding walking simulator, The controls on keyboard / mouse are terrible.",
+            "Kliff is a non character, controls are very clunky and unresponsive, difficulty is nonexistant."
+          ]
+        },
+        {
+          "title": "Story, characters and quest design",
+          "detail": "Story called weak or confusing even after the update; quests padded with fetch tasks and slow follow-the-NPC sections; unclear objectives.",
+          "quotes": [
+            "The story is shallow and unengaging, and the PC controls feel poorly thought out.",
+            "36 hours in it still felt like I'm in a neverending filler arc of an anime.",
+            "The characters are as deep as a puddle"
+          ]
+        },
+        {
+          "title": "Content feels wide but shallow",
+          "detail": "Many mechanics but little depth, and boss fights criticized for stunlocks and one-hit mechanics.",
+          "quotes": [
+            "Wide as an ocean, deep as a puddle.",
+            "Beneath the impressive visuals and spectacle, the experience feels bloated, lacking the depth and polish needed to make it truly engaging.",
+            "A hodgepodge of disjointed systems and ideas."
+          ]
+        }
       ]
     },
     "english": {
       "praise": [
-        { "title": "Open world and immersion", "detail": "Compared to Skyrim, Witcher 3 and Red Dead 2: a populated, immersive world with a huge amount to do.", "quote": "I honestly haven't felt this invested in a world since Skyrim." },
-        { "title": "Graphics and combat", "detail": "Beautiful visuals and satisfying combat are the other most-named strengths." },
-        { "title": "Value and hours of content", "detail": "Many players report 100 to 300+ hours with plenty left; several call it a game of the year candidate." },
-        { "title": "Improved since launch", "detail": "Reviewers mention 2.0 and Enhanced as clear improvements, including the story, and look forward to the DLC." }
+        {
+          "title": "Open world and immersion",
+          "detail": "Compared to Skyrim, Witcher 3 and Red Dead 2: a populated, immersive world with a huge amount to do.",
+          "quotes": [
+            "the world is truly immersive and has amazing graphics",
+            "If you like exploring HUGE maps, this game is for you.",
+            "There's so much to explore and do that the only real problem with this game is that a day only has 24 hours."
+          ]
+        },
+        {
+          "title": "Graphics and combat",
+          "detail": "Beautiful visuals and satisfying combat are the other most-named strengths.",
+          "quotes": [
+            "Amazing graphics, amazing combat.",
+            "beautifully built game that just works so well and scratches that itch!",
+            "The World is full of unseen Wonders and let me tell ya its's Beautiful af."
+          ]
+        },
+        {
+          "title": "Value and hours of content",
+          "detail": "Many players report 100 to 300+ hours with plenty left; several call it a game of the year candidate.",
+          "quotes": [
+            "104 hours played when I'm writing this and I'm still in the tutorial.",
+            "100 hours in and I'm maybe a quarter through the story.",
+            "This game has so much content to the point it kind of works against it."
+          ]
+        },
+        {
+          "title": "Improved since launch",
+          "detail": "Reviewers mention 2.0 and Enhanced as clear improvements, including the story, and look forward to the DLC.",
+          "quotes": [
+            "And you have to hand it to the devs, super responsive and tons of free content and positive changes.",
+            "it looks like devs will be supporting this for a while too!",
+            "Graphics, optimization, combat, quality of life improvements since launch any many other additions makes this, in my opinion, GOTY."
+          ]
+        }
       ],
       "complaints": [
-        { "title": "Crashes and failure to launch", "detail": "The single biggest English complaint: crashes on the main menu, the map or inventory, GPU hangs, and refund frustration." },
-        { "title": "Clunky controls", "detail": "Dodge and interaction feel unreliable, key bindings are limited, and there are too many steps for simple actions." },
-        { "title": "Weak story and tedious quests", "detail": "Story and characters described as boring or incoherent; side quests padded with fetching and slow NPC escorts.", "quote": "The characters are as deep as a puddle" },
-        { "title": "Puzzles and poor guidance", "detail": "Puzzles are called boring or unfair, and the game rarely tells players what to do or how systems work." },
-        { "title": "Boss design and shallow systems", "detail": "Bosses criticized for stunlocks and no proper dodge or parry; inventory limits and many shallow mechanics." }
+        {
+          "title": "Crashes and failure to launch",
+          "detail": "The single biggest English complaint: crashes on the main menu, the map or inventory, GPU hangs, and refund frustration.",
+          "quotes": [
+            "It will crash constantly when opening the map, which seems to be a common bug that was supposedly fixed a while ago.",
+            "uninstalled it and recently tried playing it again but now it wont even launch.",
+            "Game is buggy and crashy, Main story quest is not doable."
+          ]
+        },
+        {
+          "title": "Clunky controls",
+          "detail": "Dodge and interaction feel unreliable, key bindings are limited, and there are too many steps for simple actions.",
+          "quotes": [
+            "The unresponsive controls, corny combat (trust me), and forgettable story make the actual gameplay feel like a chore.",
+            "This game promises so much, but unfortunately, extremely frustrating and laggy controls make it nearly impossible to play.",
+            "I absolutely hate this game's fighting style, it feels super clunky."
+          ]
+        },
+        {
+          "title": "Weak story and tedious quests",
+          "detail": "Story and characters described as boring or incoherent; side quests padded with fetching and slow NPC escorts.",
+          "quotes": [
+            "the story is mid and fighting is more mid.",
+            "36 hours in it still felt like I'm in a neverending filler arc of an anime.",
+            "The characters are as deep as a puddle"
+          ]
+        },
+        {
+          "title": "Puzzles and poor guidance",
+          "detail": "Puzzles are called boring or unfair, and the game rarely tells players what to do or how systems work.",
+          "quotes": [
+            "Greatest game with the absolute stupidest puzzle system ever.",
+            "spending 50% of playtime to solve puzzles by asking google instead of exploring the world",
+            "hated the puzzles, the questline,the grind for resources, taming pets, lack of clues and info"
+          ]
+        },
+        {
+          "title": "Boss design and shallow systems",
+          "detail": "Bosses criticized for stunlocks and no proper dodge or parry; inventory limits and many shallow mechanics.",
+          "quotes": [
+            "Good game with some of the worst boss designs,sometimes it kills the fun",
+            "The combat literally is just you one shotting mobs, or bosses stun locking you while you ragdoll around.",
+            "A hodgepodge of disjointed systems and ideas."
+          ]
+        }
       ]
     },
     "korean": {
       "praise": [
-        { "title": "Exploration and vast world", "detail": "Freedom to explore anywhere is the most cited strength; players say there is always more to do." },
-        { "title": "Fun and sheer amount of content", "detail": "Described as very fun overall, with strong graphics and a huge amount to do." },
-        { "title": "Developer response", "detail": "Quick patching after problems is praised, and several players bought or pre-ordered the DLC." },
-        { "title": "Story improved", "detail": "Several say the story is better after Enhanced, though it is not Red Dead 2 level." }
+        {
+          "title": "Exploration and vast world",
+          "detail": "Freedom to explore anywhere is the most cited strength; players say there is always more to do.",
+          "quotes": [
+            "방대한 오픈월드에 다양한 이벤트까지 그리고 놀라운 그래픽^^ 감동입니다.",
+            "특히 어디든 탐험 가능한 광활한 월드는 탑급 수준이다.",
+            "할것도 많은데 타격감이나 전투도 재미있고, 월드 탐험하는게 또 너무 재미있네요."
+          ]
+        },
+        {
+          "title": "Fun and sheer amount of content",
+          "detail": "Described as very fun overall, with strong graphics and a huge amount to do.",
+          "quotes": [
+            "할게 너무 많다. 메인시나리오는 맞보기에 불과하다. 아직도 못 가본곳이 많다.",
+            "근데 앞의 단점들도 게임 전체로 놓고보면 사소하다 싶을 정도로 할게 많고 재미있음.",
+            "쉬었다가 이번에 다시하는데 이렇게 재미있을줄이야."
+          ]
+        },
+        {
+          "title": "Developer response",
+          "detail": "Quick patching after problems is praised, and several players bought or pre-ordered the DLC.",
+          "quotes": [
+            "아직까지 개선사항이 더러 보이지만 DLC가 곧 나올 것도 그렇고 지속적인 업데이트가 예상됨.",
+            "대응 패치를 너무 잘해줘서 좋습니다 재밌게했네요!",
+            "Enhanced 패치 이후에 시작했는데, 스토리도 머 그럭저럭이고 조작도 그럭저럭이고 좋습니다."
+          ]
+        },
+        {
+          "title": "Story improved",
+          "detail": "Several say the story is better after Enhanced, though it is not Red Dead 2 level.",
+          "quotes": [
+            "스토리도 그럭저럭 많이 나아졌음",
+            "진짜 그래픽,넓은 공간,탐험 등의 요소가 진짜 좋고 최적화도 잘 되어있고 스토리 개선해서 진짜 좋아졌는데",
+            "메인스토리 고쳤다곤했지만 위처급 문과력 발더스급 자유도,세키로급 보스러쉬액션겜을 바라면 그래도 실망할거임"
+          ]
+        }
       ],
       "complaints": [
-        { "title": "Abyss and other puzzles", "detail": "The most frequent complaint: puzzles are stressful, give no clear direction and are seen as padding playtime." },
-        { "title": "Controls and combat feel", "detail": "Several reviews call the controls and responsiveness poor, on both gamepad and keyboard." },
-        { "title": "Weak story and unfriendly guidance", "detail": "Not explaining what to do, a dull story and a protagonist some find hard to connect with." },
-        { "title": "Bugs", "detail": "Reports of Kliff's voice disappearing, NPC loading blocking paths, and map loading issues." }
+        {
+          "title": "Abyss and other puzzles",
+          "detail": "The most frequent complaint: puzzles are stressful, give no clear direction and are seen as padding playtime.",
+          "quotes": [
+            "게임은 재밌는데 어비스 퍼즐 때문에 부정적 줌",
+            "다만 플레이 타임의 반은 퍼즐 풀고 어비스 맞추는데 시간 다 씀.",
+            "퍼즐 및 조작감 진짜 엿같음, 시간 낭비 게임임"
+          ]
+        },
+        {
+          "title": "Controls and combat feel",
+          "detail": "Several reviews call the controls and responsiveness poor, on both gamepad and keyboard.",
+          "quotes": [
+            "조작감이 진짜 이보다 더 쓰레기일 수가 없음.",
+            "달리기 방향전환 전투중 패링이나 피하는것 등등 거의 멍청이 급 조작감도 몰입에 방해되는 요소중 하나.",
+            "손이안가요... 기대를 너무했나.. 조작법도 이상하구요.. ㅠㅠ"
+          ]
+        },
+        {
+          "title": "Weak story and unfriendly guidance",
+          "detail": "Not explaining what to do, a dull story and a protagonist some find hard to connect with.",
+          "quotes": [
+            "스토리 별로인건 소문 다 났으니까 말할건 없고",
+            "하지만 부족한 스토리와 뜬금없이 강력한 보스몬스터의 등장 등으로 게임 흐름이 끊기고 몰입도가 떨어지는 부분은 많이 아쉽다 .",
+            "불친절한 진행에 노잼 스토리 아쉽지만 압도적 재미 하나만큼은 인정."
+          ]
+        },
+        {
+          "title": "Bugs",
+          "detail": "Reports of Kliff's voice disappearing, NPC loading blocking paths, and map loading issues.",
+          "quotes": [
+            "NPC 로딩으로 인해 투명 상태로 길이 막히는 버그",
+            "재밌음 가끔 버그 있지만 괜찮음",
+            "미로숲 최적화나 해라"
+          ]
+        }
       ]
     },
     "chinese": {
       "praise": [
-        { "title": "Scenery and visuals", "detail": "Landscapes, towns and character models are called among the best in current open-world games." },
-        { "title": "Large world and rich content", "detail": "A vast map with lots to do and a lot of freedom: combat variety, trading, housing, dyeing and clothing." },
-        { "title": "Combat feel and builds", "detail": "Many weapons and skill options and satisfying combat for players who stick with it." },
-        { "title": "Mods and the developer's attitude", "detail": "Active mods are said to cover the control weaknesses, and the developer is credited for continued updates." }
+        {
+          "title": "Scenery and visuals",
+          "detail": "Landscapes, towns and character models are called among the best in current open-world games.",
+          "quotes": [
+            "非常喜欢里面明亮写实的画面，玩法非常多、环境也很丰富。",
+            "很好的看风景游戏",
+            "神作，画质画面玩法，都是极品，现在增强版的剧情，我感觉也很流畅了。"
+          ]
+        },
+        {
+          "title": "Large world and rich content",
+          "detail": "A vast map with lots to do and a lot of freedom: combat variety, trading, housing, dyeing and clothing.",
+          "quotes": [
+            "世界很大，可玩性丰富，但是任务引导很差",
+            "画面明亮优美，地图量大管饱，虽然收集、解谜、战斗元素看起来缝合了很多游戏，但好在仍有自己的特色。",
+            "7%不是问题，是证据——证明这个世界大到、密到、有趣到，让人舍不得推主线。"
+          ]
+        },
+        {
+          "title": "Combat feel and builds",
+          "detail": "Many weapons and skill options and satisfying combat for players who stick with it.",
+          "quotes": [
+            "战斗一百分（对我而言）解密反人类，剧情靠领悟，玩起来很爽，生活化全面。",
+            "最接近我理想中的剑与魔法世界的游戏，内容非常丰富，战斗爽快，武器派生花样繁多，厂商态度很好，值得鼓励",
+            "战斗手感顶级、开放世界体量顶级、玩法丰富度顶级"
+          ]
+        },
+        {
+          "title": "Mods and the developer's attitude",
+          "detail": "Active mods are said to cover the control weaknesses, and the developer is credited for continued updates.",
+          "quotes": [
+            "量大管饱官方态度好",
+            "更新那么多次以后，玩起来还是很爽的，就是手柄部分键位有些问题",
+            "再加上开发商持续长线更新，月底的DLC还补充了海战、进一步强化了家园建造的玩法。"
+          ]
+        }
       ],
       "complaints": [
-        { "title": "Puzzles without guidance", "detail": "By far the most repeated complaint: players say many puzzles cannot be solved without looking up a guide." },
-        { "title": "Story and quest quality", "detail": "The main story is called thin or filler, characters shallow, and side quests repetitive with slow follow-the-NPC sections." },
-        { "title": "Controls and interaction", "detail": "Poor response, too many key combinations, awkward gamepad lock-on, and slow climbing or interaction." },
-        { "title": "Optimization and crashes", "detail": "Freezes and crashes when opening the map or inventory, rough lighting without ray reconstruction, and performance cost." },
-        { "title": "Boss fights", "detail": "Some boss designs are called unfair or built around invincibility and attacks that are hard to avoid." }
+        {
+          "title": "Puzzles without guidance",
+          "detail": "By far the most repeated complaint: players say many puzzles cannot be solved without looking up a guide.",
+          "quotes": [
+            "恶心的解谜",
+            "指引极差，部分关卡跳下只能重来",
+            "解密是真折磨人啊不看攻略根本过不去"
+          ]
+        },
+        {
+          "title": "Story and quest quality",
+          "detail": "The main story is called thin or filler, characters shallow, and side quests repetitive with slow follow-the-NPC sections.",
+          "quotes": [
+            "作为一个开放世界游戏，这游戏剧情和引导做的实在太差了，感觉完全没花心思在上面，玩家玩游戏是为了花大量时间和你猜谜语吗？",
+            "这个跑腿任务真的烦躁死了，还要照顾一大群人，巴结一大群人，还要拯救世界，变强是完全不需要的。",
+            "剧情一般，不够引人入胜。"
+          ]
+        },
+        {
+          "title": "Controls and interaction",
+          "detail": "Poor response, too many key combinations, awkward gamepad lock-on, and slow climbing or interaction.",
+          "quotes": [
+            "交互很反人类，和我接触过的游戏完全不一样，一堆组合键要记，新的技能又有相同的组合键但是不同的触发方式，长按点按，有时候点多一下就触发不了。",
+            "引导做了但是做的非常差，操作复杂反直觉，键位八爪鱼",
+            "什么都好就是不好玩。 操作太复杂，战斗并不有趣。"
+          ]
+        },
+        {
+          "title": "Optimization and crashes",
+          "detail": "Freezes and crashes when opening the map or inventory, rough lighting without ray reconstruction, and performance cost.",
+          "quotes": [
+            "每次一按Esc就卡死闪退，你们怎么做的游戏！",
+            "打开背包技能会出现闪退",
+            "优化稀烂，不开光线重构玩不了，现在粒子特效关不掉了，位移贴图和lod切换也是突兀的很，画面还不如四五月时的版本"
+          ]
+        },
+        {
+          "title": "Boss fights",
+          "detail": "Some boss designs are called unfair or built around invincibility and attacks that are hard to avoid.",
+          "quotes": [
+            "特别是到BOSS战真的做的太差了这方面",
+            "各种操作技能整一大堆然后boss战就是全程霸体，你就回血复读就完事了。",
+            "要么无数个小怪把你射成马蜂窝，要么逆天boss中一下就被秒杀"
+          ]
+        }
       ]
     }
   }

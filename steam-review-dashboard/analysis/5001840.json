@@ -10,43 +10,85 @@
         {
           "title": "The ocean: sailing, diving and a much bigger map",
           "detail": "The most common praise in every language. Players love the sea, underwater exploration, ship combat (often compared to Assassin's Creed Black Flag), shipwrecks and islands, and say the map has grown several times over.",
-          "quote": "the map is now 4x bigger with a ton of stuff to explore underwater"
+          "quotes": [
+            "the ocean biome is huge and there's a lot to discover, so if you like the base game then this seems like a no brainer.",
+            "Pearl abyss really outdid themselves with the attention to detail and just how awesome the ocean is.",
+            "The housing and ocean exploration are my favourite things!"
+          ]
         },
         {
           "title": "Huge amount of content for the price",
           "detail": "Many call it a \"more than a DLC\" package: tens of GB, a new region, three character storylines, bosses, new music. Korean and Chinese reviewers especially stress the value for money.",
-          "quote": "The DLC brings enough content for 10 DLCs"
+          "quotes": [
+            "The amount of content provided in this DLC could be 3 separate games on its own - its genuinely astonishing how Pearl Abyss was able to pull this off.",
+            "Cheap for the amount of content",
+            "Great DLC from great devs, even more cool stuff to do in an already content packed game."
+          ]
         },
         {
           "title": "Housing, castles, business and romance",
-          "detail": "Building a house or castle, running shops and businesses, and marriage/romance are praised as a relaxing \"open-world Sims\" layer on top of the adventure."
+          "detail": "Building a house or castle, running shops and businesses, and marriage/romance are praised as a relaxing \"open-world Sims\" layer on top of the adventure.",
+          "quotes": [
+            "Bought this dlc for the romance, and stayed for the shipbuilding.",
+            "i think ive spent more time managing my businesses in the past 2 days then actually doing quests!",
+            "I forgot they added entire ocean with navel combat and underwater content because I was too busy playing business tycoon."
+          ]
         },
         {
           "title": "Fast patches and trust in the developer",
-          "detail": "Many positive reviews say the launch bugs are real but are being fixed quickly (the Radeon graphics bug within a day), and several reviewers changed a negative review to positive after a patch. A number of positive reviews were written before playing, on trust alone."
+          "detail": "Many positive reviews say the launch bugs are real but are being fixed quickly (the Radeon graphics bug within a day), and several reviewers changed a negative review to positive after a patch. A number of positive reviews were written before playing, on trust alone.",
+          "quotes": [
+            "the 9070xt graphics bug was fixed within 24 hours of being released so that is a huge props to the devs.",
+            "The graphics issues affecting the 9070 XT have been fixed and it looks great now.",
+            "Fixed this morning gotta admit that's impressive."
+          ]
         }
       ],
       "complaints": [
         {
           "title": "Launch bugs that block progress or damage saves",
           "detail": "The most repeated complaint: the first island's pioneering/dispatch quest (Auronui) gets stuck and blocks the DLC, plus save corruption, deleted chest items, crashes on launch or load, and a freeze when opening the map. Reviewers say it was not tested before release, despite the two-week delay.",
-          "quote": "you cannot release an expansion with a game breaking bug in the first quest of the DLC"
+          "quotes": [
+            "dlc is bugged, stuck at \"awaiting completion\" at Auronui island right at the begining of the DLC.",
+            "First quest is bugged as heck, i cant even use any of the new content i paid for.",
+            "Too many bugs right now; gonna wait a bit till they sort that out."
+          ]
         },
         {
           "title": "Graphics glitches and performance (AMD Radeon RX 9070 XT, ocean)",
-          "detail": "Floating mountains and broken textures on RX 9070 XT cards (fixed by a hotfix, with a driver rollback as a workaround), and frame-rate drops and stutter on the ocean and when opening the map."
+          "detail": "Floating mountains and broken textures on RX 9070 XT cards (fixed by a hotfix, with a driver rollback as a workaround), and frame-rate drops and stutter on the ocean and when opening the map.",
+          "quotes": [
+            "I can't recommend this dlc for those who are using RX 9070 XT.",
+            "ever since the update, the performance has been noticeably worse.",
+            "Completely breaks your game, the game just crashes when turned on."
+          ]
         },
         {
           "title": "The Kliff desert sandstorm quest",
-          "detail": "Described as the worst part of the DLC, mainly by Korean and Chinese reviewers: you cannot see anything, there are no clear markers, and it feels like a very long puzzle before the ocean content even starts. Several reviewers quit or refunded here."
+          "detail": "Described as the worst part of the DLC, mainly by Korean and Chinese reviewers: you cannot see anything, there are no clear markers, and it feels like a very long puzzle before the ocean content even starts. Several reviewers quit or refunded here.",
+          "quotes": [
+            "I expected a ship and the ocean, instead I am trapped in a ridiculous environmental desert sandstorm puzzle for 3 days trying to complete the quests.",
+            "the worst quest in history of gaming",
+            "game guides you through a sandstorm in the desert but it doesn't end."
+          ]
         },
         {
           "title": "Ship handling, wind and crew chatter",
-          "detail": "Steering reverses when aiming cannons, the wheel does not turn, headwinds stall the ship, ships can sink and drag you down, and the crew repeats the same few voice lines endlessly with no way to mute them."
+          "detail": "Steering reverses when aiming cannons, the wheel does not turn, headwinds stall the ship, ships can sink and drag you down, and the crew repeats the same few voice lines endlessly with no way to mute them.",
+          "quotes": [
+            "CONSTANT yappering of the same 3 sentences on the ship with 10 crewmates.",
+            "Sails automatically dropping with no wind, deck hand takes control of ship with no way to take back control.",
+            "30 mins in and already the Steering Wheel doesn't turn when you steer and your ship very frequently goes underneath the waves as you're sailing."
+          ]
         },
         {
           "title": "Changed systems, shallow content and rushed feel",
-          "detail": "Gift-giving one item at a time and reduced affinity gains, a new interaction/looting UI, reskinned bosses, a mostly empty ocean, castles that are \"just homes\" and a weak story. Some players say they feel like beta testers and will wait for more patches."
+          "detail": "Gift-giving one item at a time and reduced affinity gains, a new interaction/looting UI, reskinned bosses, a mostly empty ocean, castles that are \"just homes\" and a weak story. Some players say they feel like beta testers and will wait for more patches.",
+          "quotes": [
+            "The exploration leaves a lot to be desired because most of the new map content is empty.",
+            "Overall, the whole DLC seemed rushed, unrefined and low quality.",
+            "A fantastic concept buried beneath bugs, shallow mechanics, and disappointing execution."
+          ]
         }
       ]
     },
@@ -55,43 +97,85 @@
         {
           "title": "Ocean, sailing and underwater exploration",
           "detail": "Diving, shipwrecks, naval combat and the sheer size of the new map are the main reasons for positive reviews; the Black Flag comparison is common.",
-          "quote": "below the surface is where the fun is"
+          "quotes": [
+            "the ocean biome is huge and there's a lot to discover, so if you like the base game then this seems like a no brainer.",
+            "Pearl abyss really outdid themselves with the attention to detail and just how awesome the ocean is.",
+            "The housing and ocean exploration are my favourite things!"
+          ]
         },
         {
           "title": "Building, business and romance",
-          "detail": "House and castle building, shops and workshops, and the new romance options are enjoyed, with several reviewers saying they got hooked on the management side."
+          "detail": "House and castle building, shops and workshops, and the new romance options are enjoyed, with several reviewers saying they got hooked on the management side.",
+          "quotes": [
+            "Bought this dlc for the romance, and stayed for the shipbuilding.",
+            "i think ive spent more time managing my businesses in the past 2 days then actually doing quests!",
+            "I forgot they added entire ocean with navel combat and underwater content because I was too busy playing business tycoon."
+          ]
         },
         {
           "title": "Huge value",
           "detail": "Players say it adds many dozens of hours for a low price, plus new bosses and music.",
-          "quote": "Cheap for the amount of content"
+          "quotes": [
+            "The amount of content provided in this DLC could be 3 separate games on its own - its genuinely astonishing how Pearl Abyss was able to pull this off.",
+            "Cheap for the amount of content",
+            "Great DLC from great devs, even more cool stuff to do in an already content packed game."
+          ]
         },
         {
           "title": "Quick fixes from the developer",
-          "detail": "Reviewers note the 9070 XT graphics bug was fixed within about 24 hours and that patch 2.04.06 improved things, and expect the remaining bugs to be fixed too."
+          "detail": "Reviewers note the 9070 XT graphics bug was fixed within about 24 hours and that patch 2.04.06 improved things, and expect the remaining bugs to be fixed too.",
+          "quotes": [
+            "the 9070xt graphics bug was fixed within 24 hours of being released so that is a huge props to the devs.",
+            "The graphics issues affecting the 9070 XT have been fixed and it looks great now.",
+            "Fixed this morning gotta admit that's impressive."
+          ]
         }
       ],
       "complaints": [
         {
           "title": "Game-breaking quest bug on Auronui Island",
           "detail": "The introductory pioneering/dispatch quest gets stuck at \"awaiting completion\", locking the rest of the DLC; it can also remove companions. Other bugs: deleted chest items, missing faces, crashes.",
-          "quote": "the DLC is locked behind that quest"
+          "quotes": [
+            "dlc is bugged, stuck at \"awaiting completion\" at Auronui island right at the begining of the DLC.",
+            "Several quests are completely bugged and you can't finished them (Specifically talking about Pioneering ones).",
+            "First quest is bugged as heck, i cant even use any of the new content i paid for."
+          ]
         },
         {
           "title": "Crashes and performance",
-          "detail": "Crashes on launch, RX 9070 XT graphics corruption (floating mountains), and FPS drops and stutter on the ocean and after updates."
+          "detail": "Crashes on launch, RX 9070 XT graphics corruption (floating mountains), and FPS drops and stutter on the ocean and after updates.",
+          "quotes": [
+            "I can't recommend this dlc for those who are using RX 9070 XT.",
+            "ever since the update, the performance has been noticeably worse.",
+            "Completely breaks your game, the game just crashes when turned on."
+          ]
         },
         {
           "title": "Ship controls, wind and the looping crew voice lines",
-          "detail": "Left/right controls flip while aiming, wind keeps pushing the ship against you, and the crew's repeated lines with no mute option is one of the most hated details."
+          "detail": "Left/right controls flip while aiming, wind keeps pushing the ship against you, and the crew's repeated lines with no mute option is one of the most hated details.",
+          "quotes": [
+            "CONSTANT yappering of the same 3 sentences on the ship with 10 crewmates.",
+            "Sails automatically dropping with no wind, deck hand takes control of ship with no way to take back control.",
+            "30 mins in and already the Steering Wheel doesn't turn when you steer and your ship very frequently goes underneath the waves as you're sailing."
+          ]
         },
         {
           "title": "Desert sandstorm quest and filler requirements",
-          "detail": "The sandstorm pillar/light quest is called one of the worst quests, and some are annoyed by long unrelated chores needed to unlock the castle."
+          "detail": "The sandstorm pillar/light quest is called one of the worst quests, and some are annoyed by long unrelated chores needed to unlock the castle.",
+          "quotes": [
+            "I expected a ship and the ocean, instead I am trapped in a ridiculous environmental desert sandstorm puzzle for 3 days trying to complete the quests.",
+            "the worst quest in history of gaming",
+            "game guides you through a sandstorm in the desert but it doesn't end."
+          ]
         },
         {
           "title": "Shallow or recycled content",
-          "detail": "Short character quest lines, reskinned bosses, a boss rush made of old bosses, a mostly empty ocean and castles that are basically homes. Some also dislike the new UI and looting text."
+          "detail": "Short character quest lines, reskinned bosses, a boss rush made of old bosses, a mostly empty ocean and castles that are basically homes. Some also dislike the new UI and looting text.",
+          "quotes": [
+            "The exploration leaves a lot to be desired because most of the new map content is empty.",
+            "Overall, the whole DLC seemed rushed, unrefined and low quality.",
+            "A fantastic concept buried beneath bugs, shallow mechanics, and disappointing execution."
+          ]
         }
       ]
     },
@@ -99,41 +183,86 @@
       "praise": [
         {
           "title": "Great value and sheer volume",
-          "detail": "The most common praise: far more content than a normal DLC for the price."
+          "detail": "The most common praise: far more content than a normal DLC for the price.",
+          "quotes": [
+            "버그와 아쉬운 점이 있지만 이 가격에 이 정도 규모라면 추천을 안 할 수는 없는 DLC.",
+            "이정도가격으로 이만한볼륨은 그 어디가서 못함",
+            "이거 그냥 확팩아님? DLC볼륨이 이정도라고?"
+          ]
         },
         {
           "title": "Sailing, ocean and the physics",
-          "detail": "Waves, ship combat, diving and the scale of the sea are praised, along with housing, castle decorating, management and marriage content."
+          "detail": "Waves, ship combat, diving and the scale of the sea are praised, along with housing, castle decorating, management and marriage content.",
+          "quotes": [
+            "특히 바다는 마치 몰디브 해변에서 다이브하는 느낌이 죽여줍니다.",
+            "경영 시스템, 바다 탐험, 하우징 시스템 등등 정말 괜찮음.",
+            "더좋아진 물그래픽과 파도 확장된 세계가 엔딩 후 멈춰있던 붉은 사막에 활력을 줍니다"
+          ]
         },
         {
           "title": "Korean touches and national pride",
-          "detail": "The turtle ship and Arirang are noted, and many call the game the hope of Korean games."
+          "detail": "The turtle ship and Arirang are noted, and many call the game the hope of Korean games.",
+          "quotes": [
+            "와 이게 한국게임이라니 진짜 대단하네",
+            "DLC 컨텐츠까지 접근하는게 미지의 여정이다 하지만 국산게임의 희망이라는건 뭐 변함없다",
+            "특히 이번 바다 항해 콘텐츠에서 인상 깊었던 것은 한국적인 요소를 자연스럽게 녹여냈다는 점입니다."
+          ]
         },
         {
           "title": "Patience with launch bugs",
-          "detail": "Many positive reviews expect the usual fast patches to fix the problems, and some say the negative ratings will flip once bugs are fixed."
+          "detail": "Many positive reviews expect the usual fast patches to fix the problems, and some say the negative ratings will flip once bugs are fixed.",
+          "quotes": [
+            "AMD 드라이버 버그 바로 잡아줘서 너무 감사합니다!",
+            "역시 펄어비스 하루만에 버그패치 ㄳ",
+            "초기 패치도 하루만에 해주고 일단 가격부터 혜자인데 고봉밥이라 좋습니다 해양 컨텐츠 너무 좋아요"
+          ]
         }
       ],
       "complaints": [
         {
           "title": "Kliff's sandstorm desert quest",
-          "detail": "The loudest complaint: zero visibility, hidden pillars/nails to pull and light fruit to scatter by hand, felt as deliberately unpleasant and the reason for many negative reviews."
+          "detail": "The loudest complaint: zero visibility, hidden pillars/nails to pull and light fruit to scatter by hand, felt as deliberately unpleasant and the reason for many negative reviews.",
+          "quotes": [
+            "dlc출시후에 사막미션이랑 최적화 ㅈ같이 된거때문에 극 비추함",
+            "걍 기믹사막으로 게임 이름 바꾸셈",
+            "아 사막퀘스트 만든 놈 짤라라 진짜 개스트레스 받네"
+          ]
         },
         {
           "title": "Bugs, crashes and Radeon problems",
-          "detail": "The pioneering (개척) quest that resets or cannot be finished, crashes, frame drops when opening the map, broken graphics on Radeon cards, pre-order item duplication."
+          "detail": "The pioneering (개척) quest that resets or cannot be finished, crashes, frame drops when opening the map, broken graphics on Radeon cards, pre-order item duplication.",
+          "quotes": [
+            "그냥 묵혀뒀다가 하셈 버그가 한두개가 아니네 겜 자체는 재미있는데 버그때문에 흐름이 계속 끊겨서 못하겠다",
+            "1. 개척 버그로 진행 막힘",
+            "개척 임무 보내놓은것도 리셋되어있고 다시 임무 보내려고 해도 먹통되는 버그남"
+          ]
         },
         {
           "title": "Ship controls and repeating crew lines",
-          "detail": "Steering inverts when aiming cannons, no wheel animation, ships get stuck in shallow water or are dragged down by sinking wrecks, and the crew repeats the same line constantly."
+          "detail": "Steering inverts when aiming cannons, no wheel animation, ships get stuck in shallow water or are dragged down by sinking wrecks, and the crew repeats the same line constantly.",
+          "quotes": [
+            "측면 함포사격시 후측방쪽으로 각도를 높이면 배 방향 조작이 제멋대로 됩니다",
+            "선원들이 롤Ctrl+1 누른것마냥 같은말만 계속 옆에서",
+            "타륜이 돌아가는 모션도 없고"
+          ]
         },
         {
           "title": "Murky, dark underwater visuals",
-          "detail": "Water is too blue and murky to see anything, with complaints that it needs colour correction."
+          "detail": "Water is too blue and murky to see anything, with complaints that it needs colour correction.",
+          "quotes": [
+            "누가 퍼런거 볼라고 게임하나 물속에서 뭐가 좀 이쁘고 잘 보여야지 색보정 안하놓을 꺼야?",
+            "탁하고 어두워서 하나도 안보이는게",
+            "바다 속도 뿌옇고 빛도 안보여서 찾기 개빡세니깐 안하게됨"
+          ]
         },
         {
           "title": "Changed affinity/gift system and a repeat of launch mistakes",
-          "detail": "Gifts can only be given one at a time and affinity is harder to raise; many feel the studio repeated the base game's launch mistakes and that early buyers are treated as beta testers."
+          "detail": "Gifts can only be given one at a time and affinity is harder to raise; many feel the studio repeated the base game's launch mistakes and that early buyers are treated as beta testers.",
+          "quotes": [
+            "왜 선물주는거 바꿨냐... 다 고치면 좋아요로 바꾸겠음.",
+            "돈내고 베타 테스터 해주고 있으니",
+            "본편 출시 때 그 많은 문제점들을 검수하지 못하고 출시해버려서 대차게 까이고 평점나락도 경험해봤으면서 DLC에서도 똑같은 실수를 반복하네요."
+          ]
         }
       ]
     },
@@ -141,41 +270,86 @@
       "praise": [
         {
           "title": "Enormous content for the price",
-          "detail": "Often the first point: a DLC bigger than many full games (27 to 60 GB), with a larger map, for about 100 yuan."
+          "detail": "Often the first point: a DLC bigger than many full games (27 to 60 GB), with a larger map, for about 100 yuan.",
+          "quotes": [
+            "显示更新了快60G，你这DLC赶上别人憋几年的游戏了，打开地图大了一倍",
+            "108块钱竟然有27gb内容，能下水能谈恋爱能种田",
+            "加大了地圖，更多的探索方式，航海，潛水，給三個主角都添加了新任務，量大管飽。"
+          ]
         },
         {
           "title": "Ocean, sailing and the sea music",
-          "detail": "Sailing, diving and the sea soundtrack are liked, and many compare the naval feel to Black Flag."
+          "detail": "Sailing, diving and the sea soundtrack are liked, and many compare the naval feel to Black Flag.",
+          "quotes": [
+            "疯狂水世界，好玩，能开船能潜水",
+            "海下不是随便塞宝箱，是认真手搓的，探索完拿武器或珍珠挺有成就感。",
+            "海上部分的bgm属于是上大分了，扬帆起航，激情高昂。"
+          ]
         },
         {
           "title": "Housing, castle, businesses, marriage and new story quests",
-          "detail": "Home building and management are described as fun, with a wish list for castles (soldiers, being able to live there) and mercenary outfits."
+          "detail": "Home building and management are described as fun, with a wish list for castles (soldiers, being able to live there) and mercenary outfits.",
+          "quotes": [
+            "家园建设部分，非常好,让我能够在战斗和冒险之余花费很多小时去探索。",
+            "还有城堡建造和模拟经营，满分",
+            "主角们新增的剧情任务，让故事更加充实，对于喜欢沉浸剧情的玩家来说非常友好"
+          ]
         },
         {
           "title": "Quick patches, reviews flipped to positive",
-          "detail": "Several reviewers say they updated a negative review to positive after the developer fixed the crash or save bug within a day or so."
+          "detail": "Several reviewers say they updated a negative review to positive after the developer fixed the crash or save bug within a day or so.",
+          "quotes": [
+            "岛屿开拓卡100%吞船员，刚准备差评就弹了一版更新修复了这个bug，更新很勤快",
+            "可怕，他们马上就改了。遵守约定改为好评。",
+            "修了bug能进去了该改好评了"
+          ]
         }
       ],
       "complaints": [
         {
           "title": "Kliff's desert sandstorm quest",
-          "detail": "Called the most disgusting quest by many: no visibility, no clear marker, no compass, and it eats hours before the sea content begins."
+          "detail": "Called the most disgusting quest by many: no visibility, no clear marker, no compass, and it eats hours before the sea content begins.",
+          "quotes": [
+            "那个黄沙里面找灯的任务是我玩过最恶心的任务 没有之一",
+            "克里夫沙漠直接给差评了，没得谈",
+            "玩了一下午没走出这个黄沙风暴"
+          ]
         },
         {
           "title": "Save-breaking and crash bugs",
-          "detail": "The first island's pioneering (开拓) dispatch quest breaks the save, crashes on launch or after the small patch, bag and storage corruption, a sound-card conflict, and a freeze when double-clicking a port on the map."
+          "detail": "The first island's pioneering (开拓) dispatch quest breaks the save, crashes on launch or after the small patch, bag and storage corruption, a sound-card conflict, and a freeze when double-clicking a port on the map.",
+          "quotes": [
+            "买完dlc直接一开游戏就闪退",
+            "开拓奥罗努伊岛任务派遣任务直接死档了，建造完成后读档导致直接没法完成，一直卡在派遣",
+            "闪退/坏档/背包污染bug修一个带一个修一个带一个"
+          ]
         },
         {
           "title": "Rough, repetitive sailing",
-          "detail": "Ships feel crude with nothing to do on board, the wheel does not turn, treasure chests have no hints, and sharks and rays attack endlessly."
+          "detail": "Ships feel crude with nothing to do on board, the wheel does not turn, treasure chests have no hints, and sharks and rays attack endlessly.",
+          "quotes": [
+            "航海是本DLC的一大主要内容，但船只却做的很粗糙，克里夫虚空打舵，舵轮都不转的。",
+            "宝箱真的是一点提示都没有 这么大的海怎么找？",
+            "整艘船的NPC一直在重複一樣的台詞"
+          ]
         },
         {
           "title": "Gifting and affinity changes, thin marriage system",
-          "detail": "Gifts can only be given one by one and affinity gain was cut; some say marriage lacks dialogue or outfit changes for the spouse."
+          "detail": "Gifts can only be given one by one and affinity gain was cut; some say marriage lacks dialogue or outfit changes for the spouse.",
+          "quotes": [
+            "不是 送礼物刷好感怎么只能一个一个送了这合适吗？",
+            "送礼系统改得太垃圾了，特殊npc就几个能发展特殊关系太少了",
+            "婚后和配偶之间可以对话的内容极少，翻来覆去只有几句重复的台词"
+          ]
         },
         {
           "title": "Weak story and an unfocused feel",
-          "detail": "Character storylines are called thin or awkward, and the systems seem to run in parallel with no core. A few also complain about Twitch drops that cannot be claimed."
+          "detail": "Character storylines are called thin or awkward, and the systems seem to run in parallel with no core. A few also complain about Twitch drops that cannot be claimed.",
+          "quotes": [
+            "主线任务剧情非常之差，玩起来非常折磨，比本体有过之而无不及。",
+            "剧情任务一堆废话流水账小学生水平",
+            "航海部分的剧情线几乎可以说是没有了，就只是为了添加点玩法而已"
+          ]
         }
       ]
     }

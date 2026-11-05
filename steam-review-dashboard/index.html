@@ -94,6 +94,10 @@
   .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
 
+  .tip { position: absolute; z-index: 5; pointer-events: none; background: var(--panel-alt); border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font-size: 12px; line-height: 1.5; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+  .tip[hidden] { display: none; }
+  .tip .pos { color: var(--ok); } .tip .neg { color: var(--bad); }
+  #timeChart g.col:hover rect:not([fill="transparent"]) { filter: brightness(1.25); }
   .summary-list { list-style: none; }
   .summary-list li { padding: 9px 0; border-bottom: 1px solid #2f2f32; }
   .summary-list li:last-child { border-bottom: none; }
@@ -169,7 +173,7 @@
     <h2 data-i18n="time.title"></h2>
     <div class="hint" id="timeHint"></div>
     <div class="legend"><span><i style="background:var(--ok)"></i><span data-i18n="positive"></span></span><span><i style="background:var(--bad)"></i><span data-i18n="negative"></span></span></div>
-    <div id="timeChart"></div>
+    <div id="timeChartWrap" style="position:relative"><div id="timeChart"></div><div id="chartTip" class="tip" hidden></div></div>
   </section>
 
   <section class="card">
@@ -245,6 +249,7 @@ const I18N = {
     'card.total': 'Total reviews', 'card.pos': 'Positive', 'card.neg': 'Negative', 'card.score': 'Positive rate',
     'card.steam': 'Steam shows {0} in total ({1}% positive)',
     'time.title': 'Reviews over time', 'time.hour': 'Per hour', 'time.day': 'Per day',
+    'time.tipPos': '{0} positive ({1}%)', 'time.tipNeg': '{0} negative ({1}%)',
     'time.pct': 'bars = review counts, yellow line (right axis) = % positive; hover a bar for the exact positive/negative %',
     'pt.title': 'Positive / negative ratio by playtime', 'pt.hint': 'Playtime is the hours played when the review was written. P/R ratio = positive reviews divided by negative reviews.',
     'pt.playtime': 'Playtime', 'pt.neg': 'Negative', 'pt.pos': 'Positive', 'pt.ratio': 'P/R ratio', 'pt.total': 'Total',
@@ -430,7 +435,7 @@ function renderTime() {
   const pts = [];
   keys.forEach((k, i) => {
     const [p, n] = map.get(k), x = L + i * bw, ph = ph0 * p / max, nh = ph0 * n / max, pc = pctOf(p, n);
-    svg += `<g><title>${k}: ${p} positive (${pc === null ? 0 : pc}%), ${n} negative (${pc === null ? 0 : 100 - pc}%)</title>`;
+    svg += `<g class="col" data-k="${k}" data-p="${p}" data-n="${n}" data-pc="${pc === null ? '' : pc}">`;
     svg += `<rect x="${x}" y="${T}" width="${bw}" height="${ph0}" fill="transparent"/>`; // whole column is hoverable
     svg += `<rect x="${x + 1}" y="${H - B - ph}" width="${Math.max(1, bw - 2)}" height="${ph}" fill="#6fcf97"/>`;
     svg += `<rect x="${x + 1}" y="${H - B - ph - nh}" width="${Math.max(1, bw - 2)}" height="${nh}" fill="#ff5c5c"/></g>`;
@@ -444,6 +449,17 @@ function renderTime() {
     if (bw >= 6) svg += pts.map(q => `<circle cx="${q[0]}" cy="${q[1]}" r="2.5" fill="#f2c94c"/>`).join('');
   }
   el.innerHTML = svg + '</svg>';
+  el.onmousemove = e => {
+    const g = e.target.closest && e.target.closest('g.col'), tip = $('chartTip');
+    if (!g) { tip.hidden = true; return; }
+    const p = +g.dataset.p, n = +g.dataset.n, pc = g.dataset.pc === '' ? 0 : +g.dataset.pc;
+    tip.innerHTML = `<b>${esc(g.dataset.k)}</b><br><span class="pos">${t('time.tipPos', fmt(p), pc)}</span><br><span class="neg">${t('time.tipNeg', fmt(n), p + n ? 100 - pc : 0)}</span>`;
+    tip.hidden = false;
+    const r = el.getBoundingClientRect();
+    tip.style.left = Math.min(e.clientX - r.left + 14, r.width - tip.offsetWidth - 4) + 'px';
+    tip.style.top = Math.max(0, e.clientY - r.top - tip.offsetHeight - 10) + 'px';
+  };
+  el.onmouseleave = () => { $('chartTip').hidden = true; };
 }
 
 const PT_EDGES = [2, 3, 4, 5, 7, 10, 15, 20, 30, 40, 50, 70, 100, 150, 200, 300, 400, 500];
@@ -592,7 +608,7 @@ function renderSummary() {
   const key = S.scope, entry = a.scopes && a.scopes[key], use = entry || (a.scopes && a.scopes.all);
   $('sumHint').textContent = t('sum.hint', fmt(a.sampleSize || 0), a.from || '?', a.to || '?', a.analyzed || '?') + (entry || key === 'all' ? '' : ' ' + t('sum.fallback'));
   if (!use) { body.innerHTML = `<div class="status">${t('sum.none')}</div>`; return; }
-  const list = items => '<ul class="summary-list">' + items.map(x => `<li><b>${esc(x.title)}</b>${esc(x.detail || '')}${x.quote ? `<div class="q">“${esc(x.quote)}”</div>` : ''}</li>`).join('') + '</ul>';
+  const list = items => '<ul class="summary-list">' + items.map(x => `<li><b>${esc(x.title)}</b>${esc(x.detail || '')}${(x.quotes || (x.quote ? [x.quote] : [])).map(q => `<div class="q">“${esc(q)}”</div>`).join('')}</li>`).join('') + '</ul>';
   body.innerHTML = `<div><h3 class="pos">${t('sum.praise')}</h3>${list(use.praise || [])}</div><div><h3 class="neg">${t('sum.complain')}</h3>${list(use.complaints || [])}</div>`;
 }
 
