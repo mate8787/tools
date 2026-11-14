@@ -92,7 +92,7 @@
   ul.points li::before { content: counter(pt); counter-increment: pt; position: absolute; left: 8px; color: var(--accent); font-size: 13px; font-weight: 600; top: 5px; }
   ul.points { counter-reset: pt; }
   dl.terms dt { font-weight: 600; color: var(--accent); }
-  dl.terms .seg { margin-bottom: 6px; }
+  dl.terms > div { margin-bottom: 6px; }
   dl.terms dd { color: var(--text); }
   /* 주요 내용정리: the book's own review box, shown first */
   .review { background: var(--panel-alt); border-left: 4px solid var(--review); border-radius: 0 8px 8px 0; padding: 14px 18px 8px; margin-bottom: 1.5rem; }
@@ -159,7 +159,7 @@
         <span class="progress" id="progress"></span>
       </div>
       <div id="summary"></div>
-      <div class="hint">Summary reads only 주요 내용정리. Summary + Quiz reads 주요 내용정리, then the 탐구활동 questions with their answers. All reads everything except 이야기 나누기. Good to know reads only 알아두면 좋아요. Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
+      <div class="hint">Summary reads only 주요 내용정리. Summary + Quiz reads 주요 내용정리, then the 탐구활동 questions with their answers. All reads everything except 이야기 나누기 and 주요 용어 (those are never read). Good to know reads only 알아두면 좋아요. Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
     </main>
   </div>
 </div>
@@ -295,52 +295,30 @@ function renderChapter() {
     points(ch.keyPoints);
   }
   // Lessons within the chapter (01, 02, ...), each with its own points.
-  (ch.sections || []).forEach(s => {
-    if (s.type === 'tip' || s.type === 'story') {
-      // Collapsed: just the title until clicked.
-      // 알아두면 좋아요 (tip) is read by All and Good to know; 이야기 나누기 (story) never.
-      const d = document.createElement('details');
-      d.className = 'more';
-      const sum = document.createElement('summary');
-      sum.textContent = s.heading;
-      d.append(sum);
-      points(s.points || [], d, s.type === 'tip' ? 'tip' : null, spokenHeading(s.heading) + ' ');
-      box.append(d);
-      return;
-    }
+  // Tips and stories are collected into the collapsed menus at the end instead.
+  const sections = ch.sections || [];
+  sections.filter(s => !s.type).forEach(s => {
     box.append(add(seg('h3', s.heading, 'section'), spokenHeading(s.heading)));
     points(s.points || []);
   });
-  // 주요 용어: collapsed like 알아두면 좋아요; still read by All (it opens while read).
-  if (ch.terms?.length) {
-    const d = document.createElement('details');
-    d.className = 'more';
-    const sum = document.createElement('summary');
-    sum.textContent = `${say.terms} (${ch.terms.length}개)`;
-    d.append(sum);
-    const dl = document.createElement('dl');
-    dl.className = 'terms';
-    ch.terms.forEach(([term, def], i) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'seg';
-      const dt = document.createElement('dt'); dt.textContent = term;
-      const dd = document.createElement('dd'); dd.textContent = def;
-      wrap.append(dt, dd);
-      dl.append(add(wrap, `${i ? '' : `${say.terms}. `}${term}: ${def}`));
-    });
-    d.append(dl);
-    box.append(d);
-  }
 
-  // 탐구활동 quiz: collapsed. Pick a choice (or "정답 보기") to see the answer;
+  // Collapsed menus at the end, always in this order:
+  // 탐구활동, 주요 용어, 알아두면 좋아요 (all of them), 이야기 나누기.
+  const collapsed = (title, cls = '') => {
+    const d = document.createElement('details');
+    d.className = `more ${cls}`.trim();
+    const sum = document.createElement('summary');
+    sum.textContent = title;
+    d.append(sum);
+    box.append(d);
+    return d;
+  };
+
+  // 탐구활동 quiz. Pick a choice (or "정답 보기") to see the answer;
   // when read aloud, each question is followed by its choices and the answer.
   if (ch.quiz?.length) {
     const marks = '①②③④⑤';
-    const d = document.createElement('details');
-    d.className = 'more quiz';
-    const sum = document.createElement('summary');
-    sum.textContent = `탐구활동 (${ch.quiz.length}문제)`;
-    d.append(sum);
+    const d = collapsed(`탐구활동 (${ch.quiz.length}문제)`, 'quiz');
     d.append(add(seg('h4', say.quiz(current + 1), 'quiz-title'), `${say.quiz(current + 1)}.`, 'quizTitle'));
     ch.quiz.forEach((q, qi) => {
       const wrap = document.createElement('div');
@@ -370,8 +348,32 @@ function renderChapter() {
       segments.at(-1).reveal = reveal;
       d.append(wrap);
     });
-    box.append(d);
   }
+
+  // 주요 용어: never read aloud.
+  if (ch.terms?.length) {
+    const d = collapsed(`${say.terms} (${ch.terms.length}개)`);
+    const dl = document.createElement('dl');
+    dl.className = 'terms';
+    ch.terms.forEach(([term, def]) => {
+      const wrap = document.createElement('div');
+      const dt = document.createElement('dt'); dt.textContent = term;
+      const dd = document.createElement('dd'); dd.textContent = def;
+      wrap.append(dt, dd);
+      dl.append(wrap);
+    });
+    d.append(dl);
+  }
+
+  // 알아두면 좋아요: read by All and Good to know (each box opens while read).
+  sections.filter(s => s.type === 'tip').forEach(s => {
+    points(s.points || [], collapsed(s.heading), 'tip', spokenHeading(s.heading) + ' ');
+  });
+
+  // 이야기 나누기: never read aloud.
+  sections.filter(s => s.type === 'story').forEach(s => {
+    points(s.points || [], collapsed(s.heading), null);
+  });
 
   // Click a line to listen from there (choices and answers are for the quiz instead).
   segments.forEach((s, i) => {
