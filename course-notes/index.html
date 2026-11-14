@@ -311,19 +311,25 @@ function renderChapter() {
     box.append(add(seg('h3', s.heading, 'section'), spokenHeading(s.heading)));
     points(s.points || []);
   });
+  // 주요 용어: collapsed like 알아두면 좋아요; still read by All (it opens while read).
   if (ch.terms?.length) {
-    heading(say.terms);
+    const d = document.createElement('details');
+    d.className = 'more';
+    const sum = document.createElement('summary');
+    sum.textContent = `${say.terms} (${ch.terms.length}개)`;
+    d.append(sum);
     const dl = document.createElement('dl');
     dl.className = 'terms';
-    ch.terms.forEach(([term, def]) => {
+    ch.terms.forEach(([term, def], i) => {
       const wrap = document.createElement('div');
       wrap.className = 'seg';
       const dt = document.createElement('dt'); dt.textContent = term;
       const dd = document.createElement('dd'); dd.textContent = def;
       wrap.append(dt, dd);
-      dl.append(add(wrap, `${term}: ${def}`));
+      dl.append(add(wrap, `${i ? '' : `${say.terms}. `}${term}: ${def}`));
     });
-    box.append(dl);
+    d.append(dl);
+    box.append(d);
   }
 
   // 탐구활동 quiz: collapsed. Pick a choice (or "정답 보기") to see the answer;
