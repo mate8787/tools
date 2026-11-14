@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Notes</title>
+<style>
+  :root {
+    --bg: #1c1c1e;
+    --panel: #242426;
+    --panel-alt: #2c2c2f;
+    --border: #3a3a3d;
+    --text: #e8e8ea;
+    --muted: #9a9a9e;
+    --accent: #7fb3ff;
+    --accent-dim: #3d5a80;
+    --hl: rgba(127, 179, 255, 0.14);
+    --review: #b48cff;
+    --review-hl: rgba(180, 140, 255, 0.16);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; font-size: 15px; line-height: 1.6; }
+  .container { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+
+  .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; }
+
+  /* Chapter list */
+  .chapters { padding: 0.5rem; position: sticky; top: 1rem; }
+  .chapters button {
+    display: block; width: 100%; text-align: left; padding: 9px 12px; border-radius: 7px;
+    background: none; border: 1px solid transparent; color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+  }
+  .chapters button:hover { background: var(--panel-alt); }
+  .chapters button.active { background: var(--panel-alt); border-color: var(--accent-dim); }
+  .chapters .num { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+
+  /* Player */
+  .player { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+  button.ctl {
+    padding: 9px 18px; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font-family: inherit;
+  }
+  button.ctl:hover { border-color: var(--accent-dim); }
+  button.ctl.primary { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; min-width: 110px; }
+  button.ctl.primary:hover { background: #4a6d94; }
+  button.ctl.review-btn { background: #5b4785; border-color: #5b4785; }
+  button.ctl.review-btn:hover { background: #6a5499; }
+  button.ctl:disabled { opacity: 0.4; cursor: default; }
+  .player label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  select {
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel-alt);
+    color: var(--text); font: inherit; font-size: 13px; max-width: 220px;
+  }
+  .spacer { flex: 1; }
+  .progress { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Summary */
+  h2 { font-size: 20px; font-weight: 600; margin-bottom: 1rem; }
+  h3 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 0.5rem; }
+  h3.section { font-size: 16px; color: var(--text); text-transform: none; letter-spacing: 0; margin: 1.75rem -8px 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border); border-radius: 0; }
+  details.more { margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  details.more summary { cursor: pointer; list-style: none; font-size: 16px; font-weight: 600; padding: 8px 12px; margin: 0 -8px; border: 1px dashed var(--border); border-radius: 7px; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::before { content: '▸'; display: inline-block; color: var(--accent); margin-right: 8px; transition: transform 0.15s; }
+  details.more summary::after { content: '눌러서 보기'; float: right; font-size: 13px; font-weight: 400; color: var(--muted); }
+  details.more summary:hover { border-color: var(--accent-dim); }
+  details.more[open] summary { border-style: solid; margin-bottom: 0.5rem; }
+  details.more[open] summary::before { transform: rotate(90deg); }
+  details.more[open] summary::after { content: '접기'; }
+  .seg { border-radius: 6px; padding: 4px 8px; margin: 0 -8px; cursor: pointer; transition: background 0.15s; }
+  .seg:hover { background: rgba(255,255,255,0.03); }
+  .seg.speaking { background: var(--hl); }
+  ul.points { list-style: none; }
+  ul.points li { position: relative; padding-left: 26px; margin-bottom: 4px; }
+  ul.points li::before { content: counter(pt); counter-increment: pt; position: absolute; left: 8px; color: var(--accent); font-size: 13px; font-weight: 600; top: 5px; }
+  ul.points { counter-reset: pt; }
+  dl.terms dt { font-weight: 600; color: var(--accent); }
+  dl.terms .seg { margin-bottom: 6px; }
+  dl.terms dd { color: var(--text); }
+  /* 주요 내용정리: the book's own review box, shown first */
+  .review { background: var(--panel-alt); border-left: 4px solid var(--review); border-radius: 0 8px 8px 0; padding: 14px 18px 8px; margin-bottom: 1.5rem; }
+  .review h3.review-title { color: var(--review); font-size: 17px; text-transform: none; letter-spacing: 0; margin: 0 -8px 0.5rem; }
+  .review h4 { font-size: 15px; font-weight: 600; margin: 0.75rem -8px 0.25rem; }
+  .review ul { list-style: none; margin-bottom: 0.5rem; }
+  .review li { position: relative; padding-left: 24px; margin-bottom: 4px; }
+  .review li::before { content: '•'; position: absolute; left: 10px; color: var(--review); font-weight: 700; }
+  .review .blank { color: var(--review); font-weight: 700; }
+  .review .speaking { background: var(--review-hl); }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 1.5rem; }
+  .empty { color: var(--muted); }
+
+  @media (max-width: 820px) {
+    body { padding: 1rem; }
+    .layout { grid-template-columns: 1fr; }
+    .chapters { position: static; display: flex; overflow-x: auto; gap: 4px; }
+    .chapters button { white-space: nowrap; width: auto; }
+    select { max-width: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Course Notes</h1>
+  <div class="subtitle">Key content from each chapter: read it or listen to it.</div>
+
+  <div class="layout">
+    <nav class="card chapters" id="chapterList"></nav>
+
+    <main class="card">
+      <div class="player">
+        <button class="ctl primary" id="allBtn">▶ Listen all</button>
+        <button class="ctl primary review-btn" id="summaryBtn">▶ Listen summary</button>
+        <button class="ctl" id="stopBtn" disabled>■ Stop</button>
+        <label>Speed
+          <select id="rate">
+            <option value="0.8">0.8×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.2">1.2×</option>
+            <option value="1.5">1.5×</option>
+            <option value="1.8">1.8×</option>
+          </select>
+        </label>
+        <label>Voice <select id="voice"></select></label>
+        <div class="spacer"></div>
+        <span class="progress" id="progress"></span>
+      </div>
+      <div id="summary"></div>
+      <div class="hint">Listen all reads everything except 이야기 나누기. Listen summary reads only 주요 내용정리. Click any line to start from there. Space = play/pause.</div>
+    </main>
+  </div>
+</div>
+
+<script src="chapters.js"></script>
+<script>
+const chapters = window.CHAPTERS || [];
+const $ = id => document.getElementById(id);
+const synth = window.speechSynthesis;
+
+let current = 0;      // chapter index
+let segments = [];    // [{el, text, kind}] in reading order for the current chapter
+let pos = 0;          // segment being read
+let playing = false;
+let mode = 'all';     // 'all' = everything; 'summary' = chapter title + 주요 내용정리 only
+
+const inMode = s => mode === 'all' || s.kind === 'title' || s.kind === 'review';
+let voices = [];
+
+/* ---- Chapter list & rendering ---- */
+function renderList() {
+  $('chapterList').innerHTML = '';
+  chapters.forEach((ch, i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="num">${i + 1}</span>`;
+    b.append(ch.title);
+    b.onclick = () => selectChapter(i);
+    if (i === current) b.classList.add('active');
+    $('chapterList').append(b);
+  });
+}
+
+function seg(tag, text, cls) {
+  const el = document.createElement(tag);
+  el.className = 'seg' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+  return el;
+}
+
+function renderChapter() {
+  const box = $('summary');
+  box.innerHTML = '';
+  segments = [];
+  const ch = chapters[current];
+  if (!ch) { box.innerHTML = '<p class="empty">No chapters yet.</p>'; return; }
+
+  // Words added to the spoken text, in the chapter's language.
+  const ko = (ch.lang || 'ko').toLowerCase().startsWith('ko');
+  const say = ko
+    ? { chapter: n => `챕터 ${n}:`, point: n => `${n}번.`,
+        review: '주요 내용정리', overview: '개요', keyPoints: '핵심 내용', terms: '주요 용어' }
+    : { chapter: n => `Chapter ${n}:`, point: n => `Point ${n}.`,
+        review: 'Review', overview: 'Overview', keyPoints: 'Key points', terms: 'Key terms' };
+  // "01 Heading?" is read as "Heading?" (no lesson number, no doubled period).
+  const spokenHeading = h => { const t = h.replace(/^\d+\s+/, ''); return /[.?!]$/.test(t) ? t : t + '.'; };
+
+  const add = (el, spoken, kind) => { el.dataset.i = segments.length; segments.push({ el, text: spoken || el.textContent, kind }); return el; };
+  const heading = (t) => { const h = document.createElement('h3'); h.textContent = t; box.append(h); };
+  const points = (list, parent = box, spoken = true) => {
+    const ul = document.createElement('ul');
+    ul.className = 'points';
+    list.forEach((p, i) => {
+      if (spoken) ul.append(add(seg('li', p), `${say.point(i + 1)} ${p}`));
+      else { const li = document.createElement('li'); li.textContent = p; ul.append(li); }
+    });
+    parent.append(ul);
+  };
+
+  box.append(add(seg('h2', ch.title), `${say.chapter(current + 1)} ${ch.title}.`, 'title'));
+
+  if (ch.review?.length) {
+    const wrap = document.createElement('div');
+    wrap.className = 'review';
+    wrap.append(add(seg('h3', say.review, 'review-title'), `${say.review}.`, 'review'));
+    ch.review.forEach(r => {
+      wrap.append(add(seg('h4', r.heading), spokenHeading(r.heading), 'review'));
+      const ul = document.createElement('ul');
+      r.points.forEach(p => {
+        // [word] marks a blank from the book; show it highlighted.
+        const li = seg('li', '');
+        p.split(/\[([^\]]+)\]/).forEach((part, i) => {
+          if (i % 2) { const b = document.createElement('span'); b.className = 'blank'; b.textContent = part; li.append(b); }
+          else li.append(part);
+        });
+        ul.append(add(li, p.replace(/[\[\]]/g, ''), 'review'));
+      });
+      wrap.append(ul);
+    });
+    box.append(wrap);
+  }
+
+  if (ch.overview) {
+    heading(say.overview);
+    box.append(add(seg('p', ch.overview)));
+  }
+  if (ch.keyPoints?.length) {
+    heading(say.keyPoints);
+    points(ch.keyPoints);
+  }
+  // Lessons within the chapter (01, 02, ...), each with its own points.
+  (ch.sections || []).forEach(s => {
+    if (s.hidden) {
+      // Collapsed: just the title until clicked. Never read aloud.
+      const d = document.createElement('details');
+      d.className = 'more';
+      const sum = document.createElement('summary');
+      sum.textContent = s.heading;
+      d.append(sum);
+      points(s.points || [], d, false);
+      box.append(d);
+      return;
+    }
+    box.append(add(seg('h3', s.heading, 'section'), spokenHeading(s.heading)));
+    points(s.points || []);
+  });
+  if (ch.terms?.length) {
+    heading(say.terms);
+    const dl = document.createElement('dl');
+    dl.className = 'terms';
+    ch.terms.forEach(([term, def]) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'seg';
+      const dt = document.createElement('dt'); dt.textContent = term;
+      const dd = document.createElement('dd'); dd.textContent = def;
+      wrap.append(dt, dd);
+      dl.append(add(wrap, `${term}: ${def}`));
+    });
+    box.append(dl);
+  }
+
+  segments.forEach((s, i) => s.el.onclick = () => {
+    if (!inMode(s)) mode = 'all';
+    pos = i; play();
+  });
+  updateProgress();
+}
+
+function selectChapter(i) {
+  stop();
+  current = i;
+  pos = 0;
+  try { localStorage.setItem('courseNotes.chapter', i); } catch {}
+  renderList();
+  renderChapter();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---- Speech ---- */
+function loadVoices() {
+  voices = synth ? synth.getVoices() : [];
+  const sel = $('voice');
+  const saved = (() => { try { return localStorage.getItem('courseNotes.voice'); } catch { return null; } })();
+  sel.innerHTML = '<option value="">Auto</option>';
+  voices.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v.name;
+    o.textContent = `${v.name} (${v.lang})`;
+    sel.append(o);
+  });
+  if (saved && voices.some(v => v.name === saved)) sel.value = saved;
+}
+
+function pickVoice() {
+  const name = $('voice').value;
+  if (name) return voices.find(v => v.name === name);
+  const lang = (chapters[current]?.lang || 'ko-KR').toLowerCase();
+  return voices.find(v => v.lang.toLowerCase() === lang)
+      || voices.find(v => v.lang.toLowerCase().startsWith(lang.slice(0, 2)));
+}
+
+function highlight() {
+  segments.forEach((s, i) => s.el.classList.toggle('speaking', playing && i === pos));
+  const el = segments[pos]?.el;
+  if (playing && el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function speakCurrent() {
+  if (!playing) return;
+  while (pos < segments.length && !inMode(segments[pos])) pos++;
+  if (pos >= segments.length) {
+    // Finished this chapter: roll on to the next one (same mode), if any.
+    if (current < chapters.length - 1) {
+      current++; pos = 0; renderList(); renderChapter();
+    } else { stop(); return; }
+  }
+  const u = new SpeechSynthesisUtterance(segments[pos].text);
+  const v = pickVoice();
+  if (v) { u.voice = v; u.lang = v.lang; } else if (chapters[current]?.lang) u.lang = chapters[current].lang;
+  u.rate = parseFloat($('rate').value);
+  u.onend = () => { if (u._cancelled) return; pos++; speakCurrent(); };
+  u.onerror = () => { if (!u._cancelled) { pos++; speakCurrent(); } };
+  currentUtterance = u;
+  highlight();
+  updateProgress();
+  synth.speak(u);
+}
+let currentUtterance = null;
+
+function cancelSpeech() {
+  if (currentUtterance) currentUtterance._cancelled = true;
+  synth.cancel();
+}
+
+function play() {
+  if (!synth) { alert('Your browser does not support text-to-speech. Try Chrome or Edge.'); return; }
+  cancelSpeech();
+  playing = true;
+  updateButtons();
+  speakCurrent();
+}
+
+function pause() {
+  // Cancel + remember position; resumes from the start of the current line.
+  playing = false;
+  cancelSpeech();
+  updateButtons();
+  highlight();
+}
+
+function stop() {
+  playing = false;
+  cancelSpeech();
+  pos = 0;
+  updateButtons();
+  highlight();
+  updateProgress();
+}
+
+const modeButtons = { all: ['allBtn', '▶ Listen all'], summary: ['summaryBtn', '▶ Listen summary'] };
+
+function updateButtons() {
+  for (const [m, [id, label]] of Object.entries(modeButtons)) {
+    $(id).textContent = m !== mode ? label : playing ? '❚❚ Pause' : pos > 0 ? '▶ Resume' : label;
+  }
+  $('stopBtn').disabled = !playing && pos === 0;
+}
+
+function updateProgress() {
+  const idx = segments.map((s, i) => inMode(s) ? i : -1).filter(i => i >= 0);
+  const done = idx.filter(i => i <= pos).length;
+  $('progress').textContent = idx.length ? `${Math.max(done, 1)} / ${idx.length}` : '';
+}
+
+// Same mode's button = pause/resume; the other one starts that mode from the top.
+function listen(m) {
+  if (m === mode) return playing ? pause() : play();
+  stop();
+  mode = m;
+  play();
+}
+$('allBtn').onclick = () => listen('all');
+$('summaryBtn').onclick = () => listen('summary');
+$('stopBtn').onclick = stop;
+$('rate').onchange = () => { if (playing) play(); };
+$('voice').onchange = () => {
+  try { localStorage.setItem('courseNotes.voice', $('voice').value); } catch {}
+  if (playing) play();
+};
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'SUMMARY'].includes(e.target.tagName)) {
+    e.preventDefault();
+    playing ? pause() : play();
+  }
+});
+
+if (synth) {
+  loadVoices();
+  synth.onvoiceschanged = loadVoices;
+}
+
+/* ---- Init ---- */
+try {
+  const saved = parseInt(localStorage.getItem('courseNotes.chapter'), 10);
+  if (saved >= 0 && saved < chapters.length) current = saved;
+} catch {}
+renderList();
+renderChapter();
+updateButtons();
+</script>
+</body>
+</html>
