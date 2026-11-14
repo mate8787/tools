@@ -17,6 +17,12 @@
     --hl: rgba(127, 179, 255, 0.14);
     --review: #b48cff;
     --review-hl: rgba(180, 140, 255, 0.16);
+    --quiz: #e8a95c;
+    --quiz-dim: #7a5a33;
+    --ok: #6fcf97;
+    --ok-bg: rgba(111, 207, 151, 0.14);
+    --bad: #ff8a8a;
+    --bad-bg: rgba(255, 92, 92, 0.12);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; font-size: 15px; line-height: 1.6; }
@@ -52,6 +58,8 @@
   button.ctl.primary:hover { background: #4a6d94; }
   button.ctl.review-btn { background: #5b4785; border-color: #5b4785; }
   button.ctl.review-btn:hover { background: #6a5499; }
+  button.ctl.quiz-btn { background: #8a5a22; border-color: #8a5a22; }
+  button.ctl.quiz-btn:hover { background: #9c6828; }
   button.ctl.tips-btn { background: #2f6b5e; border-color: #2f6b5e; }
   button.ctl.tips-btn:hover { background: #3a7d6e; }
   button.ctl:disabled { opacity: 0.4; cursor: default; }
@@ -95,6 +103,20 @@
   .review li::before { content: '•'; position: absolute; left: 10px; color: var(--review); font-weight: 700; }
   .review .blank { color: var(--review); font-weight: 700; }
   .review .speaking { background: var(--review-hl); }
+  /* 탐구활동: workbook quiz, collapsed like 알아두면 좋아요 */
+  details.quiz summary { border-color: var(--quiz-dim); }
+  details.quiz summary::before { color: var(--quiz); }
+  .quiz-title { font-size: 15px; font-weight: 600; color: var(--quiz); margin: 0.5rem -8px 0; }
+  .quiz-q { margin-top: 1rem; }
+  .qtext { font-weight: 600; }
+  .qbox { margin: 6px 0 2px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 14px; font-weight: 400; color: var(--muted); white-space: pre-line; }
+  ol.choices { list-style: none; }
+  ol.choices li { padding: 3px 8px; margin: 0 -8px; border-radius: 6px; cursor: pointer; }
+  ol.choices li:hover { background: rgba(255,255,255,0.04); }
+  ol.choices li.correct { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
+  ol.choices li.wrong { background: var(--bad-bg); color: var(--bad); }
+  .answer { display: inline-block; margin-top: 4px; font-size: 13px; color: var(--quiz); cursor: pointer; border: 1px dashed var(--quiz-dim); border-radius: 6px; padding: 3px 10px; margin-left: 0; }
+  .answer.shown { border-style: solid; font-weight: 600; cursor: default; }
   .hint { font-size: 13px; color: var(--muted); margin-top: 1.5rem; }
   .empty { color: var(--muted); }
 
@@ -119,6 +141,7 @@
     <main class="card">
       <div class="player">
         <button class="ctl primary review-btn" id="summaryBtn">▶ Summary</button>
+        <button class="ctl primary quiz-btn" id="quizBtn">▶ Summary + Quiz</button>
         <button class="ctl primary" id="allBtn">▶ All</button>
         <button class="ctl primary tips-btn" id="tipsBtn">▶ Good to know</button>
         <button class="ctl" id="stopBtn" disabled>■ Stop</button>
@@ -136,7 +159,7 @@
         <span class="progress" id="progress"></span>
       </div>
       <div id="summary"></div>
-      <div class="hint">Summary reads only 주요 내용정리. All reads everything except 이야기 나누기. Good to know reads only 알아두면 좋아요. Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
+      <div class="hint">Summary reads only 주요 내용정리. Summary + Quiz reads 주요 내용정리, then the 탐구활동 questions with their answers. All reads everything except 이야기 나누기. Good to know reads only 알아두면 좋아요. Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
     </main>
   </div>
 </div>
@@ -151,20 +174,22 @@ let current = 0;      // chapter index
 let segments = [];    // [{el, text, kind, intro?}] in reading order for the current chapter
 let pos = 0;          // segment being read
 let playing = false;
-let mode = 'all';     // 'all' = everything; 'summary' = 주요 내용정리; 'tips' = 알아두면 좋아요
+let mode = 'all';     // 'all' = everything; 'summary' = 주요 내용정리; 'quiz' = 주요 내용정리 + 탐구활동;
+                      // 'tips' = 알아두면 좋아요
 
 // Which lines each mode reads. The chapter title (read with a per-mode intro)
 // only counts when the chapter has something else to read in that mode.
 const inBody = s => mode === 'all' ? s.kind !== 'title'
                   : mode === 'summary' ? s.kind === 'review'
+                  : mode === 'quiz' ? ['review', 'quizTitle', 'quiz'].includes(s.kind)
                   : s.kind === 'tip';
 const inMode = s => s.kind === 'title' ? segments.some(inBody) : inBody(s);
 let voices = [];
 
 /* ---- Chapter list & rendering ---- */
-// Sections group consecutive chapters, numbered in order: "01 대한민국의 국민".
+// Sections (편) group consecutive chapters, numbered in order: "제1편 대한민국의 국민".
 const partNames = [...new Set(chapters.map(ch => ch.part).filter(Boolean))];
-const partLabel = ch => ch.part ? `${String(partNames.indexOf(ch.part) + 1).padStart(2, '0')} ${ch.part}` : '';
+const partLabel = ch => ch.part ? `제${partNames.indexOf(ch.part) + 1}편 ${ch.part}` : '';
 
 function renderList() {
   $('chapterList').innerHTML = '';
@@ -203,12 +228,18 @@ function renderChapter() {
   const say = ko
     ? { chapter: n => `챕터 ${n},`, point: n => `${n}번.`,
         review: '주요 내용정리', overview: '개요', keyPoints: '핵심 내용', terms: '주요 용어',
-        intro: { all: '전체 내용 듣기', summary: '주요 내용 정리 듣기', tips: '알아두면 좋아요 듣기' } }
+        quiz: n => `챕터 ${n} 탐구활동`, question: n => `${n}번 문제.`, box: '보기.',
+        choice: n => `${n}번,`, answer: n => `정답은 ${n}번,`,
+        intro: { all: '전체 내용 듣기', summary: '주요 내용 정리 듣기',
+                 quiz: '주요 내용 정리와 탐구활동 듣기', tips: '알아두면 좋아요 듣기' } }
     : { chapter: n => `Chapter ${n},`, point: n => `Point ${n}.`,
         review: 'Review', overview: 'Overview', keyPoints: 'Key points', terms: 'Key terms',
-        intro: { all: 'all content', summary: 'review', tips: 'good to know' } };
+        quiz: n => `Chapter ${n} quiz`, question: n => `Question ${n}.`, box: 'Example.',
+        choice: n => `${n},`, answer: n => `The answer is ${n},`,
+        intro: { all: 'all content', summary: 'review', quiz: 'review and quiz', tips: 'good to know' } };
   // "01 Heading?" is read as "Heading?" (no lesson number, no doubled period).
-  const spokenHeading = h => { const t = h.replace(/^\d+\s+/, ''); return /[.?!]$/.test(t) ? t : t + '.'; };
+  const endStop = t => /[.?!]$/.test(t) ? t : t + '.';
+  const spokenHeading = h => endStop(h.replace(/^\d+\s+/, ''));
 
   const add = (el, spoken, kind) => { el.dataset.i = segments.length; segments.push({ el, text: spoken || el.textContent, kind }); return el; };
   const heading = (t) => { const h = document.createElement('h3'); h.textContent = t; box.append(h); };
@@ -295,9 +326,54 @@ function renderChapter() {
     box.append(dl);
   }
 
-  segments.forEach((s, i) => s.el.onclick = () => {
-    if (!inMode(s)) mode = 'all';
-    pos = i; play();
+  // 탐구활동 quiz: collapsed. Pick a choice (or "정답 보기") to see the answer;
+  // when read aloud, each question is followed by its choices and the answer.
+  if (ch.quiz?.length) {
+    const marks = '①②③④⑤';
+    const d = document.createElement('details');
+    d.className = 'more quiz';
+    const sum = document.createElement('summary');
+    sum.textContent = `탐구활동 (${ch.quiz.length}문제)`;
+    d.append(sum);
+    d.append(add(seg('h4', say.quiz(current + 1), 'quiz-title'), `${say.quiz(current + 1)}.`, 'quizTitle'));
+    ch.quiz.forEach((q, qi) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'quiz-q';
+      const qt = seg('div', `${String(qi + 1).padStart(2, '0')} ${q.q}`, 'qtext');
+      if (q.box) { const b = document.createElement('div'); b.className = 'qbox'; b.textContent = q.box; qt.append(b); }
+      wrap.append(add(qt, `${say.question(qi + 1)} ${q.q}${q.box ? ` ${say.box} ${q.box.replace(/\n/g, ' ')}` : ''}`, 'quiz'));
+
+      const ol = seg('ol', '', 'choices noplay');
+      q.choices.forEach((c, ci) => {
+        const li = document.createElement('li');
+        li.textContent = `${marks[ci]} ${c}`;
+        li.addEventListener('click', () => { if (ci !== q.answer - 1) li.classList.add('wrong'); reveal(); });
+        ol.append(li);
+      });
+      wrap.append(add(ol, q.choices.map((c, ci) => `${say.choice(ci + 1)} ${endStop(c)}`).join(' '), 'quiz'));
+
+      const right = q.choices[q.answer - 1];
+      const ans = seg('div', '정답 보기', 'answer noplay');
+      const reveal = () => {
+        ans.textContent = `정답: ${marks[q.answer - 1]} ${right}`;
+        ans.classList.add('shown');
+        ol.children[q.answer - 1].classList.add('correct');
+      };
+      ans.addEventListener('click', reveal);
+      wrap.append(add(ans, `${say.answer(q.answer)} ${endStop(right)}`, 'quiz'));
+      segments.at(-1).reveal = reveal;
+      d.append(wrap);
+    });
+    box.append(d);
+  }
+
+  // Click a line to listen from there (choices and answers are for the quiz instead).
+  segments.forEach((s, i) => {
+    if (s.el.classList.contains('noplay')) return;
+    s.el.onclick = () => {
+      if (!inMode(s)) mode = s.kind?.startsWith('quiz') ? 'quiz' : 'all';
+      pos = i; play();
+    };
   });
   updateProgress();
 }
@@ -340,6 +416,7 @@ function highlight() {
   const el = segments[pos]?.el;
   if (playing && el) {
     el.closest('details')?.setAttribute('open', '');  // show a collapsed box while it's read
+    segments[pos].reveal?.();                          // and a quiz answer as it's read
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
@@ -401,7 +478,8 @@ function stop() {
   updateProgress();
 }
 
-const modeButtons = { all: ['allBtn', '▶ All'], summary: ['summaryBtn', '▶ Summary'], tips: ['tipsBtn', '▶ Good to know'] };
+const modeButtons = { summary: ['summaryBtn', '▶ Summary'], quiz: ['quizBtn', '▶ Summary + Quiz'],
+                      all: ['allBtn', '▶ All'], tips: ['tipsBtn', '▶ Good to know'] };
 
 function updateButtons() {
   for (const [m, [id, label]] of Object.entries(modeButtons)) {
@@ -426,6 +504,7 @@ function listen(m) {
 $('allBtn').onclick = () => listen('all');
 $('summaryBtn').onclick = () => listen('summary');
 $('tipsBtn').onclick = () => listen('tips');
+$('quizBtn').onclick = () => listen('quiz');
 $('stopBtn').onclick = stop;
 $('rate').onchange = () => { if (playing) play(); };
 $('voice').onchange = () => {
