@@ -21,19 +21,25 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
     overflow: hidden;
   }
+
+  /* login screen */
   .wrap {
+    position: relative;
+    z-index: 4;
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 18px;
-    position: relative;
-    z-index: 2;
+    transition: opacity .6s ease, transform .6s ease;
   }
-  .emoji {
-    font-size: 48px;
+  body.revealed .wrap {
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
   }
+  .emoji { font-size: 48px; }
   .hint {
     color: var(--muted);
     font-size: 14px;
@@ -50,15 +56,61 @@
     text-align: center;
     outline: none;
   }
-  input#nameInput:focus {
-    border-color: #ff6b9d;
+  input#nameInput:focus { border-color: #ff6b9d; }
+
+  /* photo stage */
+  #stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    overflow: hidden;
+    background: #000;
   }
+  body.revealed #stage { opacity: 1; }
+  #stage .bg {
+    position: absolute;
+    inset: -40px;
+    background: url("photo.jpg") center / cover no-repeat;
+    filter: blur(28px) brightness(.55) saturate(1.3);
+  }
+  #stage .photo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    max-width: 92vw;
+    max-height: 88vh;
+    border-radius: 18px;
+    box-shadow: 0 0 60px rgba(255, 92, 138, .55), 0 0 140px rgba(255, 140, 180, .3);
+    transform: translate(-50%, -50%) scale(.85) rotate(-3deg);
+    transition: transform 1.4s cubic-bezier(.2, 1.2, .3, 1);
+  }
+  body.revealed #stage .photo {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    animation: pulse 3.2s ease-in-out 1.4s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 60px rgba(255, 92, 138, .55), 0 0 140px rgba(255, 140, 180, .3); }
+    50%      { box-shadow: 0 0 90px rgba(255, 92, 138, .85), 0 0 200px rgba(255, 140, 180, .5); }
+  }
+
+  #fireworks {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* floating hearts + words */
   #heartLayer {
     position: fixed;
     inset: 0;
     pointer-events: none;
     overflow: hidden;
-    z-index: 1;
+    z-index: 2;
   }
   .heart {
     position: absolute;
@@ -78,6 +130,7 @@
     font-weight: 800;
     font-style: italic;
     white-space: nowrap;
+    text-shadow: 0 0 12px rgba(0, 0, 0, .55);
     animation-name: spinUp;
     animation-timing-function: ease-in;
     animation-fill-mode: forwards;
@@ -90,30 +143,36 @@
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="emoji">💌</div>
-    <p class="hint">이름을 입력하고 Enter를 눌러보세요</p>
-    <input id="nameInput" type="text" placeholder="이름을 입력하세요" autocomplete="off" autofocus>
+  <div id="stage">
+    <div class="bg"></div>
+    <img class="photo" src="photo.jpg" alt="">
   </div>
+  <canvas id="fireworks"></canvas>
   <div id="heartLayer"></div>
 
+  <div class="wrap">
+    <div class="emoji">💌</div>
+    <p class="hint">비번을 입력하고 Enter를 눌러보세요</p>
+    <input id="nameInput" type="password" placeholder="비번 입력 해 주세요" autocomplete="off" autofocus>
+  </div>
+
 <script>
-  const TRIGGER = "전예솔";
   const input = document.getElementById('nameInput');
   const layer = document.getElementById('heartLayer');
   const COLORS = ['#ff5c8a', '#ff8fab', '#ff2e63', '#ff6b9d', '#ffb3c6', '#ff85a1'];
+  let revealed = false;
 
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      if (input.value.trim() === TRIGGER) {
-        burstHearts();
-      }
-      input.value = '';
+    if (e.key === 'Enter' && !revealed) {
+      revealed = true;
+      input.blur();
+      document.body.classList.add('revealed');
+      startShow();
     }
   });
 
-  function burstHearts() {
-    const count = 70;
+  /* ---------- hearts + Yesol words ---------- */
+  function burstHearts(count) {
     for (let i = 0; i < count; i++) {
       setTimeout(() => {
         if (i % 3 === 0) spawnWord(); else spawnHeart();
@@ -153,6 +212,113 @@
     word.style.animationDuration = duration + 's';
     layer.appendChild(word);
     word.addEventListener('animationend', () => word.remove());
+  }
+
+  /* ---------- fireworks ---------- */
+  const canvas = document.getElementById('fireworks');
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0;
+  const rockets = [];
+  const sparks = [];
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function launch() {
+    rockets.push({
+      x: W * (0.1 + Math.random() * 0.8),
+      y: H,
+      vy: -(H * (0.016 + Math.random() * 0.006)),
+      targetY: H * (0.12 + Math.random() * 0.4),
+      hue: Math.floor(Math.random() * 360)
+    });
+  }
+
+  function explode(x, y, hue) {
+    const heartShape = Math.random() < 0.3;
+    const n = heartShape ? 60 : 70 + Math.floor(Math.random() * 40);
+    const power = 3 + Math.random() * 3;
+    for (let i = 0; i < n; i++) {
+      let vx, vy;
+      if (heartShape) {
+        const t = (i / n) * Math.PI * 2;
+        vx = 16 * Math.pow(Math.sin(t), 3);
+        vy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+        vx *= power / 11;
+        vy *= power / 11;
+      } else {
+        const a = Math.random() * Math.PI * 2;
+        const s = Math.random() * power;
+        vx = Math.cos(a) * s;
+        vy = Math.sin(a) * s;
+      }
+      sparks.push({
+        x, y, vx, vy,
+        life: 1,
+        decay: 0.009 + Math.random() * 0.012,
+        hue: (hue + Math.random() * 40) % 360,
+        size: 1.5 + Math.random() * 1.5
+      });
+    }
+  }
+
+  let last = 0;
+  function frame(t) {
+    requestAnimationFrame(frame);
+    if (t - last < 1000 / 70) return;
+    last = t;
+
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.y += r.vy;
+      r.vy *= 0.985;
+      ctx.fillStyle = `hsl(${r.hue}, 100%, 75%)`;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      if (r.y <= r.targetY || r.vy > -2) {
+        explode(r.x, r.y, r.hue);
+        rockets.splice(i, 1);
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.985;
+      p.vy = p.vy * 0.985 + 0.045;
+      p.life -= p.decay;
+      if (p.life <= 0) { sparks.splice(i, 1); continue; }
+      ctx.fillStyle = `hsla(${p.hue}, 100%, 65%, ${p.life})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function startShow() {
+    for (let i = 0; i < 7; i++) setTimeout(launch, i * 220);
+    burstHearts(90);
+    requestAnimationFrame(frame);
+    setInterval(() => {
+      launch();
+      if (Math.random() < 0.5) launch();
+    }, 650);
+    setInterval(() => burstHearts(18), 2200);
   }
 </script>
 </body>
