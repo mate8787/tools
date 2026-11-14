@@ -117,6 +117,10 @@
   ol.choices li.wrong { background: var(--bad-bg); color: var(--bad); }
   .answer { display: inline-block; margin-top: 4px; font-size: 13px; color: var(--quiz); cursor: pointer; border: 1px dashed var(--quiz-dim); border-radius: 6px; padding: 3px 10px; margin-left: 0; }
   .answer.shown { border-style: solid; font-weight: 600; cursor: default; }
+  /* Section quiz (단원 종합 평가) page and its entry in the chapter list */
+  .squiz-sub { font-size: 13px; color: var(--quiz); margin: -0.5rem 0 0.5rem; }
+  .chapters button.squiz-item .num { color: var(--quiz); }
+  button.ctl[hidden] { display: none; }
   .hint { font-size: 13px; color: var(--muted); margin-top: 1.5rem; }
   .empty { color: var(--muted); }
 
@@ -144,6 +148,7 @@
         <button class="ctl primary quiz-btn" id="quizBtn">▶ Summary + Quiz</button>
         <button class="ctl primary" id="allBtn">▶ All</button>
         <button class="ctl primary tips-btn" id="tipsBtn">▶ Good to know</button>
+        <button class="ctl primary quiz-btn" id="sectionBtn" hidden>▶ Section Quiz</button>
         <button class="ctl" id="stopBtn" disabled>■ Stop</button>
         <label>Speed
           <select id="rate">
@@ -159,7 +164,7 @@
         <span class="progress" id="progress"></span>
       </div>
       <div id="summary"></div>
-      <div class="hint">Summary reads only 주요 내용정리. Summary + Quiz reads 주요 내용정리, then the 탐구활동 questions with their answers. All reads everything except 이야기 나누기 and 주요 용어 (those are never read). Good to know reads only 알아두면 좋아요. Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
+      <div class="hint">Summary reads only 주요 내용정리. Summary + Quiz reads 주요 내용정리, then the 탐구활동 questions with their answers. All reads everything except 이야기 나누기 and 주요 용어 (those are never read). Good to know reads only 알아두면 좋아요. Summary and Summary + Quiz also read each Section Quiz (questions and answers only). Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
     </main>
   </div>
 </div>
@@ -175,13 +180,15 @@ let segments = [];    // [{el, text, kind, intro?}] in reading order for the cur
 let pos = 0;          // segment being read
 let playing = false;
 let mode = 'all';     // 'all' = everything; 'summary' = 주요 내용정리; 'quiz' = 주요 내용정리 + 탐구활동;
-                      // 'tips' = 알아두면 좋아요
+                      // 'tips' = 알아두면 좋아요; 'section' = section quizzes (단원 종합 평가) only.
+                      // Summary and Summary + Quiz also read the section quizzes.
 
 // Which lines each mode reads. The chapter title (read with a per-mode intro)
 // only counts when the chapter has something else to read in that mode.
-const inBody = s => mode === 'all' ? s.kind !== 'title'
-                  : mode === 'summary' ? s.kind === 'review'
-                  : mode === 'quiz' ? ['review', 'quizTitle', 'quiz'].includes(s.kind)
+const inBody = s => mode === 'all' ? s.kind !== 'title' && s.kind !== 'squiz'
+                  : mode === 'summary' ? ['review', 'squiz'].includes(s.kind)
+                  : mode === 'quiz' ? ['review', 'quizTitle', 'quiz', 'squiz'].includes(s.kind)
+                  : mode === 'section' ? s.kind === 'squiz'
                   : s.kind === 'tip';
 const inMode = s => s.kind === 'title' ? segments.some(inBody) : inBody(s);
 let voices = [];
@@ -190,6 +197,9 @@ let voices = [];
 // Sections (편) group consecutive chapters, numbered in order: "제1편 대한민국의 국민".
 const partNames = [...new Set(chapters.map(ch => ch.part).filter(Boolean))];
 const partLabel = ch => ch.part ? `제${partNames.indexOf(ch.part) + 1}편 ${ch.part}` : '';
+// A section quiz (단원 종합 평가) sits after its section's chapters and takes no chapter number.
+const isSectionQuiz = ch => ch?.type === 'sectionQuiz';
+const chapterNum = i => chapters.slice(0, i + 1).filter(c => !isSectionQuiz(c)).length;
 
 function renderList() {
   $('chapterList').innerHTML = '';
@@ -201,7 +211,8 @@ function renderList() {
       $('chapterList').append(p);
     }
     const b = document.createElement('button');
-    b.innerHTML = `<span class="num">${i + 1}</span>`;
+    b.innerHTML = `<span class="num">${isSectionQuiz(ch) ? '★' : chapterNum(i)}</span>`;
+    if (isSectionQuiz(ch)) b.classList.add('squiz-item');
     b.append(ch.title);
     b.onclick = () => selectChapter(i);
     if (i === current) b.classList.add('active');
@@ -230,13 +241,15 @@ function renderChapter() {
         review: '주요 내용정리', overview: '개요', keyPoints: '핵심 내용', terms: '주요 용어',
         quiz: n => `챕터 ${n} 탐구활동`, question: n => `${n}번 문제.`, box: '보기.',
         choice: n => `${n}번,`, answer: n => `정답은 ${n}번,`,
+        section: n => `섹션 ${n} 퀴즈 내용 듣기`, sectionSub: '단원 종합 평가',
         intro: { all: '전체 내용 듣기', summary: '주요 내용 정리 듣기',
-                 quiz: '주요 내용 정리와 탐구활동 듣기', tips: '알아두면 좋아요 듣기' } }
+                 quiz: '주요 내용 정리와 탐구활동 듣기', tips: '알아두면 좋아요 듣기', section: '퀴즈 듣기' } }
     : { chapter: n => `Chapter ${n},`, point: n => `Point ${n}.`,
         review: 'Review', overview: 'Overview', keyPoints: 'Key points', terms: 'Key terms',
         quiz: n => `Chapter ${n} quiz`, question: n => `Question ${n}.`, box: 'Example.',
         choice: n => `${n},`, answer: n => `The answer is ${n},`,
-        intro: { all: 'all content', summary: 'review', quiz: 'review and quiz', tips: 'good to know' } };
+        section: n => `Section ${n} quiz`, sectionSub: 'Section review',
+        intro: { all: 'all content', summary: 'review', quiz: 'review and quiz', tips: 'good to know', section: 'quiz' } };
   // "01 Heading?" is read as "Heading?" (no lesson number, no doubled period).
   const endStop = t => /[.?!]$/.test(t) ? t : t + '.';
   const spokenHeading = h => endStop(h.replace(/^\d+\s+/, ''));
@@ -262,8 +275,57 @@ function renderChapter() {
     box.append(p);
   }
   box.append(add(seg('h2', ch.title), '', 'title'));
-  segments[0].intro = Object.fromEntries(Object.entries(say.intro)
-    .map(([m, words]) => [m, `${say.chapter(current + 1)} ${ch.title}, ${words}.`]));
+  // A section quiz is introduced the same way in every mode: "섹션 1 퀴즈 내용 듣기."
+  segments[0].intro = Object.fromEntries(Object.entries(say.intro).map(([m, words]) => [m,
+    isSectionQuiz(ch) ? `${say.section(partNames.indexOf(ch.part) + 1)}.`
+                      : `${say.chapter(chapterNum(current))} ${ch.title}, ${words}.`]));
+
+  // Quiz questions with clickable choices (pick one, or "정답 보기", to see the answer).
+  // Read aloud: the question (and its 보기), the choices if readChoices, then the answer.
+  const renderQuiz = (parent, list, kind, readChoices) => {
+    const marks = '①②③④⑤';
+    list.forEach((q, qi) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'quiz-q';
+      const qt = seg('div', `${String(qi + 1).padStart(2, '0')} ${q.q}`, 'qtext');
+      if (q.box) { const b = document.createElement('div'); b.className = 'qbox'; b.textContent = q.box; qt.append(b); }
+      // Each 보기 line ends with a stop so the voice pauses between lines.
+      const spokenBox = q.box ? ` ${say.box} ${q.box.split('\n').map(l => endStop(l.replace(/^\s*•\s*/, '').trim())).join(' ')}` : '';
+      wrap.append(add(qt, `${say.question(qi + 1)} ${q.q}${spokenBox}`, kind));
+
+      const ol = readChoices ? seg('ol', '', 'choices noplay') : document.createElement('ol');
+      ol.classList.add('choices');
+      q.choices.forEach((c, ci) => {
+        const li = document.createElement('li');
+        li.textContent = `${marks[ci]} ${c}`;
+        li.addEventListener('click', () => { if (ci !== q.answer - 1) li.classList.add('wrong'); reveal(); });
+        ol.append(li);
+      });
+      if (readChoices) add(ol, q.choices.map((c, ci) => `${say.choice(ci + 1)} ${endStop(c)}`).join(' '), kind);
+      wrap.append(ol);
+
+      const right = q.choices[q.answer - 1];
+      const ans = seg('div', '정답 보기', 'answer noplay');
+      const reveal = () => {
+        ans.textContent = `정답: ${marks[q.answer - 1]} ${right}`;
+        ans.classList.add('shown');
+        ol.children[q.answer - 1].classList.add('correct');
+      };
+      ans.addEventListener('click', reveal);
+      wrap.append(add(ans, `${say.answer(q.answer)} ${endStop(right)}`, kind));
+      segments.at(-1).reveal = reveal;
+      parent.append(wrap);
+    });
+  };
+
+  // Section quiz page: questions and answers only (choices are shown, not read).
+  if (isSectionQuiz(ch)) {
+    const sub = document.createElement('div');
+    sub.className = 'squiz-sub';
+    sub.textContent = `${say.sectionSub} · ${ch.quiz?.length || 0}문제`;
+    box.append(sub);
+    renderQuiz(box, ch.quiz || [], 'squiz', false);
+  }
 
   if (ch.review?.length) {
     const wrap = document.createElement('div');
@@ -316,38 +378,11 @@ function renderChapter() {
 
   // 탐구활동 quiz. Pick a choice (or "정답 보기") to see the answer;
   // when read aloud, each question is followed by its choices and the answer.
-  if (ch.quiz?.length) {
-    const marks = '①②③④⑤';
+  if (ch.quiz?.length && !isSectionQuiz(ch)) {
     const d = collapsed(`탐구활동 (${ch.quiz.length}문제)`, 'quiz');
-    d.append(add(seg('h4', say.quiz(current + 1), 'quiz-title'), `${say.quiz(current + 1)}.`, 'quizTitle'));
-    ch.quiz.forEach((q, qi) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'quiz-q';
-      const qt = seg('div', `${String(qi + 1).padStart(2, '0')} ${q.q}`, 'qtext');
-      if (q.box) { const b = document.createElement('div'); b.className = 'qbox'; b.textContent = q.box; qt.append(b); }
-      wrap.append(add(qt, `${say.question(qi + 1)} ${q.q}${q.box ? ` ${say.box} ${q.box.replace(/\n/g, ' ')}` : ''}`, 'quiz'));
-
-      const ol = seg('ol', '', 'choices noplay');
-      q.choices.forEach((c, ci) => {
-        const li = document.createElement('li');
-        li.textContent = `${marks[ci]} ${c}`;
-        li.addEventListener('click', () => { if (ci !== q.answer - 1) li.classList.add('wrong'); reveal(); });
-        ol.append(li);
-      });
-      wrap.append(add(ol, q.choices.map((c, ci) => `${say.choice(ci + 1)} ${endStop(c)}`).join(' '), 'quiz'));
-
-      const right = q.choices[q.answer - 1];
-      const ans = seg('div', '정답 보기', 'answer noplay');
-      const reveal = () => {
-        ans.textContent = `정답: ${marks[q.answer - 1]} ${right}`;
-        ans.classList.add('shown');
-        ol.children[q.answer - 1].classList.add('correct');
-      };
-      ans.addEventListener('click', reveal);
-      wrap.append(add(ans, `${say.answer(q.answer)} ${endStop(right)}`, 'quiz'));
-      segments.at(-1).reveal = reveal;
-      d.append(wrap);
-    });
+    const n = chapterNum(current);
+    d.append(add(seg('h4', say.quiz(n), 'quiz-title'), `${say.quiz(n)}.`, 'quizTitle'));
+    renderQuiz(d, ch.quiz, 'quiz', true);
   }
 
   // 주요 용어: never read aloud.
@@ -379,11 +414,12 @@ function renderChapter() {
   segments.forEach((s, i) => {
     if (s.el.classList.contains('noplay')) return;
     s.el.onclick = () => {
-      if (!inMode(s)) mode = s.kind?.startsWith('quiz') ? 'quiz' : 'all';
+      if (!inMode(s)) mode = s.kind?.startsWith('quiz') ? 'quiz' : s.kind === 'squiz' ? 'section' : 'all';
       pos = i; play();
     };
   });
   updateProgress();
+  updateButtons();
 }
 
 function selectChapter(i) {
@@ -487,11 +523,17 @@ function stop() {
 }
 
 const modeButtons = { summary: ['summaryBtn', '▶ Summary'], quiz: ['quizBtn', '▶ Summary + Quiz'],
-                      all: ['allBtn', '▶ All'], tips: ['tipsBtn', '▶ Good to know'] };
+                      all: ['allBtn', '▶ All'], tips: ['tipsBtn', '▶ Good to know'],
+                      section: ['sectionBtn', '▶ Section Quiz'] };
 
 function updateButtons() {
+  // A section quiz page shows only its own button; chapter pages show the rest.
+  // The button of whatever is playing stays visible so it can still be paused.
+  const onSectionQuiz = isSectionQuiz(chapters[current]);
   for (const [m, [id, label]] of Object.entries(modeButtons)) {
     $(id).textContent = m !== mode ? label : playing ? '❚❚ Pause' : pos > 0 ? '▶ Resume' : label;
+    const active = m === mode && (playing || pos > 0);
+    $(id).hidden = !active && (m === 'section') !== onSectionQuiz;
   }
   $('stopBtn').disabled = !playing && pos === 0;
 }
@@ -513,6 +555,7 @@ $('allBtn').onclick = () => listen('all');
 $('summaryBtn').onclick = () => listen('summary');
 $('tipsBtn').onclick = () => listen('tips');
 $('quizBtn').onclick = () => listen('quiz');
+$('sectionBtn').onclick = () => listen('section');
 $('stopBtn').onclick = stop;
 $('rate').onchange = () => { if (playing) play(); };
 $('voice').onchange = () => {
