@@ -150,6 +150,7 @@
         <button class="ctl primary tips-btn" id="tipsBtn">▶ Good to know</button>
         <button class="ctl primary quiz-btn" id="sectionBtn" hidden>▶ Section Quiz</button>
         <button class="ctl" id="stopBtn" disabled>■ Stop</button>
+        <button class="ctl" id="resetQuizBtn" title="Clear your answers in all chapter and section quizzes">↺ Reset quizzes</button>
         <label>Speed
           <select id="rate">
             <option value="0.8">0.8×</option>
@@ -282,8 +283,10 @@ function renderChapter() {
 
   // Quiz questions with clickable choices (pick one, or "정답 보기", to see the answer).
   // Read aloud: the question (and its 보기), the choices if readChoices, then the answer.
+  // Your picks are saved per quiz, so they stay when you change chapters (↺ Reset quizzes clears them).
   const renderQuiz = (parent, list, kind, readChoices) => {
     const marks = '①②③④⑤';
+    const saved = loadQuizzes()[ch.title] || {};
     list.forEach((q, qi) => {
       const wrap = document.createElement('div');
       wrap.className = 'quiz-q';
@@ -298,7 +301,11 @@ function renderChapter() {
       q.choices.forEach((c, ci) => {
         const li = document.createElement('li');
         li.textContent = `${marks[ci]} ${c}`;
-        li.addEventListener('click', () => { if (ci !== q.answer - 1) li.classList.add('wrong'); reveal(); });
+        li.addEventListener('click', () => {
+          if (ci !== q.answer - 1) li.classList.add('wrong');
+          reveal();
+          saveQuizPick(ch.title, qi, ci);
+        });
         ol.append(li);
       });
       if (readChoices) add(ol, q.choices.map((c, ci) => `${say.choice(ci + 1)} ${endStop(c)}`).join(' '), kind);
@@ -311,9 +318,13 @@ function renderChapter() {
         ans.classList.add('shown');
         ol.children[q.answer - 1].classList.add('correct');
       };
-      ans.addEventListener('click', reveal);
+      ans.addEventListener('click', () => { reveal(); saveQuizPick(ch.title, qi, -1); });
       wrap.append(add(ans, `${say.answer(q.answer)} ${endStop(right)}`, kind));
       segments.at(-1).reveal = reveal;
+      if (qi in saved) {                                   // restore an earlier pick
+        if (saved[qi] >= 0 && saved[qi] !== q.answer - 1) ol.children[saved[qi]]?.classList.add('wrong');
+        reveal();
+      }
       parent.append(wrap);
     });
   };
@@ -420,6 +431,26 @@ function renderChapter() {
   });
   updateProgress();
   updateButtons();
+}
+
+/* ---- Quiz progress: { chapterTitle: { questionIndex: pickedChoice, or -1 = just looked } } ---- */
+const QUIZ_KEY = 'courseNotes.quiz';
+function loadQuizzes() {
+  try { return JSON.parse(localStorage.getItem(QUIZ_KEY)) || {}; } catch { return {}; }
+}
+function saveQuizPick(title, qi, pick) {
+  const all = loadQuizzes();
+  const mine = all[title] ||= {};
+  if (pick < 0 && qi in mine) return;                  // "정답 보기" doesn't overwrite a real pick
+  if (pick >= 0 && mine[qi] >= 0) return;              // keep the first choice you made
+  mine[qi] = pick;
+  try { localStorage.setItem(QUIZ_KEY, JSON.stringify(all)); } catch {}
+}
+function resetQuizzes() {
+  if (!confirm('Reset all quizzes? Your answers in every chapter quiz and section quiz will be cleared.')) return;
+  try { localStorage.removeItem(QUIZ_KEY); } catch {}
+  stop();
+  renderChapter();
 }
 
 function selectChapter(i) {
@@ -557,6 +588,7 @@ $('tipsBtn').onclick = () => listen('tips');
 $('quizBtn').onclick = () => listen('quiz');
 $('sectionBtn').onclick = () => listen('section');
 $('stopBtn').onclick = stop;
+$('resetQuizBtn').onclick = resetQuizzes;
 $('rate').onchange = () => { if (playing) play(); };
 $('voice').onchange = () => {
   try { localStorage.setItem('courseNotes.voice', $('voice').value); } catch {}
