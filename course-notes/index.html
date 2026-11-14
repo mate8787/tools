@@ -35,8 +35,34 @@
 
   /* Chapter list */
   /* Compact, and scrolls on its own if it gets taller than the window */
-  .chapters { padding: 0.4rem; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto;
+  .side { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 2rem); }
+  .side > button { flex: none; }
+  .chapters { padding: 0.4rem; flex: 0 1 auto; min-height: 0; overflow-y: auto;
               scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  button.gq-open { width: 100%; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--quiz-dim); background: var(--panel);
+                   color: var(--quiz); font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; }
+  button.gq-open:hover { background: var(--panel-alt); }
+  button.gq-open.active { background: var(--panel-alt); border-color: var(--quiz); }
+  button.ap-open { border-color: var(--accent-dim); color: var(--accent); }
+  button.ap-open.active { border-color: var(--accent); }
+
+  /* Appendix: a list of extra pages; each opens on its own (not read aloud) */
+  .ap-list { display: flex; flex-direction: column; gap: 8px; }
+  button.ap-item { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; text-align: left; padding: 10px 14px; border-radius: 8px;
+                   border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); font: inherit; cursor: pointer; }
+  button.ap-item:hover { border-color: var(--accent-dim); }
+  .ap-num { grid-row: span 2; color: var(--accent); font-weight: 600; }
+  .ap-title { font-weight: 600; }
+  .ap-sub { font-size: 12.5px; color: var(--muted); }
+  button.ap-back { background: none; border: none; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; padding: 0; margin-bottom: 0.75rem; }
+  button.ap-back:hover { text-decoration: underline; }
+  ol.timeline { list-style: none; position: relative; margin-left: 6px; }
+  ol.timeline::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; background: var(--accent-dim); }
+  ol.timeline li { position: relative; display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; padding: 5px 0 5px 20px; }
+  ol.timeline li::before { content: ''; position: absolute; left: -4px; top: 13px; width: 10px; height: 10px; border-radius: 50%;
+                           background: var(--panel); border: 2px solid var(--accent); }
+  .tl-date { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tl-event { font-weight: 500; }
   .chapters button {
     display: block; width: 100%; text-align: left; padding: 4px 10px; border-radius: 6px;
     background: none; border: 1px solid transparent; color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.35; cursor: pointer;
@@ -123,13 +149,44 @@
   .squiz-sub { font-size: 13px; color: var(--quiz); margin: -0.5rem 0 0.5rem; }
   .chapters button.squiz-item .num { color: var(--quiz); }
   button.ctl[hidden] { display: none; }
+  .img-tag { font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
+
+  /* General Quiz: every 탐구활동, section quiz and 주요 내용정리 (as fill-in blanks), shuffled */
+  main.gq .player, main.gq #summary, main.gq .hint { display: none; }
+  .gq-sub { font-size: 13px; color: var(--muted); margin: -0.5rem 0 1rem; }
+  .gq-q { border-top: 1px solid var(--border); padding: 0.9rem 0 0.7rem; }
+  .gq-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .gq-meta b { color: var(--quiz); margin-right: 6px; font-size: 13px; }
+  .gq-q h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .gq-q ul { list-style: none; }
+  .gq-q ul li { position: relative; padding-left: 18px; margin-bottom: 4px; line-height: 2; }
+  .gq-q ul li::before { content: '•'; position: absolute; left: 4px; color: var(--review); font-weight: 700; line-height: 2; }
+  input.blank-in { width: 9em; padding: 1px 6px; margin: 0 3px; border: 1px solid var(--border); border-bottom: 2px solid var(--review);
+                   border-radius: 5px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; line-height: 1.5; }
+  input.blank-in:focus { outline: none; border-color: var(--review); }
+  input.blank-in:disabled { opacity: 1; -webkit-text-fill-color: currentColor; }
+  input.blank-in.ok { border-color: var(--ok); color: var(--ok); background: var(--ok-bg); }
+  input.blank-in.bad { border-color: var(--bad); color: var(--bad); background: var(--bad-bg); }
+  .gq-fix { color: var(--ok); font-weight: 600; font-size: 13px; margin-right: 4px; }
+  .gq-q ol.choices li.picked { background: var(--hl); box-shadow: inset 0 0 0 1px var(--accent-dim); }
+  .gq-done ol.choices li { cursor: default; }
+  .gq-done ol.choices li:hover { background: none; }
+  .gq-done ol.choices li.correct { background: var(--ok-bg); }
+  .gq-done ol.choices li.wrong { background: var(--bad-bg); }
+  .gq-answer { font-size: 13px; font-weight: 600; color: var(--quiz); margin-top: 4px; }
+  .gq-answer.none { color: var(--bad); }
+  .gq-scorebox { padding: 10px 14px; border: 1px solid var(--quiz-dim); border-radius: 8px; margin-bottom: 1rem; }
+  .gq-score { font-size: 17px; font-weight: 600; }
+  .gq-score small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .gq-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
   .hint { font-size: 13px; color: var(--muted); margin-top: 1.5rem; }
   .empty { color: var(--muted); }
 
   @media (max-width: 820px) {
     body { padding: 1rem; }
     .layout { grid-template-columns: 1fr; }
-    .chapters { position: static; display: flex; overflow-x: auto; max-height: none; gap: 4px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .side { position: static; max-height: none; }
+    .chapters { display: flex; overflow-x: auto; max-height: none; gap: 4px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
     .chapters button { white-space: nowrap; width: auto; }
     .chapters .part, .chapters .part:not(:first-child) { white-space: nowrap; align-self: center; margin: 0; padding: 0 6px; border: none; }
     select { max-width: 160px; }
@@ -142,9 +199,13 @@
   <div class="subtitle">Key content from each chapter: read it or listen to it.</div>
 
   <div class="layout">
-    <nav class="card chapters" id="chapterList"></nav>
+    <aside class="side">
+      <nav class="card chapters" id="chapterList"></nav>
+      <button class="gq-open" id="generalQuizBtn">✎ General Quiz</button>
+      <button class="gq-open ap-open" id="appendixBtn">☰ Appendix</button>
+    </aside>
 
-    <main class="card">
+    <main class="card" id="main">
       <div class="player">
         <button class="ctl primary review-btn" id="summaryBtn">▶ Summary</button>
         <button class="ctl primary quiz-btn" id="quizBtn">▶ Summary + Quiz</button>
@@ -167,12 +228,15 @@
         <span class="progress" id="progress"></span>
       </div>
       <div id="summary"></div>
+      <div id="general" hidden></div>
+      <div id="appendix" hidden></div>
       <div class="hint">Summary reads only 주요 내용정리. Summary + Quiz reads 주요 내용정리, then the 탐구활동 questions with their answers. All reads everything except 이야기 나누기 and 주요 용어 (those are never read). Good to know reads only 알아두면 좋아요. Summary and Summary + Quiz also read each Section Quiz (questions and answers only). Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
     </main>
   </div>
 </div>
 
 <script src="chapters.js"></script>
+<script src="appendix.js"></script>
 <script>
 const chapters = window.CHAPTERS || [];
 const $ = id => document.getElementById(id);
@@ -218,7 +282,7 @@ function renderList() {
     if (isSectionQuiz(ch)) b.classList.add('squiz-item');
     b.append(ch.title);
     b.onclick = () => selectChapter(i);
-    if (i === current) b.classList.add('active');
+    if (i === current && view === 'chapter') b.classList.add('active');
     $('chapterList').append(b);
   });
 }
@@ -293,6 +357,7 @@ function renderChapter() {
       const wrap = document.createElement('div');
       wrap.className = 'quiz-q';
       const qt = seg('div', `${String(qi + 1).padStart(2, '0')} ${q.q}`, 'qtext');
+      if (q.image) qt.append(imageTag());
       if (q.box) { const b = document.createElement('div'); b.className = 'qbox'; b.textContent = q.box; qt.append(b); }
       // Each 보기 line ends with a stop so the voice pauses between lines.
       const spokenBox = q.box ? ` ${say.box} ${q.box.split('\n').map(l => endStop(l.replace(/^\s*•\s*/, '').trim())).join(' ')}` : '';
@@ -455,7 +520,257 @@ function resetQuizzes() {
   renderChapter();
 }
 
+// "[Image]": the book has a picture here (described in the 보기 box instead).
+function imageTag() {
+  const t = document.createElement('span');
+  t.className = 'img-tag';
+  t.textContent = '[Image]';
+  return t;
+}
+
+/* ---- General Quiz ----
+   Every 탐구활동 and section quiz question (multiple choice), plus each 주요 내용정리 section
+   with its highlighted words turned into fill-in blanks. Shown in random order; nothing is
+   marked until you press Check. Saved: { order: [id], answers: { id: choice | [text] }, checked } */
+const GQ_KEY = 'courseNotes.generalQuiz';
+let view = 'chapter';   // 'chapter', 'general' or 'appendix'
+
+function generalBank() {
+  const bank = [];
+  chapters.forEach((ch, ci) => {
+    const where = isSectionQuiz(ch) ? ch.title : `챕터 ${chapterNum(ci)}`;
+    (ch.review || []).forEach((r, ri) => bank.push({
+      id: `r|${ch.title}|${ri}`, type: 'fill', src: `${where} · 주요 내용정리`, heading: r.heading,
+      // each point split into text and blanks: odd items are the answers
+      points: r.points.map(p => p.split(/\[([^\]]+)\]/))
+    }));
+    (ch.quiz || []).forEach((q, qi) => bank.push({
+      id: `q|${ch.title}|${qi}`, type: 'mc', src: isSectionQuiz(ch) ? where : `${where} · 탐구활동`, ...q
+    }));
+  });
+  return bank;
+}
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const blanksOf = q => q.points.flatMap(parts => parts.filter((_, i) => i % 2));
+// Spacing, dots and punctuation don't matter: "4·19 혁명" = "419혁명", "임시 정부" = "임시정부".
+const normAnswer = s => (s || '').normalize('NFC').toLowerCase().replace(/[\s·・.,'"“”‘’()\-–~]/g, '');
+
+function loadGQ(ids) {
+  let st;
+  try { st = JSON.parse(localStorage.getItem(GQ_KEY)); } catch {}
+  st ||= {};
+  st.answers ||= {};
+  // New questions added since last time (or the first visit): shuffle again.
+  const same = st.order?.length === ids.length && st.order.every(id => ids.includes(id));
+  if (!same) st.order = shuffle([...ids]);
+  return st;
+}
+const saveGQ = st => { try { localStorage.setItem(GQ_KEY, JSON.stringify(st)); } catch {} };
+
+// Which page the main area shows: a chapter, the General Quiz, or the Appendix.
+// The last two hide the player (they are not read aloud).
+function setView(v) {
+  stop();
+  view = v;
+  try { localStorage.setItem('courseNotes.view', v); } catch {}
+  $('main').classList.toggle('gq', v !== 'chapter');
+  $('general').hidden = v !== 'general';
+  $('appendix').hidden = v !== 'appendix';
+  $('generalQuizBtn').classList.toggle('active', v === 'general');
+  $('appendixBtn').classList.toggle('active', v === 'appendix');
+  renderList();
+}
+
+function openGeneral() {
+  setView('general');
+  renderGeneral();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---- Appendix: extra material from appendix.js, listed and opened one at a time ---- */
+const appendix = window.APPENDIX || [];
+function openAppendix(i = -1) {
+  setView('appendix');
+  try { localStorage.setItem('courseNotes.appendix', i); } catch {}
+  renderAppendix(i);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderAppendix(i) {
+  const box = $('appendix');
+  box.innerHTML = '';
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const label = a => [a.part && partNames.includes(a.part) ? `제${partNames.indexOf(a.part) + 1}편 ${a.part}` : a.part, a.source].filter(Boolean).join(' · ');
+  const a = appendix[i];
+
+  if (!a) {                                          // the list
+    box.append(el('h2', '', 'Appendix'));
+    if (!appendix.length) { box.append(el('p', 'empty', 'Nothing here yet.')); return; }
+    const list = el('div', 'ap-list');
+    appendix.forEach((item, k) => {
+      const b = el('button', 'ap-item');
+      b.append(el('span', 'ap-num', String(k + 1)), el('span', 'ap-title', item.title));
+      if (label(item)) b.append(el('span', 'ap-sub', label(item)));
+      b.onclick = () => openAppendix(k);
+      list.append(b);
+    });
+    box.append(list);
+    return;
+  }
+
+  const back = el('button', 'ap-back', '← Appendix');
+  back.onclick = () => openAppendix(-1);
+  box.append(back);
+  if (label(a)) box.append(el('div', 'part-label', label(a)));
+  box.append(el('h2', '', a.title));
+  if (a.timeline?.length) {
+    const ol = el('ol', 'timeline');
+    a.timeline.forEach(t => {
+      const li = el('li');
+      li.append(el('span', 'tl-date', t.date), el('span', 'tl-event', t.event));
+      ol.append(li);
+    });
+    box.append(ol);
+  }
+  if (a.points?.length) {
+    const ul = el('ul', 'points');
+    a.points.forEach(p => ul.append(el('li', '', p)));
+    box.append(ul);
+  }
+}
+
+function renderGeneral() {
+  const box = $('general');
+  box.innerHTML = '';
+  const bank = Object.fromEntries(generalBank().map(q => [q.id, q]));
+  const st = loadGQ(Object.keys(bank));
+  saveGQ(st);
+  const marks = '①②③④⑤';
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  // Score: one point per multiple-choice question and per blank.
+  let mcRight = 0, mcTotal = 0, blRight = 0, blTotal = 0, unanswered = 0;
+  st.order.forEach(id => {
+    const q = bank[id], a = st.answers[id];
+    if (q.type === 'mc') {
+      mcTotal++;
+      if (a == null) unanswered++; else if (a === q.answer - 1) mcRight++;
+    } else blanksOf(q).forEach((ans, bi) => {
+      blTotal++;
+      const v = a?.[bi];
+      if (!v?.trim()) unanswered++; else if (normAnswer(v) === normAnswer(ans)) blRight++;
+    });
+  });
+  const total = mcTotal + blTotal, right = mcRight + blRight;
+  const scoreBox = () => {
+    const s = el('div', 'gq-scorebox');
+    const line = el('div', 'gq-score', `점수: ${right} / ${total} (${total ? Math.round(right / total * 100) : 0}%)`);
+    line.append(el('small', '', `객관식 ${mcRight}/${mcTotal} · 빈칸 ${blRight}/${blTotal}`));
+    s.append(line);
+    return s;
+  };
+
+  box.append(el('h2', '', 'General Quiz'));
+  box.append(el('div', 'gq-sub', `${st.order.length}문제 · 객관식 ${mcTotal}문제 + 주요 내용정리 빈칸 ${blTotal}개 · 순서는 무작위예요. 다 풀고 맨 아래 Check를 누르세요.`));
+  if (st.checked) box.append(scoreBox());
+  box.classList.toggle('gq-done', !!st.checked);
+
+  st.order.forEach((id, n) => {
+    const q = bank[id];
+    const card = el('div', 'gq-q');
+    const meta = el('div', 'gq-meta');
+    meta.append(el('b', '', `${n + 1}.`), q.src);
+    card.append(meta);
+
+    if (q.type === 'mc') {
+      const qt = el('div', 'qtext', q.q);
+      if (q.image) qt.append(imageTag());
+      if (q.box) qt.append(el('div', 'qbox', q.box));
+      card.append(qt);
+      const ol = el('ol', 'choices');
+      const picked = st.answers[id];
+      q.choices.forEach((c, ci) => {
+        const li = el('li', '', `${marks[ci]} ${c}`);
+        if (picked === ci) li.classList.add('picked');
+        if (st.checked) {
+          if (ci === q.answer - 1) li.classList.add('correct');
+          else if (picked === ci) li.classList.add('wrong');
+        } else li.onclick = () => {
+          st.answers[id] = ci;
+          saveGQ(st);
+          [...ol.children].forEach((x, xi) => x.classList.toggle('picked', xi === ci));
+        };
+        ol.append(li);
+      });
+      card.append(ol);
+      if (st.checked) {
+        const right = `정답: ${marks[q.answer - 1]} ${q.choices[q.answer - 1]}`;
+        card.append(el('div', 'gq-answer' + (picked == null ? ' none' : ''), picked == null ? `답을 고르지 않았어요 · ${right}` : right));
+      }
+    } else {
+      card.append(el('h4', '', q.heading));
+      const ul = el('ul');
+      let bi = 0;
+      q.points.forEach(parts => {
+        const li = el('li');
+        parts.forEach((part, pi) => {
+          if (!(pi % 2)) { li.append(part); return; }
+          const k = bi++;
+          const inp = el('input', 'blank-in');
+          inp.type = 'text';
+          inp.autocomplete = 'off';
+          inp.spellcheck = false;
+          inp.value = st.answers[id]?.[k] || '';
+          if (st.checked) {
+            inp.disabled = true;
+            const ok = normAnswer(inp.value) === normAnswer(part);
+            inp.classList.add(ok ? 'ok' : 'bad');
+            li.append(inp);
+            if (!ok) li.append(el('span', 'gq-fix', `→ ${part}`));
+          } else {
+            inp.oninput = () => { (st.answers[id] ||= [])[k] = inp.value; saveGQ(st); };
+            li.append(inp);
+          }
+        });
+        ul.append(li);
+      });
+      card.append(ul);
+    }
+    box.append(card);
+  });
+
+  const actions = el('div', 'gq-actions');
+  if (!st.checked) {
+    const check = el('button', 'ctl primary quiz-btn', 'Check');
+    check.onclick = () => {
+      if (unanswered && !confirm(`아직 ${unanswered}개를 풀지 않았어요. 그래도 채점할까요?`)) return;
+      st.checked = true;
+      saveGQ(st);
+      renderGeneral();
+      $('gqBottomScore')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    actions.append(check);
+  }
+  const reset = el('button', 'ctl', '↺ Reset quiz');
+  reset.onclick = () => {
+    const started = Object.keys(st.answers).length;
+    if (!st.checked && started && !confirm('Reset the General Quiz? Your answers will be cleared.')) return;
+    saveGQ({ order: shuffle(Object.keys(bank)), answers: {}, checked: false });
+    renderGeneral();
+    $('main').scrollIntoView({ behavior: 'smooth' });
+  };
+  actions.append(reset);
+  if (st.checked) {
+    const s = scoreBox();
+    s.id = 'gqBottomScore';
+    s.style.margin = '0';
+    actions.prepend(s);
+  }
+  box.append(actions);
+}
+
 function selectChapter(i) {
+  if (view !== 'chapter') setView('chapter');
   stop();
   current = i;
   pos = 0;
@@ -591,13 +906,15 @@ $('quizBtn').onclick = () => listen('quiz');
 $('sectionBtn').onclick = () => listen('section');
 $('stopBtn').onclick = stop;
 $('resetQuizBtn').onclick = resetQuizzes;
+$('generalQuizBtn').onclick = openGeneral;
+$('appendixBtn').onclick = () => openAppendix(-1);
 $('rate').onchange = () => { if (playing) play(); };
 $('voice').onchange = () => {
   try { localStorage.setItem('courseNotes.voice', $('voice').value); } catch {}
   if (playing) play();
 };
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && !['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'SUMMARY'].includes(e.target.tagName)) {
+  if (e.code === 'Space' && view === 'chapter' && !['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON', 'SUMMARY'].includes(e.target.tagName)) {
     e.preventDefault();
     playing ? pause() : play();
   }
@@ -616,6 +933,11 @@ try {
 renderList();
 renderChapter();
 updateButtons();
+try {
+  const v = localStorage.getItem('courseNotes.view');
+  if (v === 'general') openGeneral();
+  else if (v === 'appendix') openAppendix(parseInt(localStorage.getItem('courseNotes.appendix'), 10));
+} catch {}
 </script>
 </body>
 </html>

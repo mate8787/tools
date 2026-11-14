@@ -13,8 +13,9 @@
 //   sections  - optional lessons in the chapter: [{ heading, points: [...] }]
 //               type: "tip" (알아두면 좋아요) or "story" (이야기 나누기) shows only the title
 //               until clicked; tips are read by All and Good to know, stories never
-//   quiz      - optional 탐구활동 from the workbook: [{ q, box?, choices: [4], answer: 1–4 }]
-//               box is the 〈보기〉 text (\n for line breaks)
+//   quiz      - optional 탐구활동 from the workbook: [{ q, box?, image?, choices: [4], answer: 1–4 }]
+//               box is the 〈보기〉 text (\n for line breaks); image: true = the book shows
+//               a picture here (described in box, marked [Image])
 //   terms     - optional [term, definition] pairs
 //
 // A section quiz (단원 종합 평가) is an entry with type: "sectionQuiz", its part, a title
@@ -1076,12 +1077,14 @@ window.CHAPTERS = [
     // 탐구활동, workbook p. 26
     quiz: [
       {
+        image: true,
         q: "다음과 같이 포스터의 내용이 바뀌게 된 배경으로 가장 적절한 것은?",
         box: "• 1983년 포스터: “둘도 많다” (자녀를 적게 낳자는 가족 계획 포스터)\n• 2015년 포스터: 아이를 더 낳자는 출산 장려 포스터",
         choices: ["한국의 출산율이 감소하였다.", "한국의 민주주의가 발전하였다.", "한국이 다문화 사회로 진입하였다.", "한국인의 외국 이민이 증가하였다."],
         answer: 1
       },
       {
+        image: true,
         q: "다음 그래프를 활용한 수업 주제로 가장 적절한 것은?",
         box: "인구 피라미드: 1960년 → 2022년 → 2072년\n(아래쪽 어린 인구가 줄고 위쪽 노인 인구가 늘어나는 모양으로 바뀜)",
         choices: ["한국의 민주주의", "한국의 경제 성장", "한국의 고령화 현상", "한국의 다문화적 변화"],
@@ -1130,6 +1133,7 @@ window.CHAPTERS = [
     title: "Section Quiz 2",
     quiz: [
       {
+        image: true,
         q: "다음 상황이 나타난 배경으로 옳은 것은?",
         box: "• 즉시 독립을 하기 위해 신탁 통치를 반대하는 사람들의 집회 모습\n• 민주적인 임시 정부를 빨리 수립한 후 신탁 통치 기간을 줄이자고 주장하는 사람들의 집회 모습",
         choices: ["6·25 전쟁이 일어났다.", "대한민국 정부가 수립되었다.", "모스크바 3국 외상 회의가 개최되었다.", "유엔에서 남한 지역에 총선거 실시를 결정하였다."],
