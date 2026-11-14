@@ -128,7 +128,7 @@
         <span class="progress" id="progress"></span>
       </div>
       <div id="summary"></div>
-      <div class="hint">Listen all reads everything except 이야기 나누기. Listen summary reads only 주요 내용정리. Click any line to start from there. Space = play/pause.</div>
+      <div class="hint">Listen all reads everything except 이야기 나누기. Listen summary reads only 주요 내용정리. Both keep going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
     </main>
   </div>
 </div>
@@ -312,6 +312,8 @@ function speakCurrent() {
     // Finished this chapter: roll on to the next one (same mode), if any.
     if (current < chapters.length - 1) {
       current++; pos = 0; renderList(); renderChapter();
+      try { localStorage.setItem('courseNotes.chapter', current); } catch {}
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else { stop(); return; }
   }
   const u = new SpeechSynthesisUtterance(segments[pos].text);
