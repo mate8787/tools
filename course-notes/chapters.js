@@ -9,7 +9,8 @@
 //   overview  - a short paragraph: what the chapter is about
 //   keyPoints - optional main ideas, one sentence each
 //   sections  - optional lessons in the chapter: [{ heading, points: [...] }]
-//               add hidden: true to show only the title until clicked (이야기 나누기)
+//               type: "tip" (알아두면 좋아요) or "story" (이야기 나누기) shows only the title
+//               until clicked; tips are read by All and Good to know, stories never
 //   terms     - optional [term, definition] pairs
 
 window.CHAPTERS = [
@@ -51,6 +52,7 @@ window.CHAPTERS = [
       },
       {
         heading: "알아두면 좋아요: 대한민국 헌법이 걸어온 길",
+        type: "tip",
         points: [
           "헌법은 1948년 7월 17일에 공포되었고, 1987년까지 9번 개정되었다. 제헌헌법에 따라 1948년 8월 15일 이승만을 대통령으로 하는 정부가 세워졌다.",
           "1차 개헌, 1952년: 대통령 선거를 간접선거에서 직접선거로 바꾸었다.",
@@ -74,6 +76,7 @@ window.CHAPTERS = [
       },
       {
         heading: "알아두면 좋아요: 각 나라의 헌법 1조",
+        type: "tip",
         points: [
           "헌법 1조에는 그 나라가 중요하게 생각하는 가치와 정신이 담겨 있다.",
           "독일: 인간의 존엄성은 침해될 수 없고, 이를 존중하고 보호하는 것은 모든 국가 권력의 의무이다.",
@@ -84,7 +87,7 @@ window.CHAPTERS = [
       },
       {
         heading: "이야기 나누기: 민식이법 헌법소원",
-        hidden: true,
+        type: "story",
         points: [
           "민식이법은 어린이보호구역, 즉 스쿨존에서 운전 부주의로 12세 미만 어린이를 사망하게 하면 최대 무기징역까지 처벌할 수 있게 한 법이다.",
           "이 법이 기본권을 침해한다는 헌법소원이 제기되었지만, 헌법재판소는 받아들이지 않았다.",
@@ -149,6 +152,7 @@ window.CHAPTERS = [
       },
       {
         heading: "알아두면 좋아요: 원하는 이름으로 바꿀 수 있을까?",
+        type: "tip",
         points: [
           "이름 때문에 놀림을 받거나 불이익을 당하면, 법원의 허락을 받아 이름을 바꿀 수 있다. 대법원에 따르면 1년에 평균 15만 명 정도가 개명 신청을 한다.",
           "법원이 개명을 허락하는 근거는 헌법이 보장하는 '행복을 추구할 권리'이다. 이름 때문에 계속 고통을 겪는다면 행복할 수 없기 때문이다.",
@@ -170,6 +174,7 @@ window.CHAPTERS = [
       },
       {
         heading: "알아두면 좋아요: 기본권도 제한될 수 있다?",
+        type: "tip",
         points: [
           "헌법 제37조 2항: 국민의 모든 자유와 권리는 국가안전보장, 질서유지, 공공복리를 위하여 필요한 경우에 한하여 법률로써 제한할 수 있다. 제한하는 경우에도 자유와 권리의 본질적인 내용은 침해할 수 없다.",
           "첫째 조건: 아무 때나 제한하는 것이 아니라, 필요한 경우에만 제한할 수 있다.",
@@ -179,7 +184,7 @@ window.CHAPTERS = [
       },
       {
         heading: "이야기 나누기: 학교 휴대전화 전면 제한",
-        hidden: true,
+        type: "story",
         points: [
           "국가인권위원회는 교육시간 외에도 학교에서 휴대전화를 전면으로 제한하는 것은 헌법상 '과잉금지 원칙'에 어긋날 수 있다고 판단했다.",
           "점심시간 같은 휴식 시간에는 사용을 허락하는 등, 학생 피해를 줄이면서도 교육 목적을 이룰 수 있는 다른 방법이 있는데 한꺼번에 제한하는 것은 문제가 있다고 본 것이다.",

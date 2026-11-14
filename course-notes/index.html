@@ -48,6 +48,8 @@
   button.ctl.primary:hover { background: #4a6d94; }
   button.ctl.review-btn { background: #5b4785; border-color: #5b4785; }
   button.ctl.review-btn:hover { background: #6a5499; }
+  button.ctl.tips-btn { background: #2f6b5e; border-color: #2f6b5e; }
+  button.ctl.tips-btn:hover { background: #3a7d6e; }
   button.ctl:disabled { opacity: 0.4; cursor: default; }
   .player label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
   select {
@@ -111,8 +113,9 @@
 
     <main class="card">
       <div class="player">
-        <button class="ctl primary" id="allBtn">▶ Listen all</button>
-        <button class="ctl primary review-btn" id="summaryBtn">▶ Listen summary</button>
+        <button class="ctl primary review-btn" id="summaryBtn">▶ Summary</button>
+        <button class="ctl primary" id="allBtn">▶ All</button>
+        <button class="ctl primary tips-btn" id="tipsBtn">▶ Good to know</button>
         <button class="ctl" id="stopBtn" disabled>■ Stop</button>
         <label>Speed
           <select id="rate">
@@ -128,7 +131,7 @@
         <span class="progress" id="progress"></span>
       </div>
       <div id="summary"></div>
-      <div class="hint">Listen all reads everything except 이야기 나누기. Listen summary reads only 주요 내용정리. Both keep going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
+      <div class="hint">Summary reads only 주요 내용정리. All reads everything except 이야기 나누기. Good to know reads only 알아두면 좋아요. Each keeps going through all the following chapters until the end. Click any line to start from there. Space = play/pause.</div>
     </main>
   </div>
 </div>
@@ -140,12 +143,17 @@ const $ = id => document.getElementById(id);
 const synth = window.speechSynthesis;
 
 let current = 0;      // chapter index
-let segments = [];    // [{el, text, kind}] in reading order for the current chapter
+let segments = [];    // [{el, text, kind, intro?}] in reading order for the current chapter
 let pos = 0;          // segment being read
 let playing = false;
-let mode = 'all';     // 'all' = everything; 'summary' = chapter title + 주요 내용정리 only
+let mode = 'all';     // 'all' = everything; 'summary' = 주요 내용정리; 'tips' = 알아두면 좋아요
 
-const inMode = s => mode === 'all' || s.kind === 'title' || s.kind === 'review';
+// Which lines each mode reads. The chapter title (read with a per-mode intro)
+// only counts when the chapter has something else to read in that mode.
+const inBody = s => mode === 'all' ? s.kind !== 'title'
+                  : mode === 'summary' ? s.kind === 'review'
+                  : s.kind === 'tip';
+const inMode = s => s.kind === 'title' ? segments.some(inBody) : inBody(s);
 let voices = [];
 
 /* ---- Chapter list & rendering ---- */
@@ -178,31 +186,37 @@ function renderChapter() {
   // Words added to the spoken text, in the chapter's language.
   const ko = (ch.lang || 'ko').toLowerCase().startsWith('ko');
   const say = ko
-    ? { chapter: n => `챕터 ${n}:`, point: n => `${n}번.`,
-        review: '주요 내용정리', overview: '개요', keyPoints: '핵심 내용', terms: '주요 용어' }
-    : { chapter: n => `Chapter ${n}:`, point: n => `Point ${n}.`,
-        review: 'Review', overview: 'Overview', keyPoints: 'Key points', terms: 'Key terms' };
+    ? { chapter: n => `챕터 ${n},`, point: n => `${n}번.`,
+        review: '주요 내용정리', overview: '개요', keyPoints: '핵심 내용', terms: '주요 용어',
+        intro: { all: '전체 내용 듣기', summary: '주요 내용 정리 듣기', tips: '알아두면 좋아요 듣기' } }
+    : { chapter: n => `Chapter ${n},`, point: n => `Point ${n}.`,
+        review: 'Review', overview: 'Overview', keyPoints: 'Key points', terms: 'Key terms',
+        intro: { all: 'all content', summary: 'review', tips: 'good to know' } };
   // "01 Heading?" is read as "Heading?" (no lesson number, no doubled period).
   const spokenHeading = h => { const t = h.replace(/^\d+\s+/, ''); return /[.?!]$/.test(t) ? t : t + '.'; };
 
   const add = (el, spoken, kind) => { el.dataset.i = segments.length; segments.push({ el, text: spoken || el.textContent, kind }); return el; };
   const heading = (t) => { const h = document.createElement('h3'); h.textContent = t; box.append(h); };
-  const points = (list, parent = box, spoken = true) => {
+  // kind null = shown but never read; lead = spoken before the first point.
+  const points = (list, parent = box, kind = 'body', lead = '') => {
     const ul = document.createElement('ul');
     ul.className = 'points';
     list.forEach((p, i) => {
-      if (spoken) ul.append(add(seg('li', p), `${say.point(i + 1)} ${p}`));
+      if (kind) ul.append(add(seg('li', p), `${i ? '' : lead}${say.point(i + 1)} ${p}`, kind));
       else { const li = document.createElement('li'); li.textContent = p; ul.append(li); }
     });
     parent.append(ul);
   };
 
-  box.append(add(seg('h2', ch.title), `${say.chapter(current + 1)} ${ch.title}.`, 'title'));
+  // The title is read with an intro naming the mode, e.g. "챕터 1, …, 전체 내용 듣기."
+  box.append(add(seg('h2', ch.title), '', 'title'));
+  segments[0].intro = Object.fromEntries(Object.entries(say.intro)
+    .map(([m, words]) => [m, `${say.chapter(current + 1)} ${ch.title}, ${words}.`]));
 
   if (ch.review?.length) {
     const wrap = document.createElement('div');
     wrap.className = 'review';
-    wrap.append(add(seg('h3', say.review, 'review-title'), `${say.review}.`, 'review'));
+    wrap.append(add(seg('h3', say.review, 'review-title'), `${say.review}.`, 'reviewTitle'));
     ch.review.forEach(r => {
       wrap.append(add(seg('h4', r.heading), spokenHeading(r.heading), 'review'));
       const ul = document.createElement('ul');
@@ -230,14 +244,15 @@ function renderChapter() {
   }
   // Lessons within the chapter (01, 02, ...), each with its own points.
   (ch.sections || []).forEach(s => {
-    if (s.hidden) {
-      // Collapsed: just the title until clicked. Never read aloud.
+    if (s.type === 'tip' || s.type === 'story') {
+      // Collapsed: just the title until clicked.
+      // 알아두면 좋아요 (tip) is read by All and Good to know; 이야기 나누기 (story) never.
       const d = document.createElement('details');
       d.className = 'more';
       const sum = document.createElement('summary');
       sum.textContent = s.heading;
       d.append(sum);
-      points(s.points || [], d, false);
+      points(s.points || [], d, s.type === 'tip' ? 'tip' : null, spokenHeading(s.heading) + ' ');
       box.append(d);
       return;
     }
@@ -302,21 +317,27 @@ function pickVoice() {
 function highlight() {
   segments.forEach((s, i) => s.el.classList.toggle('speaking', playing && i === pos));
   const el = segments[pos]?.el;
-  if (playing && el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  if (playing && el) {
+    el.closest('details')?.setAttribute('open', '');  // show a collapsed box while it's read
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 }
 
 function speakCurrent() {
   if (!playing) return;
-  while (pos < segments.length && !inMode(segments[pos])) pos++;
-  if (pos >= segments.length) {
+  for (;;) {
+    while (pos < segments.length && !inMode(segments[pos])) pos++;
+    if (pos < segments.length) break;
     // Finished this chapter: roll on to the next one (same mode), if any.
+    // Chapters with nothing to read in this mode are skipped entirely.
     if (current < chapters.length - 1) {
       current++; pos = 0; renderList(); renderChapter();
       try { localStorage.setItem('courseNotes.chapter', current); } catch {}
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else { stop(); return; }
   }
-  const u = new SpeechSynthesisUtterance(segments[pos].text);
+  const s = segments[pos];
+  const u = new SpeechSynthesisUtterance(s.intro ? s.intro[mode] : s.text);
   const v = pickVoice();
   if (v) { u.voice = v; u.lang = v.lang; } else if (chapters[current]?.lang) u.lang = chapters[current].lang;
   u.rate = parseFloat($('rate').value);
@@ -359,7 +380,7 @@ function stop() {
   updateProgress();
 }
 
-const modeButtons = { all: ['allBtn', '▶ Listen all'], summary: ['summaryBtn', '▶ Listen summary'] };
+const modeButtons = { all: ['allBtn', '▶ All'], summary: ['summaryBtn', '▶ Summary'], tips: ['tipsBtn', '▶ Good to know'] };
 
 function updateButtons() {
   for (const [m, [id, label]] of Object.entries(modeButtons)) {
@@ -383,6 +404,7 @@ function listen(m) {
 }
 $('allBtn').onclick = () => listen('all');
 $('summaryBtn').onclick = () => listen('summary');
+$('tipsBtn').onclick = () => listen('tips');
 $('stopBtn').onclick = stop;
 $('rate').onchange = () => { if (playing) play(); };
 $('voice').onchange = () => {
