@@ -2,6 +2,8 @@
 // Send Claude photos of a chapter and it will add an entry here.
 //
 // Each chapter:
+//   part      - section the chapter belongs to (e.g. "대한민국의 국민"); chapters
+//               with the same part are grouped and numbered in order
 //   title     - chapter name
 //   lang      - optional, defaults to "ko-KR" (picks a matching voice)
 //   review    - the book's 주요 내용정리, in full, shown first:
@@ -16,6 +18,7 @@
 window.CHAPTERS = [
   {
     // 사회통합프로그램(KIIP) 한국사회 이해(심화), pp. 13–15
+    part: "대한민국의 국민",
     title: "대한민국의 정체성과 헌법",
     review: [
       {
@@ -116,6 +119,7 @@ window.CHAPTERS = [
   },
   {
     // 사회통합프로그램(KIIP) 한국사회 이해(심화), pp. 17–19
+    part: "대한민국의 국민",
     title: "대한민국 국민의 권리",
     review: [
       {
@@ -214,6 +218,7 @@ window.CHAPTERS = [
   },
   {
     // 사회통합프로그램(KIIP) 한국사회 이해(심화), pp. 21–23
+    part: "대한민국의 국민",
     title: "대한민국 국민의 의무",
     review: [
       {
@@ -309,6 +314,7 @@ window.CHAPTERS = [
   },
   {
     // 사회통합프로그램(KIIP) 한국사회 이해(심화), pp. 25–27
+    part: "대한민국의 국민",
     title: "대한민국 국민을 위한 복지",
     review: [
       {

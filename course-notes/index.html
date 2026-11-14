@@ -36,6 +36,10 @@
   .chapters button:hover { background: var(--panel-alt); }
   .chapters button.active { background: var(--panel-alt); border-color: var(--accent-dim); }
   .chapters .num { color: var(--muted); margin-right: 6px; font-variant-numeric: tabular-nums; }
+  /* Section (단원 group) headers in the chapter list */
+  .chapters .part { font-size: 12px; font-weight: 600; color: var(--accent); padding: 10px 12px 6px; letter-spacing: 0.02em; }
+  .chapters .part:not(:first-child) { margin-top: 6px; border-top: 1px solid var(--border); }
+  .part-label { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
 
   /* Player */
   .player { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
@@ -97,8 +101,9 @@
   @media (max-width: 820px) {
     body { padding: 1rem; }
     .layout { grid-template-columns: 1fr; }
-    .chapters { position: static; display: flex; overflow-x: auto; gap: 4px; }
+    .chapters { position: static; display: flex; overflow-x: auto; gap: 4px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
     .chapters button { white-space: nowrap; width: auto; }
+    .chapters .part, .chapters .part:not(:first-child) { white-space: nowrap; align-self: center; margin: 0; padding: 0 6px; border: none; }
     select { max-width: 160px; }
   }
 </style>
@@ -157,9 +162,19 @@ const inMode = s => s.kind === 'title' ? segments.some(inBody) : inBody(s);
 let voices = [];
 
 /* ---- Chapter list & rendering ---- */
+// Sections group consecutive chapters, numbered in order: "01 대한민국의 국민".
+const partNames = [...new Set(chapters.map(ch => ch.part).filter(Boolean))];
+const partLabel = ch => ch.part ? `${String(partNames.indexOf(ch.part) + 1).padStart(2, '0')} ${ch.part}` : '';
+
 function renderList() {
   $('chapterList').innerHTML = '';
   chapters.forEach((ch, i) => {
+    if (ch.part && ch.part !== chapters[i - 1]?.part) {
+      const p = document.createElement('div');
+      p.className = 'part';
+      p.textContent = partLabel(ch);
+      $('chapterList').append(p);
+    }
     const b = document.createElement('button');
     b.innerHTML = `<span class="num">${i + 1}</span>`;
     b.append(ch.title);
@@ -209,6 +224,12 @@ function renderChapter() {
   };
 
   // The title is read with an intro naming the mode, e.g. "챕터 1, …, 전체 내용 듣기."
+  if (ch.part) {
+    const p = document.createElement('div');
+    p.className = 'part-label';
+    p.textContent = partLabel(ch);
+    box.append(p);
+  }
   box.append(add(seg('h2', ch.title), '', 'title'));
   segments[0].intro = Object.fromEntries(Object.entries(say.intro)
     .map(([m, words]) => [m, `${say.chapter(current + 1)} ${ch.title}, ${words}.`]));
