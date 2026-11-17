@@ -319,9 +319,14 @@
   .toast.show { opacity: 1; }
   .top-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    gap: 10px;
     margin-bottom: 12px;
   }
+  .btn-danger:hover { border-color: var(--bad); color: var(--bad); }
+  .title-panel { grid-column: 1 / -1; }
+  .title-row { display: flex; gap: 10px; align-items: flex-start; }
+  .title-box { flex: 1; height: 42px; }
 </style>
 </head>
 <body>
@@ -355,9 +360,10 @@
     <div class="base-body">
       <p class="base-hint">
         Paste the table straight from Excel. The first row holds the language codes
-        (<code>KR&nbsp; EN&nbsp; DE&nbsp; FR&nbsp; ES&nbsp; MX&nbsp; IT&nbsp; PL&nbsp; BR&nbsp; TR&nbsp; RU&nbsp; CN&nbsp; TW&nbsp; JP</code>).
+        (<code>KR&nbsp; EN&nbsp; DE&nbsp; ES&nbsp; MX&nbsp; FR&nbsp; IT&nbsp; PL&nbsp; BR&nbsp; TR&nbsp; RU&nbsp; CN&nbsp; TW&nbsp; JP</code>).
         Put a <code>◆</code> in column A on the first row of every segment — everything up to the next
-        <code>◆</code> is one segment. Blank rows are ignored. Every language tab is filled and all sources are generated below.
+        <code>◆</code> is one segment. A row marked <code>★</code> is the title: it is not part of the HTML and gets its own
+        “Copy title” box. Blank rows are ignored. Every language tab is filled and all sources are generated below.
       </p>
       <textarea id="bulkPaste" placeholder="&#9;KR&#9;EN&#9;DE&#9;...&#10;◆&#9;Korean segment 1&#9;English segment 1&#9;German segment 1&#9;...&#10;◆&#9;Korean segment 2&#9;English segment 2&#9;German segment 2&#9;..."></textarea>
       <div class="actions">
@@ -372,6 +378,7 @@
   <div class="tabbar" id="tabbar"></div>
 
   <div class="top-actions">
+    <button class="btn-secondary btn-danger" onclick="clearAll()">Clear all</button>
     <button class="btn-secondary" onclick="downloadAll()">Download all filled languages as .txt</button>
   </div>
 
@@ -383,15 +390,18 @@
 <div class="toast" id="toast">Copied!</div>
 
 <script>
-const LANGS = ['KR','EN','DE','FR','ES','MX','IT','PL','BR','TR','RU','CN','TW','JP'];
-const MARKER = '◆';
+const LANGS = ['KR','EN','DE','ES','MX','FR','IT','PL','BR','TR','RU','CN','TW','JP'];
+const MARKER = '◆';        // starts a segment
+const TITLE_MARKER = '★';  // marks the title row (not part of the segments)
 
 let CURRENT_TEMPLATE = '';
 let TOKENS = [];     // template split into tags and text pieces
 let NODE_IDX = [];   // token indices of the text pieces that hold real text
-let SEGS = [];       // segments from the sheet: { src, group: [token idx] | null, primary, rowwise }
+let SEGS = [];       // segments from the sheet: { src, group: [token idx] | null, rowwise }
 let LEFTOVER = [];   // token indices of template text no segment covered (left unchanged)
-const state = {};    // state[lang] = { values: { segIndex: text } }
+let HAS_TITLE = false;  // the sheet had a ★ title row
+let TITLE_SRC = '';     // title text from the language column used for matching (for the list)
+const state = {};    // state[lang] = { values: { segIndex: text }, title: text }
 let activeLang = LANGS[0];
 
 const $ = id => document.getElementById(id);
@@ -438,7 +448,7 @@ function toggleBase() { $('baseSection').classList.toggle('open'); }
 function toggleBulk() { $('bulkSection').classList.toggle('open'); }
 
 function resetState() {
-  LANGS.forEach(l => { state[l] = { values: {} }; });
+  LANGS.forEach(l => { state[l] = { values: {}, title: '' }; });
 }
 
 function applyTemplateChange() {
@@ -446,6 +456,8 @@ function applyTemplateChange() {
   NODE_IDX = TOKENS.map((t, i) => (t.kind === 'text' && t.norm) ? i : -1).filter(i => i !== -1);
   SEGS = [];
   LEFTOVER = [];
+  HAS_TITLE = false;
+  TITLE_SRC = '';
   resetState();
   buildTabs();
   buildPanels();
@@ -539,6 +551,14 @@ function buildPanels() {
 
   container.innerHTML = LANGS.map(l => `
     <div class="lang-panel ${l === activeLang ? 'active' : ''}" id="panel_${l}">
+      ${HAS_TITLE ? `
+      <div class="panel title-panel">
+        <h2>Title — ${l}</h2>
+        <div class="title-row">
+          <textarea class="title-box" id="title_${l}" placeholder="Title…" oninput="onTitleInput('${l}')">${esc(state[l].title || '')}</textarea>
+          <button class="btn-primary" onclick="copyTitle('${l}')">Copy title</button>
+        </div>
+      </div>` : ''}
       <div class="panel">
         <h2>1. Review / edit fields — ${l}</h2>
         ${SEGS.map((seg, s) => `
@@ -583,11 +603,20 @@ function onFieldInput(l) {
   refreshOutput(l);
 }
 
+function onTitleInput(l) {
+  state[l].title = $('title_' + l).value;
+  const box = $('alltitle_' + l);
+  if (box) box.textContent = state[l].title;
+  updateDot(l);
+}
+
 function updateDot(l) {
   const tab = $('tabbtn_' + l);
   if (!tab) return;
-  const total = SEGS.length;
-  const filled = SEGS.filter((_, s) => (state[l].values[s] || '').trim()).length;
+  // the title counts as one more field when the sheet has a ★ row
+  const total = SEGS.length + (HAS_TITLE ? 1 : 0);
+  const filled = SEGS.filter((_, s) => (state[l].values[s] || '').trim()).length
+    + (HAS_TITLE && (state[l].title || '').trim() ? 1 : 0);
   tab.classList.remove('partial', 'complete');
   if (total === 0 || filled === 0) return;            // untouched — no dot
   tab.classList.add(filled < total ? 'partial' : 'complete');  // red = some field missing, green = all filled
@@ -696,7 +725,10 @@ function bulkSplit() {
 
   // column holding the ◆ markers (normally column A)
   const markerCounts = {};
-  rows.slice(1).forEach(r => r.forEach((c, i) => { if (c.trim() === MARKER) markerCounts[i] = (markerCounts[i] || 0) + 1; }));
+  rows.slice(1).forEach(r => r.forEach((c, i) => {
+    const t = c.trim();
+    if (t === MARKER || t === TITLE_MARKER) markerCounts[i] = (markerCounts[i] || 0) + 1;
+  }));
   const markerCols = Object.keys(markerCounts).sort((a, b) => markerCounts[b] - markerCounts[a]);
   if (markerCols.length === 0) return bulkFail(`No ${MARKER} markers found — put a ${MARKER} in column A on the first row of every segment.`);
   const markerCol = parseInt(markerCols[0], 10);
@@ -716,13 +748,15 @@ function bulkSplit() {
     else unknown.push(h.trim());
   });
   const langs = Object.keys(langCol);
-  if (langs.length === 0) return bulkFail('No column header in the first row matched a known language (KR, EN, DE, FR, ES, MX, IT, PL, BR, TR, RU, CN, TW, JP).');
+  if (langs.length === 0) return bulkFail('No column header in the first row matched a known language (KR, EN, DE, ES, MX, FR, IT, PL, BR, TR, RU, CN, TW, JP).');
 
-  // group rows into segments: a ◆ starts a new one, following rows continue it
-  const segRows = [];
+  // group rows: a ◆ starts a segment, a ★ starts the title, following rows continue whichever is open
+  const segRows = [], titleRows = [];
   let cur = null;
   rows.slice(1).forEach(r => {
-    if ((r[markerCol] || '').trim() === MARKER) { cur = []; segRows.push(cur); }
+    const m = (r[markerCol] || '').trim();
+    if (m === MARKER) { cur = []; segRows.push(cur); }
+    else if (m === TITLE_MARKER) { cur = []; titleRows.push(cur); }
     if (cur) cur.push(r);
   });
 
@@ -733,6 +767,9 @@ function bulkSplit() {
     .map(rs => { const c = {}; langs.forEach(l => { c[l] = cellsOf(rs, langCol[l]); }); return c; })
     .filter(c => langs.some(l => c[l].length));
   if (segData.length === 0) return bulkFail(`No text found next to the ${MARKER} markers.`);
+
+  const titleOf = {};
+  if (titleRows.length) langs.forEach(l => { titleOf[l] = cellsOf(titleRows[0], langCol[l]).join(' '); });
 
   // match segments to template text using whichever language column lines up best
   const nodes = NODE_IDX.map(i => ({ idx: i, norm: TOKENS[i].norm }));
@@ -770,6 +807,10 @@ function bulkSplit() {
     });
   });
 
+  HAS_TITLE = langs.some(l => titleOf[l]);
+  TITLE_SRC = HAS_TITLE ? (titleOf[best.lang] || langs.map(l => titleOf[l]).find(Boolean) || '') : '';
+  langs.forEach(l => { state[l].title = titleOf[l] || ''; });
+
   const covered = new Set();
   SEGS.forEach(seg => (seg.group || []).forEach(i => covered.add(i)));
   LEFTOVER = NODE_IDX.filter(i => !covered.has(i));
@@ -788,7 +829,9 @@ function bulkSplit() {
     if (!hasValues(l)) { problems.push(`no text for ${l}`); return; }
     const missing = SEGS.map((_, s) => (state[l].values[s] || '').trim() ? null : s + 1).filter(Boolean);
     if (missing.length) problems.push(`${l} is missing segment(s) ${missing.join(', ')}`);
+    if (HAS_TITLE && !(state[l].title || '').trim()) problems.push(`${l} is missing the title`);
   });
+  if (titleRows.length > 1) problems.push(`only the first ${TITLE_MARKER} row is used as the title`);
   // link text that couldn't be found in a translation keeps the template's wording
   const keptLinks = {}, readLinks = {};
   SEGS.forEach((seg, s) => {
@@ -809,6 +852,7 @@ function bulkSplit() {
   const how = byPosition ? 'paired with the template by position' : `matched to the template using the ${best.lang} column`;
   let msg = `${SEGS.length} segment(s) ${how}`;
   if (combined) msg += `; ${combined} of them span several text pieces (only the plain text is replaced, tags stay)`;
+  if (HAS_TITLE) msg += `; title read from the ${TITLE_MARKER} row`;
   msg += `. Generated ${filled.length} language(s).`;
   if (readNote) msg += ` Link text taken from the translation — ${readNote}.`;
 
@@ -824,7 +868,13 @@ function bulkSplit() {
 function renderBulkSegments() {
   const el = $('bulkSegments');
   if (!SEGS.length) { el.innerHTML = ''; return; }
-  let html = SEGS.map((seg, s) => `
+  let html = HAS_TITLE ? `
+    <div class="segment-preview-item">
+      <span class="idx">★</span>
+      <span class="seg-text">${esc(truncate(TITLE_SRC, 120))}</span>
+      <span class="seg-chip" title="Not part of the HTML — shown in its own box at the top of each language">title</span>
+    </div>` : '';
+  html += SEGS.map((seg, s) => `
     <div class="segment-preview-item${seg.group ? '' : ' unmatched'}">
       <span class="idx">${s + 1}</span>
       <span class="seg-text">${esc(truncate(seg.src, 120))}</span>
@@ -994,6 +1044,11 @@ function renderAllOutputs(langs) {
     langs.map(l => `
       <div class="panel" style="margin-top:14px;">
         <h2>${l}</h2>
+        ${HAS_TITLE ? `
+        <div class="title-row" style="margin-bottom:10px; align-items:center;">
+          <div class="source-text" style="flex:1; margin:0;" id="alltitle_${l}">${esc(state[l].title || '')}</div>
+          <button class="btn-primary btn-small" onclick="copyTitle('${l}')">Copy title</button>
+        </div>` : ''}
         <div class="actions" style="margin-top:0; margin-bottom:10px;">
           <button class="btn-primary btn-small" onclick="copyCode('${l}')">Copy ${l} source</button>
         </div>
@@ -1009,12 +1064,28 @@ function copyCode(l) {
   navigator.clipboard.writeText(html).then(() => showToast(`Copied ${l} source!`));
 }
 
+function copyTitle(l) {
+  const title = (state[l].title || '').trim();
+  if (!title) { showToast(`No title for ${l} yet`); return; }
+  navigator.clipboard.writeText(title).then(() => showToast(`Copied ${l} title!`));
+}
+
+// Empty everything: template, pasted table, titles and all language fields.
+function clearAll() {
+  if (!confirm('Clear the template and all pasted languages?')) return;
+  resetTemplate();
+  clearBulk();
+  $('baseSection').classList.add('open');
+  showToast('Everything cleared');
+}
+
 function downloadAll() {
   const filled = LANGS.filter(hasValues);
   if (filled.length === 0) { showToast('No languages filled in yet'); return; }
   let out = '';
   filled.forEach(l => {
-    out += `===== ${l} =====\n\n${generate(l)}\n\n\n`;
+    const title = HAS_TITLE && (state[l].title || '').trim();
+    out += `===== ${l} =====\n\n${title ? `TITLE: ${title}\n\n` : ''}${generate(l)}\n\n\n`;
   });
   const blob = new Blob([out], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
