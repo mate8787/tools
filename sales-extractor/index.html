@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales Extractor</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7385;
+    --line: #d9dde5; --accent: #2f6fed; --accent-text: #fff; --head: #eef1f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171d; --card: #1d222b; --text: #e8ebf1; --muted: #98a0b2;
+      --line: #333a47; --accent: #5b8cff; --accent-text: #0e1220; --head: #262d3a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .tab { border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; background: none;
+         padding: 8px 18px; color: var(--muted); font-weight: 600; }
+  .tab.active { background: var(--card); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+  p.hint { margin: 0 0 14px; color: var(--muted); }
+  textarea { width: 100%; height: 170px; padding: 10px; border: 1px solid var(--line);
+             border-radius: 8px; background: var(--card); color: var(--text);
+             font: 13px/1.4 ui-monospace, Consolas, monospace; resize: vertical; }
+  .row { display: flex; gap: 8px; margin: 10px 0 18px; }
+  button { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button[hidden] { display: none; }
+  .wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); }
+  th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-size: 13px; background: var(--head); font-weight: 700; }
+  tr:last-child td { border-bottom: 0; }
+  td.zero { color: var(--muted); }
+  td.gap { background: rgba(192, 57, 43, .12); }
+  td.tot, th.tot { border-left: 2px solid var(--line); color: var(--muted); }
+  th button.col { padding: 3px 9px; font-size: 12px; font-weight: 700; background: var(--accent);
+                  color: var(--accent-text); border-color: var(--accent); border-radius: 6px; }
+  .msg { margin-top: 10px; color: var(--muted); font-size: 13px; }
+  .msg.warn { color: #c0392b; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sales Extractor</h1>
+  <div class="tabs">
+    <button class="tab" data-mode="row">Base Game</button>
+    <button class="tab" data-mode="col">DLC</button>
+  </div>
+  <p class="hint" id="hint"></p>
+
+  <textarea id="input" placeholder="Paste Slack text here…" spellcheck="false"></textarea>
+  <div class="row">
+    <button class="primary" id="copy">Copy sums (STEAM → APPLE)</button>
+    <button class="primary" id="copygap" hidden>Copy lines with gaps (for Skip blanks)</button>
+    <button id="clear">Clear</button>
+  </div>
+
+  <div class="wrap" id="out"></div>
+  <div class="msg" id="msg"></div>
+</main>
+
+<script>
+const PLATFORMS = ['STEAM', 'PS', 'XBOX', 'EPIC', 'APPLE'];
+const num = s => parseInt(s.replace(/,/g, '').replace(/^\+/, ''), 10);
+
+/* PARSE-START */
+// One block of text -> { STEAM: {today, prev, cum}, PS: {...}, ... }
+//   today = first number in the bracket after 판매량
+//   prev  = number in the bracket after 전일 판매량
+function parsePlatforms(text) {
+  // Split on "-NAME:" so it still works if two lines got glued together.
+  const parts = text.split(/-\s*(STEAM|PS|XBOX|EPIC|APPLE)\s*:/);
+  const found = {};
+  for (let i = 1; i < parts.length; i += 2) {
+    // 판매량: 193개(+9개, 전일 판매량: 308개(0개))
+    const m = parts[i + 1].match(/판매량:\s*[\d,]+개\(\s*([+-]?[\d,]+)개\s*,\s*전일\s*판매량:\s*[\d,]+개\(\s*([+-]?[\d,]+)개\s*\)/);
+    if (m) found[parts[i]] = { today: num(m[1]), prev: num(m[2]) };
+  }
+  return found;
+}
+
+// Whole paste -> [{ label, platforms }] — one entry per "[date ... N시 기준]" header.
+function parseBatches(text) {
+  const heads = [...text.matchAll(/\[(\d{4})-(\d{2})-(\d{2})[^\]]*?(\d{1,2})시\s*기준\]/g)];
+  if (!heads.length) return [{ label: '—', platforms: parsePlatforms(text) }];
+  return heads.map((h, i) => {
+    const end = i + 1 < heads.length ? heads[i + 1].index : text.length;
+    return {
+      label: `${+h[2]}/${+h[3]} ${h[4]}시`,
+      platforms: parsePlatforms(text.slice(h.index + h[0].length, end)),
+    };
+  });
+}
+/* PARSE-END */
+
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('en-US');
+
+// Same numbers on both tabs; only the copy pattern differs.
+// mode 'row' = Base Game (platform columns side by side -> one line per block)
+// mode 'col' = DLC (formula columns in between -> one copy button per platform column)
+let mode = 'row';
+try { mode = localStorage.getItem('sales-extractor-tab') === 'col' ? 'col' : 'row'; } catch {}
+
+const DLC_SKIP = ['APPLE'];   // platforms left out of the DLC tab for now (remove from this list to bring back)
+let shown = PLATFORMS;         // platforms shown on the current tab
+
+let rowsSums = [];  // one array of sums per batch
+let cols = [];      // one array of sums per platform
+
+const HINTS = {
+  row: 'Base Game: for every "N시 기준" block, the first bracket number after 판매량 plus the bracket number after 전일 판매량, per platform. Copy gives one line per block (STEAM → APPLE).',
+  col: 'DLC: same numbers, different copying. Your sheet has 증감 formula columns between the platforms, so each platform has its own copy button — it copies just that one column, so nothing in the formula columns gets overwritten.',
+};
+
+function render() {
+  const text = $('input').value;
+  const batches = text.trim() ? parseBatches(text).filter(b => Object.keys(b.platforms).length) : [];
+  const warnings = [];
+  rowsSums = [];
+  shown = mode === 'col' ? PLATFORMS.filter(p => !DLC_SKIP.includes(p)) : PLATFORMS;
+  cols = shown.map(() => []);
+  let body = '';
+
+  for (const b of batches) {
+    const sums = [];
+    let total = 0;
+    let cells = '';
+    shown.forEach((p, i) => {
+      const f = b.platforms[p];
+      const v = f ? f.today + f.prev : undefined;
+      if (v === undefined) {
+        sums.push('');
+        cols[i].push('');
+        cells += '<td class="gap">?</td>';
+        warnings.push(`${b.label}: ${p} not found`);
+        return;
+      }
+      sums.push(v);
+      cols[i].push(v);
+      total += v;
+      cells += `<td class="${v === 0 ? 'zero' : ''}" title="${f.today} + ${f.prev}">${v === 0 ? '-' : fmt(v)}</td>`;
+    });
+    rowsSums.push(sums);
+    body += `<tr><td>${b.label}</td>${cells}<td class="tot">${fmt(total)}</td></tr>`;
+  }
+
+  const head = '<th></th>' + shown.map((p, i) =>
+    mode === 'col' ? `<th><button class="col" data-col="${i}">Copy ${p}</button></th>` : `<th>${p}</th>`).join('')
+    + '<th class="tot">Total</th>';
+  $('out').innerHTML = body ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : '';
+
+  const msg = $('msg');
+  if (text.trim() && !body) { msg.className = 'msg warn'; msg.textContent = 'No platform data found in that text.'; }
+  else if (warnings.length) { msg.className = 'msg warn'; msg.textContent = 'Not found — ' + warnings.join(' · '); }
+  else { msg.className = 'msg'; msg.textContent = ''; }
+}
+
+function setMode(m) {
+  mode = m;
+  try { localStorage.setItem('sales-extractor-tab', m); } catch {}
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  $('hint').textContent = HINTS[m];
+  $('copy').hidden = m === 'col';
+  $('copygap').hidden = m !== 'col';
+  render();
+}
+
+function legacyCopy(text) {
+  // Works where navigator.clipboard is blocked (e.g. some file:// setups).
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch {}
+  document.body.removeChild(ta);
+  return ok;
+}
+
+async function copyText(text, okMessage) {
+  const msg = $('msg');
+  // Synchronous copy first (runs inside the click, works in every browser and in embedded
+  // previews); the async clipboard API is only the fallback — it can "succeed" without copying.
+  let ok = legacyCopy(text);
+  if (!ok) { try { await navigator.clipboard.writeText(text); ok = true; } catch {} }
+  msg.className = ok ? 'msg' : 'msg warn';
+  msg.textContent = ok ? okMessage : 'Copy blocked by the browser. Select the table and copy manually.';
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+$('input').addEventListener('input', render);
+$('clear').addEventListener('click', () => { $('input').value = ''; render(); $('input').focus(); });
+
+// Base Game: one line per block, sums only, in sheet order STEAM, PS, XBOX, EPIC, APPLE.
+$('copy').addEventListener('click', () => {
+  if (!rowsSums.length) { $('msg').className = 'msg warn'; $('msg').textContent = 'Nothing to copy yet — paste the Slack text first.'; return; }
+  const n = rowsSums.length;
+  copyText(rowsSums.map(l => l.join('\t')).join('\n'), `Copied ${n} line${n > 1 ? 's' : ''} — paste into the STEAM cell of the first row.`);
+});
+
+// DLC, whole lines: value, empty gap column, value, empty gap column, ... — paste into a spare area of the
+// sheet, copy that range, then Paste Special -> Skip blanks onto the real rows so formulas stay untouched.
+$('copygap').addEventListener('click', () => {
+  if (!rowsSums.length) { $('msg').className = 'msg warn'; $('msg').textContent = 'Nothing to copy yet — paste the Slack text first.'; return; }
+  const n = rowsSums.length;
+  copyText(rowsSums.map(l => l.join('\t\t')).join('\n'),
+    `Copied ${n} line${n > 1 ? 's' : ''} with empty gap columns — paste in a spare area, copy that range, then Paste Special → Skip blanks onto the STEAM cell.`);
+});
+
+// DLC: copy one platform's column (one value per line, top to bottom).
+$('out').addEventListener('click', e => {
+  const b = e.target.closest('button[data-col]');
+  if (!b) return;
+  const i = +b.dataset.col;
+  const n = cols[i].length;
+  copyText(cols[i].join('\n'), `Copied ${shown[i]}: ${n} value${n > 1 ? 's' : ''} — paste into the first ${shown[i]} cell.`);
+});
+
+setMode(mode);
+</script>
+</body>
+</html>
