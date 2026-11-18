@@ -20,17 +20,18 @@
          font: 15px/1.5 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
   main { max-width: 900px; margin: 0 auto; }
   h1 { font-size: 20px; margin: 0 0 12px; }
-  .tabs { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
-  .tab { position: relative; width: min(100%, 280px); aspect-ratio: 2.15 / 1; padding: 0; overflow: hidden;
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 560px) { .tabs { grid-template-columns: 1fr; } }
+  .tab { position: relative; width: 100%; aspect-ratio: 4.3 / 1; padding: 0; overflow: hidden;
          border: 3px solid transparent; border-radius: 12px; background-color: #1b1b1f;
          background-repeat: no-repeat; filter: grayscale(.6) brightness(.65);
          transition: filter .15s, border-color .15s, box-shadow .15s; }
   .tab:hover { filter: grayscale(.2) brightness(.9); }
   .tab.active { border-color: var(--accent); filter: none; box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
-  .tab[data-mode="row"] { background-image: url(img/base-game.png); background-size: cover; background-position: left center; }
-  /* DLC art has a purple download badge in its top-left corner: zoom in and anchor bottom-right to crop it out */
-  .tab[data-mode="col"] { background-image: url(img/dlc.png); background-size: 116% auto; background-position: 100% 100%; }
-  .tab .tag { position: absolute; top: 8px; right: 8px; padding: 1px 11px; border-radius: 999px; font-size: 12px;
+  /* the pictures in img/ are pre-cropped to the same 4.3:1 banner shape as the buttons */
+  .tab[data-mode="row"] { background-image: url(img/base-game.png); background-size: 100% 100%; }
+  .tab[data-mode="col"] { background-image: url(img/dlc.png); background-size: 100% 100%; }
+  .tab .tag { position: absolute; top: 6px; right: 6px; padding: 0 10px; border-radius: 999px; font-size: 12px;
               font-weight: 700; color: #fff; background: rgba(0, 0, 0, .65); }
   .tab.active .tag { background: var(--accent); color: var(--accent-text); }
   p.hint { margin: 0 0 14px; color: var(--muted); }
