@@ -17,18 +17,27 @@
   h1 { font-size: 20px; margin: 0 0 12px; }
   .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   @media (max-width: 560px) { .tabs { grid-template-columns: 1fr; } }
-  .tab { position: relative; width: 100%; aspect-ratio: 3.6 / 1; padding: 0; overflow: hidden;
-         border: 3px solid transparent; border-radius: 12px; background-color: #1b1b1f;
-         background-repeat: no-repeat; filter: grayscale(.6) brightness(.65);
-         transition: filter .15s, border-color .15s, box-shadow .15s; }
-  .tab:hover { filter: grayscale(.2) brightness(.9); }
-  .tab.active { border-color: var(--accent); filter: none; box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
-  /* the pictures in img/ are pre-cropped to the same 3.6:1 banner shape as the buttons */
-  .tab[data-mode="row"] { background-image: url(img/base-game.png); background-size: 100% 100%; }
-  .tab[data-mode="col"] { background-image: url(img/dlc.png); background-size: 100% 100%; }
-  .tab .tag { position: absolute; top: 6px; right: 6px; padding: 0 10px; border-radius: 999px; font-size: 12px;
-              font-weight: 700; color: #fff; background: rgba(0, 0, 0, .65); }
-  .tab.active .tag { background: var(--accent); color: var(--accent-text); }
+  /* button = the picture (full, uncropped, same 3.6:1 shape as the files) + a label strip underneath */
+  .tab { display: flex; flex-direction: column; width: 100%; padding: 0; overflow: hidden;
+         border: 3px solid transparent; border-radius: 12px; background: #12151c;
+         transition: border-color .15s, box-shadow .15s; }
+  .tab .pic { flex: none; width: 100%; aspect-ratio: 3.6 / 1; background-size: 100% 100%; background-repeat: no-repeat;
+              filter: grayscale(.6) brightness(.65); transition: filter .15s; }
+  .tab:hover .pic { filter: grayscale(.2) brightness(.9); }
+  .tab.active { border-color: var(--accent); box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
+  .tab.active .pic { filter: none; }
+  /* the pictures in img/ are the same 3.6:1 shape as the buttons */
+  .tab[data-mode="row"] .pic { background-image: url(img/base-game.png); }
+  /* the DLC picture has transparent edges: white behind it so they don't show as black bars */
+  .tab[data-mode="col"] .pic { background-image: url(img/dlc.png); background-color: #fff; }
+  /* label: a full-width strip under the picture with a horizontal gradient and a glowing line on top */
+  .tab .tag { position: relative; display: block; padding: 5px 0 6px; text-align: center;
+              font-size: 17px; font-weight: 800; letter-spacing: .1em; line-height: 1.3; color: #fff;
+              background: linear-gradient(90deg, #12151c 0%, #2c3447 50%, #12151c 100%); }
+  .tab .tag::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+                      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .8), transparent); }
+  .tab.active .tag { background: linear-gradient(90deg, #14307a 0%, #3c69eb 50%, #14307a 100%); }
+  .tab.active .tag::before { background: linear-gradient(90deg, transparent, #fff, transparent); }
   p.hint { margin: 0 0 14px; color: var(--muted); }
   textarea { width: 100%; height: 170px; padding: 10px; border: 1px solid var(--line);
              border-radius: 8px; background: var(--card); color: var(--text);
@@ -57,8 +66,8 @@
 <main>
   <h1>판매량 추출기</h1>
   <div class="tabs">
-    <button class="tab" data-mode="row" aria-label="본편 (Crimson Desert Enhanced)"><span class="tag">본편</span></button>
-    <button class="tab" data-mode="col" aria-label="DLC (Charting the Unknown)"><span class="tag">DLC</span></button>
+    <button class="tab" data-mode="row" aria-label="본편 (Crimson Desert Enhanced)"><span class="pic"></span><span class="tag">본편</span></button>
+    <button class="tab" data-mode="col" aria-label="DLC (Charting the Unknown)"><span class="pic"></span><span class="tag">DLC</span></button>
   </div>
   <p class="hint" id="hint"></p>
 
