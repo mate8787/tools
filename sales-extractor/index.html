@@ -6,14 +6,9 @@
 <title>판매량 추출기</title>
 <style>
   :root {
-    --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7385;
-    --line: #d9dde5; --accent: #2f6fed; --accent-text: #fff; --head: #eef1f6;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14171d; --card: #1d222b; --text: #e8ebf1; --muted: #98a0b2;
-      --line: #333a47; --accent: #5b8cff; --accent-text: #0e1220; --head: #262d3a;
-    }
+    color-scheme: dark;
+    --bg: #000; --card: #0d0f13; --text: #e8ebf1; --muted: #98a0b2;
+    --line: #2a2f3a; --accent: #5b8cff; --accent-text: #0e1220; --head: #171b23;
   }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--text);
@@ -22,13 +17,13 @@
   h1 { font-size: 20px; margin: 0 0 12px; }
   .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   @media (max-width: 560px) { .tabs { grid-template-columns: 1fr; } }
-  .tab { position: relative; width: 100%; aspect-ratio: 4.3 / 1; padding: 0; overflow: hidden;
+  .tab { position: relative; width: 100%; aspect-ratio: 3.6 / 1; padding: 0; overflow: hidden;
          border: 3px solid transparent; border-radius: 12px; background-color: #1b1b1f;
          background-repeat: no-repeat; filter: grayscale(.6) brightness(.65);
          transition: filter .15s, border-color .15s, box-shadow .15s; }
   .tab:hover { filter: grayscale(.2) brightness(.9); }
   .tab.active { border-color: var(--accent); filter: none; box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
-  /* the pictures in img/ are pre-cropped to the same 4.3:1 banner shape as the buttons */
+  /* the pictures in img/ are pre-cropped to the same 3.6:1 banner shape as the buttons */
   .tab[data-mode="row"] { background-image: url(img/base-game.png); background-size: 100% 100%; }
   .tab[data-mode="col"] { background-image: url(img/dlc.png); background-size: 100% 100%; }
   .tab .tag { position: absolute; top: 6px; right: 6px; padding: 0 10px; border-radius: 999px; font-size: 12px;
