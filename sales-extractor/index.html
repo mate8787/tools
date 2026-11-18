@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sales Extractor</title>
+<title>판매량 추출기</title>
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7385;
@@ -17,13 +17,22 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--text);
-         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
   main { max-width: 900px; margin: 0 auto; }
   h1 { font-size: 20px; margin: 0 0 12px; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
-  .tab { border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; background: none;
-         padding: 8px 18px; color: var(--muted); font-weight: 600; }
-  .tab.active { background: var(--card); border-color: var(--line); color: var(--text); margin-bottom: -1px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+  .tab { position: relative; width: min(100%, 280px); aspect-ratio: 2.15 / 1; padding: 0; overflow: hidden;
+         border: 3px solid transparent; border-radius: 12px; background-color: #1b1b1f;
+         background-repeat: no-repeat; filter: grayscale(.6) brightness(.65);
+         transition: filter .15s, border-color .15s, box-shadow .15s; }
+  .tab:hover { filter: grayscale(.2) brightness(.9); }
+  .tab.active { border-color: var(--accent); filter: none; box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
+  .tab[data-mode="row"] { background-image: url(img/base-game.png); background-size: cover; background-position: left center; }
+  /* DLC art has a purple download badge in its top-left corner: zoom in and anchor bottom-right to crop it out */
+  .tab[data-mode="col"] { background-image: url(img/dlc.png); background-size: 116% auto; background-position: 100% 100%; }
+  .tab .tag { position: absolute; top: 8px; right: 8px; padding: 1px 11px; border-radius: 999px; font-size: 12px;
+              font-weight: 700; color: #fff; background: rgba(0, 0, 0, .65); }
+  .tab.active .tag { background: var(--accent); color: var(--accent-text); }
   p.hint { margin: 0 0 14px; color: var(--muted); }
   textarea { width: 100%; height: 170px; padding: 10px; border: 1px solid var(--line);
              border-radius: 8px; background: var(--card); color: var(--text);
@@ -50,18 +59,18 @@
 </head>
 <body>
 <main>
-  <h1>Sales Extractor</h1>
+  <h1>판매량 추출기</h1>
   <div class="tabs">
-    <button class="tab" data-mode="row">Base Game</button>
-    <button class="tab" data-mode="col">DLC</button>
+    <button class="tab" data-mode="row" aria-label="본편 (Crimson Desert Enhanced)"><span class="tag">본편</span></button>
+    <button class="tab" data-mode="col" aria-label="DLC (Charting the Unknown)"><span class="tag">DLC</span></button>
   </div>
   <p class="hint" id="hint"></p>
 
-  <textarea id="input" placeholder="Paste Slack text here…" spellcheck="false"></textarea>
+  <textarea id="input" placeholder="여기에 Slack 텍스트를 붙여넣으세요…" spellcheck="false"></textarea>
   <div class="row">
-    <button class="primary" id="copy">Copy sums (STEAM → APPLE)</button>
-    <button class="primary" id="copygap" hidden>Copy lines with gaps (for Skip blanks)</button>
-    <button id="clear">Clear</button>
+    <button class="primary" id="copy">합계 복사 (STEAM → APPLE)</button>
+    <button class="primary" id="copygap" hidden>빈 열 포함 복사 (공백 무시용)</button>
+    <button id="clear">지우기</button>
   </div>
 
   <div class="wrap" id="out"></div>
@@ -118,8 +127,8 @@ let rowsSums = [];  // one array of sums per batch
 let cols = [];      // one array of sums per platform
 
 const HINTS = {
-  row: 'Base Game: for every "N시 기준" block, the first bracket number after 판매량 plus the bracket number after 전일 판매량, per platform. Copy gives one line per block (STEAM → APPLE).',
-  col: 'DLC: same numbers, different copying. Your sheet has 증감 formula columns between the platforms, so each platform has its own copy button — it copies just that one column, so nothing in the formula columns gets overwritten.',
+  row: '본편: 각 "N시 기준" 블록마다, 플랫폼별로 판매량 뒤 괄호의 첫 번째 숫자와 전일 판매량 뒤 괄호의 숫자를 더합니다. 복사하면 블록당 한 줄(STEAM → APPLE)이 복사됩니다.',
+  col: 'DLC: 숫자는 본편과 같고 복사 방식만 다릅니다. 시트의 플랫폼 열 사이에 증감 수식 열이 있으므로, 플랫폼마다 복사 버튼이 있어 해당 열만 복사됩니다 — 수식 열은 건드리지 않습니다.',
 };
 
 function render() {
@@ -142,7 +151,7 @@ function render() {
         sums.push('');
         cols[i].push('');
         cells += '<td class="gap">?</td>';
-        warnings.push(`${b.label}: ${p} not found`);
+        warnings.push(`${b.label}: ${p} 없음`);
         return;
       }
       sums.push(v);
@@ -155,13 +164,13 @@ function render() {
   }
 
   const head = '<th></th>' + shown.map((p, i) =>
-    mode === 'col' ? `<th><button class="col" data-col="${i}">Copy ${p}</button></th>` : `<th>${p}</th>`).join('')
-    + '<th class="tot">Total</th>';
+    mode === 'col' ? `<th><button class="col" data-col="${i}">${p} 복사</button></th>` : `<th>${p}</th>`).join('')
+    + '<th class="tot">합계</th>';
   $('out').innerHTML = body ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : '';
 
   const msg = $('msg');
-  if (text.trim() && !body) { msg.className = 'msg warn'; msg.textContent = 'No platform data found in that text.'; }
-  else if (warnings.length) { msg.className = 'msg warn'; msg.textContent = 'Not found — ' + warnings.join(' · '); }
+  if (text.trim() && !body) { msg.className = 'msg warn'; msg.textContent = '붙여넣은 텍스트에서 플랫폼 데이터를 찾지 못했습니다.'; }
+  else if (warnings.length) { msg.className = 'msg warn'; msg.textContent = '찾지 못함 — ' + warnings.join(' · '); }
   else { msg.className = 'msg'; msg.textContent = ''; }
 }
 
@@ -195,27 +204,29 @@ async function copyText(text, okMessage) {
   let ok = legacyCopy(text);
   if (!ok) { try { await navigator.clipboard.writeText(text); ok = true; } catch {} }
   msg.className = ok ? 'msg' : 'msg warn';
-  msg.textContent = ok ? okMessage : 'Copy blocked by the browser. Select the table and copy manually.';
+  msg.textContent = ok ? okMessage : '브라우저에서 복사가 차단되었습니다. 표를 직접 선택해서 복사하세요.';
 }
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
 $('input').addEventListener('input', render);
 $('clear').addEventListener('click', () => { $('input').value = ''; render(); $('input').focus(); });
 
+const NOTHING = '복사할 내용이 없습니다 — 먼저 Slack 텍스트를 붙여넣으세요.';
+
 // Base Game: one line per block, sums only, in sheet order STEAM, PS, XBOX, EPIC, APPLE.
 $('copy').addEventListener('click', () => {
-  if (!rowsSums.length) { $('msg').className = 'msg warn'; $('msg').textContent = 'Nothing to copy yet — paste the Slack text first.'; return; }
+  if (!rowsSums.length) { $('msg').className = 'msg warn'; $('msg').textContent = NOTHING; return; }
   const n = rowsSums.length;
-  copyText(rowsSums.map(l => l.join('\t')).join('\n'), `Copied ${n} line${n > 1 ? 's' : ''} — paste into the STEAM cell of the first row.`);
+  copyText(rowsSums.map(l => l.join('\t')).join('\n'), `${n}줄을 복사했습니다 — 첫 행의 STEAM 셀에 붙여넣으세요.`);
 });
 
 // DLC, whole lines: value, empty gap column, value, empty gap column, ... — paste into a spare area of the
 // sheet, copy that range, then Paste Special -> Skip blanks onto the real rows so formulas stay untouched.
 $('copygap').addEventListener('click', () => {
-  if (!rowsSums.length) { $('msg').className = 'msg warn'; $('msg').textContent = 'Nothing to copy yet — paste the Slack text first.'; return; }
+  if (!rowsSums.length) { $('msg').className = 'msg warn'; $('msg').textContent = NOTHING; return; }
   const n = rowsSums.length;
   copyText(rowsSums.map(l => l.join('\t\t')).join('\n'),
-    `Copied ${n} line${n > 1 ? 's' : ''} with empty gap columns — paste in a spare area, copy that range, then Paste Special → Skip blanks onto the STEAM cell.`);
+    `${n}줄을 빈 열과 함께 복사했습니다 — 여유 공간에 붙여넣고, 그 범위를 다시 복사한 뒤 STEAM 셀에서 선택하여 붙여넣기(Ctrl+Alt+V) → '공백 무시'를 체크하세요.`);
 });
 
 // DLC: copy one platform's column (one value per line, top to bottom).
@@ -224,7 +235,7 @@ $('out').addEventListener('click', e => {
   if (!b) return;
   const i = +b.dataset.col;
   const n = cols[i].length;
-  copyText(cols[i].join('\n'), `Copied ${shown[i]}: ${n} value${n > 1 ? 's' : ''} — paste into the first ${shown[i]} cell.`);
+  copyText(cols[i].join('\n'), `${shown[i]} ${n}개 값을 복사했습니다 — ${shown[i]} 열의 첫 셀에 붙여넣으세요.`);
 });
 
 setMode(mode);
