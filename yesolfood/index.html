@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf7f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Yesolfood">
+<title>Yesolfood</title>
+<style>
+  :root {
+    --bg: #faf7f6;
+    --surface: #ffffff;
+    --ink: #2a2326;
+    --muted: #8b7f84;
+    --line: #eadfe2;
+    --accent: #e0527f;
+    --accent-ink: #ffffff;
+    --accent-soft: #fde7ee;
+    --sun: #d4506b;
+    --sat: #4f7bd9;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --surface: #242426;
+      --ink: #ececee;
+      --muted: #9a9a9e;
+      --line: #3a3a3d;
+      --accent: #ff6b9d;
+      --accent-ink: #1c1c1e;
+      --accent-soft: #3a2430;
+      --sun: #ff7d98;
+      --sat: #7ea2ff;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    -webkit-text-size-adjust: 100%;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  #app { max-width: 480px; margin: 0 auto; }
+
+  /* centered messages: loading, login, denied */
+  .center {
+    min-height: 70vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; text-align: center;
+  }
+  .center h1 { margin: 0; font-size: 30px; letter-spacing: -0.01em; }
+  .center p { margin: 0; color: var(--muted); }
+  .center .err { color: var(--sun); min-height: 1.4em; }
+
+  .btn {
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 12px; padding: 12px 22px; font-weight: 600;
+  }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 6px 12px; font-size: 14px; font-weight: 500; }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .top h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); flex: none; }
+
+  /* calendar */
+  .cal { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 10px 10px; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .cal-nav h2 { margin: 0; font-size: 18px; font-weight: 700; flex: 1; text-align: center; }
+  .nav-btn { background: transparent; border: 0; width: 40px; height: 40px; border-radius: 10px; font-size: 22px; color: var(--muted); }
+  .nav-btn:active { background: var(--accent-soft); }
+  .today-btn { background: var(--accent-soft); color: var(--accent); border: 0; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+
+  .dow, .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+  .dow span { text-align: center; font-size: 12px; color: var(--muted); padding: 4px 0; }
+  .dow span:first-child { color: var(--sun); }
+  .dow span:last-child { color: var(--sat); }
+
+  .day {
+    position: relative;
+    aspect-ratio: 1 / 1.3;
+    background: transparent; border: 1px solid transparent; border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: 5px 0 0; gap: 1px; min-width: 0;
+  }
+  .day.empty { visibility: hidden; }
+  .day .num { font-size: 15px; font-variant-numeric: tabular-nums; }
+  .day.sun .num { color: var(--sun); }
+  .day.sat .num { color: var(--sat); }
+  .day.today { border-color: var(--accent); }
+  .day.selected { background: var(--accent); }
+  .day.selected .num { color: var(--accent-ink); font-weight: 700; }
+  .marks { display: flex; align-items: center; justify-content: center; gap: 2px; font-size: 11px; line-height: 1; min-height: 15px; }
+  .count {
+    min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .day.selected .count { background: var(--accent-ink); color: var(--accent); }
+  .pslot { display: flex; align-items: center; justify-content: center; height: 18px; }
+  .pmark { font-size: 17px; line-height: 1; }
+
+  /* day panel */
+  .panel { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .panel h3 { margin: 0; font-size: 17px; }
+  .poop {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent-soft); color: var(--ink);
+    border-radius: 999px; padding: 8px 14px; font-size: 15px; user-select: none; cursor: pointer;
+  }
+  .poop input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+
+  .chips { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 6px 6px 14px;
+  }
+  .chip span { overflow-wrap: anywhere; }
+  .chip button { background: transparent; border: 0; color: var(--muted); width: 28px; height: 28px; border-radius: 50%; font-size: 18px; line-height: 1; }
+  .chip button:active { background: var(--accent-soft); }
+  .none { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+
+  .add { display: flex; gap: 8px; }
+  .add input {
+    flex: 1; min-width: 0; font: inherit; font-size: 16px;
+    background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  }
+  .add input::placeholder { color: var(--muted); }
+  .add .btn { padding: 12px 18px; }
+
+  .sugg-label { margin: 14px 0 8px; font-size: 13px; color: var(--muted); }
+  .sugg { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sugg button {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 14px; font-size: 15px; max-width: 100%; overflow-wrap: anywhere; text-align: left;
+  }
+  .sugg button:active { background: var(--accent-soft); border-color: var(--accent); }
+
+  /* tabs */
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+  .tab { flex: 1; background: transparent; border: 0; border-radius: 9px; padding: 9px 0; font-size: 15px; font-weight: 600; color: var(--muted); }
+  .tab.on { background: var(--accent); color: var(--accent-ink); }
+
+  /* analysis */
+  #pane-stats .panel { margin-top: 12px; }
+  #pane-stats .panel:first-child { margin-top: 0; }
+  .note { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  .seg { display: flex; gap: 6px; margin-bottom: 12px; }
+  .seg button { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 0; font-size: 14px; }
+  .seg button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .summary { margin: 0; font-size: 15px; }
+  .rank { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
+  .rank li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; }
+  .rank .name { overflow-wrap: anywhere; }
+  .rank .meta { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rank .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--accent-soft); overflow: hidden; }
+  .rank .bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+  .fine { margin: 12px 4px 0; color: var(--muted); font-size: 12.5px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px;
+    max-width: calc(100vw - 32px); z-index: 10;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .day, .btn, .sugg button { transition: background .15s, border-color .15s; }
+  }
+</style>
+</head>
+<body>
+<main id="app">
+
+  <section id="view-loading" class="center">
+    <p>불러오는 중…</p>
+  </section>
+
+  <section id="view-login" class="center" hidden>
+    <h1>Yesolfood</h1>
+    <p>오늘 먹은 것을 기록해요</p>
+    <button class="btn" id="loginBtn" type="button">Google로 로그인</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </section>
+
+  <section id="view-denied" class="center" hidden>
+    <h1>Yesolfood</h1>
+    <p>이 계정은 사용할 수 없어요.<br>다른 계정으로 로그인해 주세요.</p>
+    <p id="deniedEmail"></p>
+    <button class="btn" id="deniedLogout" type="button">로그아웃</button>
+  </section>
+
+  <section id="view-main" hidden>
+    <header class="top">
+      <div class="brand">
+        <img class="avatar" src="avatar.jpg" alt="" width="44" height="44">
+        <h1>Yesolfood</h1>
+      </div>
+      <button class="btn ghost" id="logoutBtn" type="button">로그아웃</button>
+    </header>
+
+    <nav class="tabs" aria-label="화면 선택">
+      <button class="tab on" id="tabCal" type="button">달력</button>
+      <button class="tab" id="tabStats" type="button">분석</button>
+    </nav>
+
+    <div id="pane-cal">
+    <div class="cal">
+      <div class="cal-nav">
+        <button class="nav-btn" id="prev" type="button" aria-label="이전 달">‹</button>
+        <h2 id="monthTitle"></h2>
+        <button class="today-btn" id="todayBtn" type="button">오늘</button>
+        <button class="nav-btn" id="next" type="button" aria-label="다음 달">›</button>
+      </div>
+      <div class="dow" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <section class="panel" id="panel">
+      <div class="panel-head">
+        <h3 id="dayTitle"></h3>
+        <label class="poop"><input type="checkbox" id="poop"><span>응가 했어요 💩</span></label>
+      </div>
+      <ul class="chips" id="foods"></ul>
+      <p class="none" id="none">아직 기록이 없어요. 아래에 먹은 것을 적어 주세요.</p>
+      <form class="add" id="addForm" autocomplete="off">
+        <input id="foodInput" type="text" maxlength="40" placeholder="먹은 것을 입력하세요" enterkeyhint="done" aria-label="먹은 것">
+        <button class="btn" type="submit">추가</button>
+      </form>
+      <p class="sugg-label" id="suggLabel" hidden>이전에 먹은 음식 (눌러서 추가)</p>
+      <div class="sugg" id="sugg"></div>
+    </section>
+    </div>
+
+    <section id="pane-stats" hidden>
+      <div class="panel">
+        <h3>먹은 뒤 응가 분석</h3>
+        <p class="note">음식을 먹은 다음 날부터 며칠 안에 응가를 했는지 보여줘요.</p>
+        <div class="seg" role="group" aria-label="기간">
+          <button type="button" data-win="1">다음 날</button>
+          <button type="button" class="on" data-win="2">2일 안</button>
+          <button type="button" data-win="3">3일 안</button>
+        </div>
+        <p class="summary" id="statsSummary"></p>
+      </div>
+      <div class="panel" id="statsYes" hidden>
+        <h3>먹고 나서 응가가 잘 나온 음식</h3>
+        <ul class="rank" id="listYes"></ul>
+      </div>
+      <div class="panel" id="statsNo" hidden>
+        <h3>먹고 나서 응가가 잘 안 나온 음식</h3>
+        <ul class="rank" id="listNo"></ul>
+      </div>
+      <div class="panel" id="statsFew" hidden>
+        <h3>기록이 더 필요한 음식</h3>
+        <p class="note" id="fewList"></p>
+      </div>
+      <p class="fine">같은 날 응가는 세지 않아요. 아무것도 기록하지 않은 날은 계산에서 빼요. 기록이 쌓일수록 정확해지고, 참고용이에요.</p>
+    </section>
+  </section>
+
+</main>
+<div id="toast" role="status" hidden></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+    from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
+           collection, doc, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove }
+    from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAdlepUV1rh7wjOJ_S2fDkWhOL2N30N_Gw",
+    authDomain: "food-tracker-33007.firebaseapp.com",
+    projectId: "food-tracker-33007",
+    storageBucket: "food-tracker-33007.firebasestorage.app",
+    messagingSenderId: "260686717417",
+    appId: "1:260686717417:web:cfafa0bb91f098e0c06b78"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  let db;
+  try {
+    // keeps entries on the phone while offline and syncs when back online
+    db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+  } catch (e) {
+    db = getFirestore(app);
+  }
+
+  const $ = (s) => document.querySelector(s);
+  const VIEWS = ["loading", "login", "denied", "main"];
+  const show = (name) => VIEWS.forEach((v) => { $("#view-" + v).hidden = v !== name; });
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const keyOf = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+  const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+  const now = new Date();
+  const todayKey = keyOf(now.getFullYear(), now.getMonth(), now.getDate());
+  let viewYear = now.getFullYear();
+  let viewMonth = now.getMonth();
+  let selected = todayKey;
+  let days = {};          // { "2026-11-19": { foods: [...], poop: true } }
+  let unsubscribe = null;
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
+  }
+
+  /* ---------- sign in / out ---------- */
+  $("#loginBtn").addEventListener("click", async () => {
+    $("#loginErr").textContent = "";
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (e) {
+      if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") return;
+      $("#loginErr").textContent = e.code === "auth/popup-blocked"
+        ? "팝업이 막혀 있어요. 팝업을 허용하고 다시 눌러 주세요."
+        : "로그인하지 못했어요. 다시 시도해 주세요.";
+    }
+  });
+  const logout = () => signOut(auth);
+  $("#logoutBtn").addEventListener("click", logout);
+  $("#deniedLogout").addEventListener("click", logout);
+
+  onAuthStateChanged(auth, (user) => {
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    if (!user) { days = {}; show("login"); return; }
+    $("#deniedEmail").textContent = user.email || "";
+    unsubscribe = onSnapshot(
+      collection(db, "days"),
+      (snap) => {
+        days = {};
+        snap.forEach((d) => { days[d.id] = d.data(); });
+        show("main");
+        render();
+      },
+      (err) => {
+        if (err.code === "permission-denied") show("denied");
+        else toast("데이터를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
+      }
+    );
+  });
+
+  /* ---------- writes ---------- */
+  function addFood(raw) {
+    const name = raw.replace(/\s+/g, " ").trim().slice(0, 40);
+    if (!name) return;
+    const key = selected;
+    if ((days[key]?.foods || []).includes(name)) { toast("이미 적어 둔 음식이에요."); return; }
+    setDoc(doc(db, "days", key), { foods: arrayUnion(name) }, { merge: true })
+      .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
+  }
+  function removeFood(name) {
+    updateDoc(doc(db, "days", selected), { foods: arrayRemove(name) })
+      .catch(() => toast("삭제하지 못했어요. 다시 시도해 주세요."));
+  }
+  $("#poop").addEventListener("change", (e) => {
+    setDoc(doc(db, "days", selected), { poop: e.target.checked }, { merge: true })
+      .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
+  });
+
+  $("#addForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = $("#foodInput");
+    addFood(input.value);
+    input.value = "";
+    renderSuggestions();
+    input.focus();
+  });
+  $("#foodInput").addEventListener("input", renderSuggestions);
+
+  /* ---------- calendar ---------- */
+  function selectDay(key) {
+    selected = key;
+    const [y, m] = key.split("-").map(Number);
+    viewYear = y; viewMonth = m - 1;
+    render();
+  }
+  $("#prev").addEventListener("click", () => shiftMonth(-1));
+  $("#next").addEventListener("click", () => shiftMonth(1));
+  $("#todayBtn").addEventListener("click", () => selectDay(todayKey));
+  function shiftMonth(delta) {
+    const d = new Date(viewYear, viewMonth + delta, 1);
+    viewYear = d.getFullYear(); viewMonth = d.getMonth();
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    $("#monthTitle").textContent = `${viewYear}년 ${viewMonth + 1}월`;
+    const grid = $("#grid");
+    grid.replaceChildren();
+    const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+    const total = new Date(viewYear, viewMonth + 1, 0).getDate();
+    for (let i = 0; i < firstDow; i++) {
+      const blank = document.createElement("div");
+      blank.className = "day empty";
+      grid.append(blank);
+    }
+    for (let d = 1; d <= total; d++) {
+      const key = keyOf(viewYear, viewMonth, d);
+      const dow = (firstDow + d - 1) % 7;
+      const info = days[key];
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "day" + (dow === 0 ? " sun" : dow === 6 ? " sat" : "")
+        + (key === todayKey ? " today" : "") + (key === selected ? " selected" : "");
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = d;
+      const marks = document.createElement("span");
+      marks.className = "marks";
+      const n = info?.foods?.length || 0;
+      if (n) {
+        const c = document.createElement("span");
+        c.className = "count";
+        c.textContent = n;
+        marks.append(c);
+      }
+      const slot = document.createElement("span");
+      slot.className = "pslot";
+      if (info?.poop) {
+        const p = document.createElement("span");
+        p.className = "pmark";
+        p.textContent = "💩";
+        slot.append(p);
+      }
+      btn.append(num, slot, marks);
+      const parts = [`${viewMonth + 1}월 ${d}일`];
+      if (n) parts.push(`음식 ${n}개`);
+      if (info?.poop) parts.push("응가");
+      btn.setAttribute("aria-label", parts.join(", "));
+      btn.addEventListener("click", () => { selected = key; render(); });
+      grid.append(btn);
+    }
+  }
+
+  /* ---------- day panel ---------- */
+  function renderPanel() {
+    const [y, m, d] = selected.split("-").map(Number);
+    const dow = WEEKDAYS[new Date(y, m - 1, d).getDay()];
+    $("#dayTitle").textContent = `${m}월 ${d}일 ${dow}요일` + (selected === todayKey ? " · 오늘" : "");
+    const info = days[selected] || {};
+    $("#poop").checked = !!info.poop;
+
+    const list = $("#foods");
+    list.replaceChildren();
+    const foods = info.foods || [];
+    foods.forEach((name) => {
+      const li = document.createElement("li");
+      li.className = "chip";
+      const label = document.createElement("span");
+      label.textContent = name;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.textContent = "×";
+      del.setAttribute("aria-label", `${name} 삭제`);
+      del.addEventListener("click", () => removeFood(name));
+      li.append(label, del);
+      list.append(li);
+    });
+    $("#none").hidden = foods.length > 0;
+    renderSuggestions();
+  }
+
+  // foods used on any day, most-used first
+  function renderSuggestions() {
+    const counts = new Map();
+    Object.values(days).forEach((info) => (info.foods || []).forEach((f) => counts.set(f, (counts.get(f) || 0) + 1)));
+    const todays = new Set(days[selected]?.foods || []);
+    const q = $("#foodInput").value.replace(/\s+/g, " ").trim().toLowerCase();
+    const items = [...counts.entries()]
+      .filter(([f]) => !todays.has(f) && (!q || f.toLowerCase().includes(q)))
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"))
+      .slice(0, 12)
+      .map(([f]) => f);
+    const box = $("#sugg");
+    box.replaceChildren();
+    items.forEach((f) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = f;
+      // keep the keyboard open while tapping a suggestion
+      b.addEventListener("pointerdown", (e) => e.preventDefault());
+      b.addEventListener("click", () => {
+        addFood(f);
+        $("#foodInput").value = "";
+        renderSuggestions();
+      });
+      box.append(b);
+    });
+    $("#suggLabel").hidden = items.length === 0;
+  }
+
+  /* ---------- analysis: which foods are followed by poop ---------- */
+  let tab = "cal";
+  let statsWin = 2;       // how many following days to look at
+  const MIN_N = 2;        // a food needs this many usable records to be ranked
+
+  function setTab(t) {
+    tab = t;
+    $("#pane-cal").hidden = t !== "cal";
+    $("#pane-stats").hidden = t !== "stats";
+    $("#tabCal").classList.toggle("on", t === "cal");
+    $("#tabStats").classList.toggle("on", t === "stats");
+    render();
+  }
+  $("#tabCal").addEventListener("click", () => setTab("cal"));
+  $("#tabStats").addEventListener("click", () => setTab("stats"));
+  document.querySelectorAll(".seg button").forEach((b) => {
+    b.addEventListener("click", () => {
+      statsWin = Number(b.dataset.win);
+      document.querySelectorAll(".seg button").forEach((x) => x.classList.toggle("on", x === b));
+      renderStats();
+    });
+  });
+
+  const addDays = (key, n) => {
+    const [y, m, d] = key.split("-").map(Number);
+    const t = new Date(y, m - 1, d + n);
+    return keyOf(t.getFullYear(), t.getMonth(), t.getDate());
+  };
+  // a day counts as recorded when it has foods or a poop mark
+  const isLogged = (k) => {
+    const i = days[k];
+    return !!i && ((i.foods && i.foods.length > 0) || i.poop === true);
+  };
+
+  // "yes": poop within the next `win` days. "no": every one of those days was recorded and none had poop.
+  // null: some of those days were not recorded, so nothing can be said.
+  function outcome(key, win) {
+    let unknown = false;
+    for (let i = 1; i <= win; i++) {
+      const k = addDays(key, i);
+      if (days[k]?.poop) return "yes";
+      if (!isLogged(k)) unknown = true;
+    }
+    return unknown ? null : "no";
+  }
+
+  function computeStats(win) {
+    const byFood = new Map();
+    let yesDays = 0, noDays = 0;
+    for (const [key, info] of Object.entries(days)) {
+      const foods = info.foods || [];
+      if (!foods.length) continue;
+      const o = outcome(key, win);
+      if (!o) continue;
+      if (o === "yes") yesDays++; else noDays++;
+      foods.forEach((f) => {
+        const s = byFood.get(f) || { yes: 0, no: 0 };
+        s[o]++;
+        byFood.set(f, s);
+      });
+    }
+    return { byFood, yesDays, noDays };
+  }
+
+  function fillRank(sel, rows, inverse) {
+    const ul = $(sel);
+    ul.replaceChildren();
+    rows.forEach((r) => {
+      const share = inverse ? 1 - r.rate : r.rate;
+      const count = inverse ? r.n - r.yes : r.yes;
+      const li = document.createElement("li");
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = r.name;
+      const meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = `${r.n}번 중 ${count}번 · ${Math.round(share * 100)}%`;
+      const bar = document.createElement("span");
+      bar.className = "bar";
+      const fill = document.createElement("i");
+      fill.style.width = Math.round(share * 100) + "%";
+      bar.append(fill);
+      li.append(name, meta, bar);
+      ul.append(li);
+    });
+  }
+
+  function renderStats() {
+    const { byFood, yesDays, noDays } = computeStats(statsWin);
+    const total = yesDays + noDays;
+    $("#statsSummary").textContent = total
+      ? `분석에 쓴 날 ${total}일 중 ${yesDays}일(${Math.round((yesDays / total) * 100)}%)은 먹은 뒤 응가가 있었어요.`
+      : "아직 분석할 기록이 부족해요. 며칠 동안 음식과 응가를 기록해 보세요.";
+
+    const rows = [...byFood.entries()].map(([name, s]) => ({ name, n: s.yes + s.no, yes: s.yes, rate: s.yes / (s.yes + s.no) }));
+    const byName = (a, b) => a.name.localeCompare(b.name, "ko");
+    const enough = rows.filter((r) => r.n >= MIN_N);
+    const high = enough.filter((r) => r.rate >= 0.5).sort((a, b) => b.rate - a.rate || b.n - a.n || byName(a, b));
+    const low = enough.filter((r) => r.rate < 0.5).sort((a, b) => a.rate - b.rate || b.n - a.n || byName(a, b));
+    const few = rows.filter((r) => r.n < MIN_N).map((r) => r.name).sort((a, b) => a.localeCompare(b, "ko"));
+
+    fillRank("#listYes", high, false);
+    fillRank("#listNo", low, true);
+    $("#statsYes").hidden = !high.length;
+    $("#statsNo").hidden = !low.length;
+    $("#statsFew").hidden = !few.length;
+    $("#fewList").textContent = few.join(", ") + ` (${MIN_N}번 이상 기록하면 분석해요)`;
+  }
+
+  function render() {
+    if (tab === "stats") { renderStats(); return; }
+    renderCalendar();
+    renderPanel();
+  }
+</script>
+</body>
+</html>
