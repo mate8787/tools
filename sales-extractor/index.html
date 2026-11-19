@@ -154,7 +154,7 @@ const fmt = n => n.toLocaleString('en-US');
 let mode = 'row';
 try { mode = localStorage.getItem('sales-extractor-tab') === 'col' ? 'col' : 'row'; } catch {}
 
-const DLC_SKIP = ['APPLE'];   // platforms left out of the DLC tab for now (remove from this list to bring back)
+const DLC_SKIP = [];           // platforms left out of the DLC tab (the DLC sheet now has all five, APPLE included)
 let shown = PLATFORMS;         // platforms shown on the current tab
 
 let rowsSums = [];  // one array of sums per batch
