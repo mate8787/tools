@@ -109,8 +109,11 @@
     font-variant-numeric: tabular-nums;
   }
   .day.selected .count { background: var(--accent-ink); color: var(--accent); }
-  .pslot { display: flex; align-items: center; justify-content: center; height: 18px; }
-  .pmark { font-size: 17px; line-height: 1; }
+  .pslot { display: flex; align-items: center; justify-content: center; height: 18px; gap: 1px; max-width: 100%; }
+  .pmark { font-size: 16px; line-height: 1; }
+  .emark { font-size: 14px; line-height: 1; }
+  .pcount { font-size: 10px; font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .day.selected .pcount { color: var(--accent-ink); }
 
   /* day panel */
   .panel { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
@@ -122,6 +125,15 @@
     border-radius: 999px; padding: 8px 14px; font-size: 15px; user-select: none; cursor: pointer;
   }
   .poop input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+  .toggles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .poopbox { cursor: default; padding: 4px 6px 4px 14px; }
+  .stepper { display: inline-flex; align-items: center; gap: 2px; }
+  .stepper button {
+    width: 34px; height: 34px; border-radius: 50%; border: 0;
+    background: var(--surface); color: var(--accent); font-size: 20px; line-height: 1; font-weight: 600;
+  }
+  .stepper button:disabled { opacity: .35; cursor: default; }
+  .stepper output { min-width: 22px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 
   .chips { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
@@ -163,12 +175,10 @@
   .seg button { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 0; font-size: 14px; }
   .seg button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
   .summary { margin: 0; font-size: 15px; }
-  .rank { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; }
-  .rank li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; }
-  .rank .name { overflow-wrap: anywhere; }
-  .rank .meta { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .rank .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--accent-soft); overflow: hidden; }
-  .rank .bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+  #statsBody { display: grid; gap: 14px; }
+  #statsBody p { margin: 0; overflow-wrap: anywhere; }
+  .line { font-size: 16px; line-height: 1.65; }
+  #statsBody .note { margin: 0; }
   .fine { margin: 12px 4px 0; color: var(--muted); font-size: 12.5px; }
 
   #toast {
@@ -231,7 +241,17 @@
     <section class="panel" id="panel">
       <div class="panel-head">
         <h3 id="dayTitle"></h3>
-        <label class="poop"><input type="checkbox" id="poop"><span>응가 했어요 💩</span></label>
+      </div>
+      <div class="toggles">
+        <div class="poop poopbox">
+          <span>응가 했어요 💩</span>
+          <div class="stepper" role="group" aria-label="응가 횟수">
+            <button type="button" id="poopMinus" aria-label="응가 횟수 줄이기">−</button>
+            <output id="poopCount" aria-live="polite">0</output>
+            <button type="button" id="poopPlus" aria-label="응가 횟수 늘리기">+</button>
+          </div>
+        </div>
+        <label class="poop"><input type="checkbox" id="exercise"><span id="exerciseLabel">오늘 운동 했어요 🏃</span></label>
       </div>
       <ul class="chips" id="foods"></ul>
       <p class="none" id="none">아직 기록이 없어요. 아래에 먹은 것을 적어 주세요.</p>
@@ -253,21 +273,9 @@
           <button type="button" class="on" data-win="2">2일 안</button>
           <button type="button" data-win="3">3일 안</button>
         </div>
-        <p class="summary" id="statsSummary"></p>
+        <div id="statsBody"></div>
       </div>
-      <div class="panel" id="statsYes" hidden>
-        <h3>먹고 나서 응가가 잘 나온 음식</h3>
-        <ul class="rank" id="listYes"></ul>
-      </div>
-      <div class="panel" id="statsNo" hidden>
-        <h3>먹고 나서 응가가 잘 안 나온 음식</h3>
-        <ul class="rank" id="listNo"></ul>
-      </div>
-      <div class="panel" id="statsFew" hidden>
-        <h3>기록이 더 필요한 음식</h3>
-        <p class="note" id="fewList"></p>
-      </div>
-      <p class="fine">같은 날 응가는 세지 않아요. 아무것도 기록하지 않은 날은 계산에서 빼요. 기록이 쌓일수록 정확해지고, 참고용이에요.</p>
+      <p class="fine">같은 날 응가는 세지 않고, 아무것도 기록하지 않은 날은 빼요. 기록이 쌓일수록 정확해지고, 참고용이에요.</p>
     </section>
   </section>
 
@@ -308,6 +316,9 @@
   const pad = (n) => String(n).padStart(2, "0");
   const keyOf = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
   const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+  const MAX_POOPS = 3;
+  // older entries only have a true/false `poop`, so count that as one
+  const poopsOf = (info) => info?.poops ?? (info?.poop ? 1 : 0);
 
   const now = new Date();
   const todayKey = keyOf(now.getFullYear(), now.getMonth(), now.getDate());
@@ -374,8 +385,17 @@
     updateDoc(doc(db, "days", selected), { foods: arrayRemove(name) })
       .catch(() => toast("삭제하지 못했어요. 다시 시도해 주세요."));
   }
-  $("#poop").addEventListener("change", (e) => {
-    setDoc(doc(db, "days", selected), { poop: e.target.checked }, { merge: true })
+  // poop count 0-3 per day; `poop` stays a plain true/false for the analysis
+  function changePoops(delta) {
+    const key = selected;
+    const next = Math.min(MAX_POOPS, Math.max(0, poopsOf(days[key]) + delta));
+    setDoc(doc(db, "days", key), { poops: next, poop: next > 0 }, { merge: true })
+      .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
+  }
+  $("#poopMinus").addEventListener("click", () => changePoops(-1));
+  $("#poopPlus").addEventListener("click", () => changePoops(1));
+  $("#exercise").addEventListener("change", (e) => {
+    setDoc(doc(db, "days", selected), { exercise: e.target.checked }, { merge: true })
       .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
   });
 
@@ -438,16 +458,30 @@
       }
       const slot = document.createElement("span");
       slot.className = "pslot";
-      if (info?.poop) {
+      const poops = poopsOf(info);
+      if (poops > 0) {
         const p = document.createElement("span");
         p.className = "pmark";
         p.textContent = "💩";
         slot.append(p);
+        if (poops > 1) {
+          const x = document.createElement("span");
+          x.className = "pcount";
+          x.textContent = "×" + poops;
+          slot.append(x);
+        }
+      }
+      if (info?.exercise) {
+        const e = document.createElement("span");
+        e.className = "emark";
+        e.textContent = "🏃";
+        slot.append(e);
       }
       btn.append(num, slot, marks);
       const parts = [`${viewMonth + 1}월 ${d}일`];
       if (n) parts.push(`음식 ${n}개`);
-      if (info?.poop) parts.push("응가");
+      if (poops) parts.push(poops > 1 ? `응가 ${poops}번` : "응가");
+      if (info?.exercise) parts.push("운동");
       btn.setAttribute("aria-label", parts.join(", "));
       btn.addEventListener("click", () => { selected = key; render(); });
       grid.append(btn);
@@ -460,7 +494,12 @@
     const dow = WEEKDAYS[new Date(y, m - 1, d).getDay()];
     $("#dayTitle").textContent = `${m}월 ${d}일 ${dow}요일` + (selected === todayKey ? " · 오늘" : "");
     const info = days[selected] || {};
-    $("#poop").checked = !!info.poop;
+    const poops = poopsOf(info);
+    $("#poopCount").textContent = poops;
+    $("#poopMinus").disabled = poops <= 0;
+    $("#poopPlus").disabled = poops >= MAX_POOPS;
+    $("#exercise").checked = !!info.exercise;
+    $("#exerciseLabel").textContent = (selected === todayKey ? "오늘 " : "") + "운동 했어요 🏃";
 
     const list = $("#foods");
     list.replaceChildren();
@@ -515,6 +554,7 @@
   let tab = "cal";
   let statsWin = 2;       // how many following days to look at
   const MIN_N = 2;        // a food needs this many usable records to be ranked
+  const MIN_DAYS = 3;     // the analysis stays hidden until this many days are recorded
 
   function setTab(t) {
     tab = t;
@@ -575,49 +615,38 @@
     return { byFood, yesDays, noDays };
   }
 
-  function fillRank(sel, rows, inverse) {
-    const ul = $(sel);
-    ul.replaceChildren();
-    rows.forEach((r) => {
-      const share = inverse ? 1 - r.rate : r.rate;
-      const count = inverse ? r.n - r.yes : r.yes;
-      const li = document.createElement("li");
-      const name = document.createElement("span");
-      name.className = "name";
-      name.textContent = r.name;
-      const meta = document.createElement("span");
-      meta.className = "meta";
-      meta.textContent = `${r.n}번 중 ${count}번 · ${Math.round(share * 100)}%`;
-      const bar = document.createElement("span");
-      bar.className = "bar";
-      const fill = document.createElement("i");
-      fill.style.width = Math.round(share * 100) + "%";
-      bar.append(fill);
-      li.append(name, meta, bar);
-      ul.append(li);
-    });
+  function line(text, cls) {
+    const p = document.createElement("p");
+    p.className = cls;
+    p.textContent = text;
+    return p;
   }
 
   function renderStats() {
-    const { byFood, yesDays, noDays } = computeStats(statsWin);
-    const total = yesDays + noDays;
-    $("#statsSummary").textContent = total
-      ? `분석에 쓴 날 ${total}일 중 ${yesDays}일(${Math.round((yesDays / total) * 100)}%)은 먹은 뒤 응가가 있었어요.`
-      : "아직 분석할 기록이 부족해요. 며칠 동안 음식과 응가를 기록해 보세요.";
+    const body = $("#statsBody");
+    body.replaceChildren();
 
-    const rows = [...byFood.entries()].map(([name, s]) => ({ name, n: s.yes + s.no, yes: s.yes, rate: s.yes / (s.yes + s.no) }));
+    // wait until there are enough recorded days
+    const loggedDays = Object.keys(days).filter(isLogged).length;
+    $(".seg").hidden = loggedDays < MIN_DAYS;
+    if (loggedDays < MIN_DAYS) {
+      body.append(line(`분석은 ${MIN_DAYS}일 이상 기록하면 볼 수 있어요. 지금까지 ${loggedDays}일 기록했어요.`, "line"));
+      return;
+    }
+
+    const { byFood } = computeStats(statsWin);
+    const rows = [...byFood.entries()].map(([name, s]) => ({ name, n: s.yes + s.no, rate: s.yes / (s.yes + s.no) }));
     const byName = (a, b) => a.name.localeCompare(b.name, "ko");
     const enough = rows.filter((r) => r.n >= MIN_N);
-    const high = enough.filter((r) => r.rate >= 0.5).sort((a, b) => b.rate - a.rate || b.n - a.n || byName(a, b));
     const low = enough.filter((r) => r.rate < 0.5).sort((a, b) => a.rate - b.rate || b.n - a.n || byName(a, b));
+    const high = enough.filter((r) => r.rate >= 0.5).sort((a, b) => b.rate - a.rate || b.n - a.n || byName(a, b));
     const few = rows.filter((r) => r.n < MIN_N).map((r) => r.name).sort((a, b) => a.localeCompare(b, "ko"));
+    const names = (list) => list.slice(0, 5).map((r) => r.name).join(", ");
 
-    fillRank("#listYes", high, false);
-    fillRank("#listNo", low, true);
-    $("#statsYes").hidden = !high.length;
-    $("#statsNo").hidden = !low.length;
-    $("#statsFew").hidden = !few.length;
-    $("#fewList").textContent = few.join(", ") + ` (${MIN_N}번 이상 기록하면 분석해요)`;
+    if (low.length) body.append(line(`${names(low)} 먹은 뒤에는 응가가 잘 안 나오는 것 같아요.`, "line"));
+    if (high.length) body.append(line(`${names(high)} 먹은 뒤에는 응가가 잘 나오는 것 같아요.`, "line"));
+    if (!low.length && !high.length) body.append(line("아직 뚜렷한 경향이 없어요. 같은 음식을 두 번 이상 기록하면 분석해 드려요.", "line"));
+    if (few.length) body.append(line(`더 기록이 필요한 음식: ${few.join(", ")}`, "note"));
   }
 
   function render() {
