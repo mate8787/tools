@@ -55,6 +55,9 @@
   tr:last-child td { border-bottom: 0; }
   td.zero { color: var(--muted); }
   td.gap { background: rgba(192, 57, 43, .12); }
+  /* a value replaced by the cumulative-total cross-check */
+  td.fix { background: rgba(240, 173, 40, .18); color: #ffc247; font-weight: 700; }
+  tr.issue td:first-child { color: #ffc247; font-weight: 700; }
   td.tot, th.tot { border-left: 2px solid var(--line); color: var(--muted); }
   th button.col { padding: 3px 9px; font-size: 12px; font-weight: 700; background: var(--accent);
                   color: var(--accent-text); border-color: var(--accent); border-radius: 6px; }
@@ -97,10 +100,15 @@ function parsePlatforms(text) {
   for (let i = 1; i < parts.length; i += 2) {
     // 판매량: 193개(+9개, 전일 판매량: 308개(0개))
     const m = parts[i + 1].match(/판매량:\s*[\d,]+개\(\s*([+-]?[\d,]+)개\s*,\s*전일\s*판매량:\s*[\d,]+개\(\s*([+-]?[\d,]+)개\s*\)/);
-    if (m) found[parts[i]] = { today: num(m[1]), prev: num(m[2]) };
+    // ... / 누적판매액: 63.6억 / 누적판매량: 63,638개   (cumulative total, used for the cross-check)
+    const c = parts[i + 1].match(/누적판매량:\s*([\d,]+)개/);
+    if (m) found[parts[i]] = { today: num(m[1]), prev: num(m[2]), cum: c ? num(c[1]) : null };
   }
   return found;
 }
+
+// Platforms whose Slack numbers are cross-checked against the cumulative total (누적판매량).
+const CHECKED = ['XBOX'];
 
 // Whole paste -> [{ label, platforms }] — one entry per "[date ... N시 기준]" header.
 function parseBatches(text) {
@@ -110,9 +118,30 @@ function parseBatches(text) {
     const end = i + 1 < heads.length ? heads[i + 1].index : text.length;
     return {
       label: `${+h[2]}/${+h[3]} ${h[4]}시`,
+      ts: Date.UTC(+h[1], +h[2] - 1, +h[3], +h[4]),   // the hour of this report, used to find the hour before
       platforms: parsePlatforms(text.slice(h.index + h[0].length, end)),
     };
   });
+}
+
+// Cross-check: (누적판매량 now) − (누적판매량 one hour earlier) should equal today + prev from Slack.
+// Sets on every batch:  issue[p] = { slack, deduced }  when they differ (the deduced value is the one to use),
+//                       unchecked[p] = true            when the hour before is not in the paste.
+function checkBatches(batches) {
+  const byTs = new Map(batches.filter(b => b.ts !== undefined).map(b => [b.ts, b]));
+  for (const b of batches) {
+    b.issue = {}; b.unchecked = {};
+    for (const p of CHECKED) {
+      const f = b.platforms[p];
+      if (!f) continue;
+      const before = byTs.get(b.ts - 3600000);
+      const pf = before && before.platforms[p];
+      if (f.cum == null || !pf || pf.cum == null) { b.unchecked[p] = true; continue; }
+      const deduced = f.cum - pf.cum, slack = f.today + f.prev;
+      if (deduced !== slack) b.issue[p] = { slack, deduced };
+    }
+  }
+  return batches;
 }
 /* PARSE-END */
 
@@ -138,8 +167,8 @@ const HINTS = {
 
 function render() {
   const text = $('input').value;
-  const batches = text.trim() ? parseBatches(text).filter(b => Object.keys(b.platforms).length) : [];
-  const warnings = [];
+  const batches = text.trim() ? checkBatches(parseBatches(text).filter(b => Object.keys(b.platforms).length)) : [];
+  const warnings = [], notes = [];
   rowsSums = [];
   shown = mode === 'col' ? PLATFORMS.filter(p => !DLC_SKIP.includes(p)) : PLATFORMS;
   cols = shown.map(() => []);
@@ -149,9 +178,10 @@ function render() {
     const sums = [];
     let total = 0;
     let cells = '';
+    let flagged = false;
     shown.forEach((p, i) => {
       const f = b.platforms[p];
-      const v = f ? f.today + f.prev : undefined;
+      let v = f ? f.today + f.prev : undefined;
       if (v === undefined) {
         sums.push('');
         cols[i].push('');
@@ -159,13 +189,26 @@ function render() {
         warnings.push(`${b.label}: ${p} 없음`);
         return;
       }
+      const bad = b.issue[p];
+      if (bad) {
+        // Slack's number disagrees with the cumulative total: use the deducted one, and mark it.
+        v = bad.deduced;
+        flagged = true;
+        warnings.push(`${b.label} ${p}: 슬랙 ${fmt(bad.slack)} ≠ 누적판매량 차감 ${fmt(bad.deduced)} → ${fmt(bad.deduced)} 사용`);
+      } else if (b.unchecked[p]) {
+        notes.push(`${b.label} ${p}: 이전 시간 데이터가 없어 교차 확인 못함`);
+      }
       sums.push(v);
       cols[i].push(v);
       total += v;
-      cells += `<td class="${v === 0 ? 'zero' : ''}" title="${f.today} + ${f.prev}">${v === 0 ? '-' : fmt(v)}</td>`;
+      if (bad) {
+        cells += `<td class="fix" title="슬랙 합계 ${bad.slack} (${f.today} + ${f.prev}) → 누적판매량 차감값 ${bad.deduced} 사용">⚠ ${fmt(v)}</td>`;
+      } else {
+        cells += `<td class="${v === 0 ? 'zero' : ''}" title="${f.today} + ${f.prev}">${v === 0 ? '-' : fmt(v)}</td>`;
+      }
     });
     rowsSums.push(sums);
-    body += `<tr><td>${b.label}</td>${cells}<td class="tot">${fmt(total)}</td></tr>`;
+    body += `<tr class="${flagged ? 'issue' : ''}"><td>${flagged ? '⚠ ' : ''}${b.label}</td>${cells}<td class="tot">${fmt(total)}</td></tr>`;
   }
 
   const head = '<th></th>' + shown.map((p, i) =>
@@ -175,15 +218,17 @@ function render() {
 
   const msg = $('msg');
   if (text.trim() && !body) { msg.className = 'msg warn'; msg.textContent = '붙여넣은 텍스트에서 플랫폼 데이터를 찾지 못했습니다.'; }
-  else if (warnings.length) { msg.className = 'msg warn'; msg.textContent = '찾지 못함 — ' + warnings.join(' · '); }
-  else { msg.className = 'msg'; msg.textContent = ''; }
+  else if (warnings.length) { msg.className = 'msg warn'; msg.textContent = '⚠ 확인 필요 — ' + warnings.join(' · ') + (notes.length ? ' | ' + notes.join(' · ') : ''); }
+  else { msg.className = 'msg'; msg.textContent = notes.join(' · '); }
 }
+
+const XBOX_HINT = ' XBOX는 슬랙 숫자가 틀릴 때가 있어, 한 시간 전 블록의 누적판매량과의 차이로 한 번 더 확인합니다. 다르면 차감값을 사용하고 ⚠로 표시합니다 (한 시간 전 블록도 함께 붙여넣어야 확인됩니다).';
 
 function setMode(m) {
   mode = m;
   try { localStorage.setItem('sales-extractor-tab', m); } catch {}
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
-  $('hint').textContent = HINTS[m];
+  $('hint').textContent = HINTS[m] + XBOX_HINT;
   $('copy').hidden = m === 'col';
   $('copygap').hidden = m !== 'col';
   render();
