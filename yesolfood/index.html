@@ -439,7 +439,10 @@
   $("#loginBtn").addEventListener("click", async () => {
     $("#loginErr").textContent = "";
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const provider = new GoogleAuthProvider();
+      // always show Google's account picker, so a different account can be chosen after logging out
+      provider.setCustomParameters({ prompt: "select_account" });
+      await signInWithPopup(auth, provider);
     } catch (e) {
       if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") return;
       $("#loginErr").textContent = e.code === "auth/popup-blocked"
