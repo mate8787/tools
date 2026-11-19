@@ -334,7 +334,7 @@
             <button type="button" id="poopPlus" aria-label="응가 횟수 늘리기">+</button>
           </div>
         </div>
-        <label class="poop"><input type="checkbox" id="exercise"><span id="exerciseLabel">오늘 운동 했어요 🏋️</span></label>
+        <label class="poop"><input type="checkbox" id="exercise"><span id="exerciseLabel">운동 했어요 🏋️</span></label>
       </div>
       <ul class="chips" id="foods"></ul>
       <p class="none" id="none">아직 기록이 없어요. 아래에 먹은 것을 적어 주세요.</p>
@@ -701,7 +701,7 @@
     $("#poopMinus").disabled = poops <= 0;
     $("#poopPlus").disabled = poops >= MAX_POOPS;
     $("#exercise").checked = !!info.exercise;
-    $("#exerciseLabel").textContent = (selected === todayKey ? "오늘 " : "") + "운동 했어요 🏋️";
+    $("#exerciseLabel").textContent = "운동 했어요 🏋️";
     const hasData = (info.foods || []).length > 0 || poops > 0 || !!info.exercise;
     $("#clearBtn").disabled = !hasData;
 
