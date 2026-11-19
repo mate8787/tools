@@ -15,6 +15,11 @@ service cloud.firestore {
       allow read, write: if ok();
     }
 
+    // which foods are included in / left out of menu suggestions
+    match /settings/{id} {
+      allow read, write: if ok();
+    }
+
     // short messages: everyone allowed can read, only the author can post or delete
     match /messages/{id} {
       allow read: if ok();

@@ -169,6 +169,26 @@
   }
   .sugg button:active { background: var(--accent-soft); border-color: var(--accent); }
 
+  /* food list and menu recommendation */
+  #pane-foods .panel { margin-top: 12px; }
+  #pane-foods .panel:first-child { margin-top: 0; }
+  .btn.wide { width: 100%; padding: 14px; font-size: 17px; }
+  .rec-card { margin-top: 14px; padding: 16px; border-radius: 14px; background: var(--accent-soft); display: grid; gap: 6px; justify-items: start; }
+  .rec-name { margin: 0; font-size: 26px; font-weight: 700; overflow-wrap: anywhere; }
+  .rec-meta { margin: 0 0 6px; color: var(--muted); font-size: 14px; }
+  .food-list { list-style: none; margin: 0; padding: 0; }
+  .food-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .food-list li:last-child .food-row { border-bottom: 0; }
+  .food-name { overflow-wrap: anywhere; }
+  .food-meta { grid-column: 1; color: var(--muted); font-size: 13px; }
+  .pill { grid-column: 2; grid-row: 1 / span 2; background: var(--accent-soft); color: var(--accent); border: 0; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .pill.off { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+  .byday { display: grid; gap: 10px; }
+  .byday-row { display: grid; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .byday-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .byday-date { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .byday-foods { overflow-wrap: anywhere; }
+
   /* header actions and messages */
   .top-actions { display: flex; align-items: center; gap: 8px; }
   .icon-btn {
@@ -274,6 +294,7 @@
     <nav class="tabs" aria-label="화면 선택">
       <button class="tab on" id="tabCal" type="button">달력</button>
       <button class="tab" id="tabStats" type="button">분석</button>
+      <button class="tab" id="tabFoods" type="button">음식</button>
     </nav>
 
     <div id="pane-cal">
@@ -336,6 +357,39 @@
         <div id="statsBody"></div>
       </div>
       <p class="fine">같은 날 응가는 세지 않고, 아무것도 기록하지 않은 날은 빼요. 기록이 쌓일수록 정확해지고, 참고용이에요.</p>
+    </section>
+
+    <section id="pane-foods" hidden>
+      <div class="panel">
+        <h3>오늘 뭐 먹지?</h3>
+        <p class="note">자주 먹었지만 일주일 넘게 안 먹은 식사 중에서 골라 드려요. 커피, 과일, 과자 같은 건 빼고요.</p>
+        <button class="btn wide" id="recBtn" type="button">오늘 메뉴 추천</button>
+        <div class="rec-card" id="recCard" hidden>
+          <p class="rec-name" id="recName"></p>
+          <p class="rec-meta" id="recMeta"></p>
+          <button class="btn ghost" id="recAgain" type="button">다른 메뉴 보기</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>많이 먹은 음식</h3>
+        <p class="note">오른쪽 버튼을 누르면 메뉴 추천에 넣거나 뺄 수 있어요.</p>
+        <ul class="food-list" id="topList"></ul>
+        <p class="note" id="topEmpty">아직 기록한 음식이 없어요.</p>
+      </div>
+
+      <div class="panel">
+        <h3>한동안 안 먹은 음식</h3>
+        <p class="note">두 번 이상 먹었고 일주일 넘게 안 먹은 식사예요.</p>
+        <ul class="food-list" id="missList"></ul>
+        <p class="note" id="missEmpty">아직 없어요.</p>
+      </div>
+
+      <div class="panel">
+        <h3>날짜별 음식</h3>
+        <div class="byday" id="byDay"></div>
+        <p class="note" id="byDayEmpty">아직 기록한 음식이 없어요.</p>
+      </div>
     </section>
 
     <section id="pane-msgs" hidden>
@@ -457,7 +511,12 @@
   onAuthStateChanged(auth, (user) => {
     unsubs.forEach((stop) => stop());
     unsubs = [];
-    if (!user) { days = {}; messages = []; readIds = new Set(); show("login"); return; }
+    if (!user) {
+      days = {}; messages = []; readIds = new Set();
+      foodPrefs = { excluded: new Set(), included: new Set() };
+      show("login");
+      return;
+    }
     $("#deniedEmail").textContent = user.email || "";
     unsubs.push(onSnapshot(
       collection(db, "days"),
@@ -479,6 +538,16 @@
       (snap) => {
         messages = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
         renderMsgs();
+      },
+      () => {}
+    ));
+    // foods she chose to include in / leave out of menu suggestions
+    unsubs.push(onSnapshot(
+      doc(db, "settings", "foods"),
+      (snap) => {
+        const d = snap.data() || {};
+        foodPrefs = { excluded: new Set(d.excluded || []), included: new Set(d.included || []) };
+        if (tab === "foods") renderFoods();
       },
       () => {}
     ));
@@ -698,14 +767,17 @@
     if (t !== "msgs") lastTab = t;
     $("#pane-cal").hidden = t !== "cal";
     $("#pane-stats").hidden = t !== "stats";
+    $("#pane-foods").hidden = t !== "foods";
     $("#pane-msgs").hidden = t !== "msgs";
     document.querySelector(".tabs").hidden = t === "msgs";
     $("#tabCal").classList.toggle("on", t === "cal");
     $("#tabStats").classList.toggle("on", t === "stats");
+    $("#tabFoods").classList.toggle("on", t === "foods");
     render();
   }
   $("#tabCal").addEventListener("click", () => setTab("cal"));
   $("#tabStats").addEventListener("click", () => setTab("stats"));
+  $("#tabFoods").addEventListener("click", () => setTab("foods"));
   document.querySelectorAll(".seg button").forEach((b) => {
     b.addEventListener("click", () => {
       statsWin = Number(b.dataset.win);
@@ -909,7 +981,152 @@
     $("#msgLen").textContent = "0/300";
   });
 
+  /* ---------- food list and menu recommendation ---------- */
+  const REC_GAP = 7;      // a food must be at least this many days old to be suggested
+  let foodPrefs = { excluded: new Set(), included: new Set() };
+  let recShown = [];      // already suggested, so "다른 메뉴 보기" gives something new
+
+  // drinks, fruit, sweets and snacks are not suggested as a meal
+  const NOT_MEAL_PARTS = [
+    "커피", "라떼", "아메리카노", "카푸치노", "에스프레소", "주스", "음료", "에이드", "스무디", "탄산", "콜라", "사이다",
+    "우유", "두유", "요거트", "요구르트", "맥주", "소주", "막걸리", "와인",
+    "과자", "스낵", "감자칩", "초콜릿", "초코", "사탕", "젤리", "캔디", "껌", "케이크", "쿠키", "마카롱", "도넛", "푸딩", "아이스크림", "빙수",
+    "바나나", "사과", "딸기", "귤", "포도", "오렌지", "수박", "참외", "복숭아", "망고", "키위", "과일",
+    "견과", "아몬드", "프로틴", "비타민", "영양제", "에너지바", "시리얼바"
+  ];
+  const NOT_MEAL_EXACT = ["차", "물", "빵", "떡"];
+  function isMealByDefault(name) {
+    if (NOT_MEAL_EXACT.includes(name)) return false;
+    if (name.endsWith("차") && name.length <= 4) return false;   // 녹차, 보리차 (not 차돌된장찌개)
+    return !NOT_MEAL_PARTS.some((k) => name.includes(k));
+  }
+  // her own choice wins over the automatic guess
+  const isMeal = (name) =>
+    foodPrefs.included.has(name) ? true : foodPrefs.excluded.has(name) ? false : isMealByDefault(name);
+
+  const dayNum = (key) => {
+    const [y, m, d] = key.split("-").map(Number);
+    return Math.round(Date.UTC(y, m - 1, d) / 86400000);
+  };
+  const daysAgo = (key) => Math.max(0, dayNum(todayKey) - dayNum(key));
+  const sinceText = (n) => (n <= 0 ? "오늘" : n === 1 ? "어제" : `${n}일 전`);
+  const byKo = (a, b) => a.name.localeCompare(b.name, "ko");
+
+  // every food with how many days it was eaten and when it was last eaten
+  function foodStats() {
+    const stats = new Map();
+    for (const [key, info] of Object.entries(days)) {
+      for (const f of info.foods || []) {
+        const s = stats.get(f) || { name: f, count: 0, last: key };
+        s.count++;
+        if (key > s.last) s.last = key;
+        stats.set(f, s);
+      }
+    }
+    return [...stats.values()].map((s) => ({ ...s, since: daysAgo(s.last) }));
+  }
+
+  function toggleMeal(name) {
+    const patch = isMeal(name)
+      ? { excluded: arrayUnion(name), included: arrayRemove(name) }
+      : { included: arrayUnion(name), excluded: arrayRemove(name) };
+    setDoc(doc(db, "settings", "foods"), patch, { merge: true })
+      .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
+  }
+
+  function foodRow(s, withToggle) {
+    const li = document.createElement("li");
+    const row = document.createElement("div");
+    row.className = "food-row";
+    const name = document.createElement("span");
+    name.className = "food-name";
+    name.textContent = s.name;
+    const meta = document.createElement("span");
+    meta.className = "food-meta";
+    meta.textContent = `${s.count}번 · 마지막 ${sinceText(s.since)}`;
+    row.append(name, meta);
+    if (withToggle) {
+      const on = isMeal(s.name);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pill" + (on ? "" : " off");
+      b.textContent = on ? "추천에 포함" : "추천에서 제외";
+      b.setAttribute("aria-label", `${s.name} ${on ? "추천에서 빼기" : "추천에 넣기"}`);
+      b.addEventListener("click", () => toggleMeal(s.name));
+      row.append(b);
+    }
+    li.append(row);
+    return li;
+  }
+
+  function renderFoods() {
+    const all = foodStats();
+
+    const top = [...all].sort((a, b) => b.count - a.count || a.since - b.since || byKo(a, b)).slice(0, 15);
+    const topList = $("#topList");
+    topList.replaceChildren(...top.map((s) => foodRow(s, true)));
+    $("#topEmpty").hidden = all.length > 0;
+
+    const missing = all
+      .filter((s) => isMeal(s.name) && s.count >= 2 && s.since >= REC_GAP)
+      .sort((a, b) => b.count - a.count || b.since - a.since || byKo(a, b))
+      .slice(0, 10);
+    $("#missList").replaceChildren(...missing.map((s) => foodRow(s, false)));
+    $("#missEmpty").hidden = missing.length > 0;
+
+    // every day with foods, newest first
+    const keys = Object.keys(days).filter((k) => (days[k].foods || []).length).sort().reverse();
+    const thisYear = todayKey.slice(0, 4);
+    $("#byDay").replaceChildren(...keys.map((k) => {
+      const [y, m, d] = k.split("-").map(Number);
+      const row = document.createElement("div");
+      row.className = "byday-row";
+      const date = document.createElement("span");
+      date.className = "byday-date";
+      date.textContent = `${String(y) !== thisYear ? y + "년 " : ""}${m}월 ${d}일 (${WEEKDAYS[new Date(y, m - 1, d).getDay()]})`;
+      const foods = document.createElement("span");
+      foods.className = "byday-foods";
+      foods.textContent = days[k].foods.join(", ");
+      row.append(date, foods);
+      return row;
+    }));
+    $("#byDayEmpty").hidden = keys.length > 0;
+  }
+
+  // favourites she has not had for a while, favouring the ones missed the longest
+  function pickMenu() {
+    const meals = foodStats().filter((s) => isMeal(s.name) && s.since >= REC_GAP);
+    let pool = meals.filter((s) => s.count >= 2);
+    if (pool.length < 3) pool = meals;          // early on, allow foods eaten only once
+    if (!pool.length) return null;
+    let fresh = pool.filter((s) => !recShown.includes(s.name));
+    if (!fresh.length) { recShown = []; fresh = pool; }
+    const weight = (s) => s.count * (1 + Math.min(s.since, 60) / 14);
+    let r = Math.random() * fresh.reduce((t, s) => t + weight(s), 0);
+    let chosen = fresh[fresh.length - 1];
+    for (const s of fresh) { r -= weight(s); if (r <= 0) { chosen = s; break; } }
+    recShown.push(chosen.name);
+    return chosen;
+  }
+
+  function showRecommendation() {
+    const s = pickMenu();
+    $("#recCard").hidden = false;
+    if (!s) {
+      $("#recName").textContent = "추천할 메뉴가 아직 없어요";
+      $("#recMeta").textContent = "식사를 더 기록하면, 한동안 안 먹은 메뉴를 골라 드려요.";
+      $("#recAgain").hidden = true;
+      return;
+    }
+    $("#recName").textContent = s.name;
+    $("#recMeta").textContent = `${s.count}번 먹었고, 마지막으로 먹은 지 ${s.since}일 됐어요.`;
+    $("#recAgain").hidden = false;
+  }
+  $("#recBtn").addEventListener("click", showRecommendation);
+  $("#recAgain").addEventListener("click", showRecommendation);
+
   function render() {
+    if (tab === "foods") { renderFoods(); return; }
     if (tab === "msgs") { renderMsgs(); return; }
     if (tab === "stats") { renderStats(); return; }
     renderCalendar();
