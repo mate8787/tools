@@ -108,7 +108,8 @@ function parsePlatforms(text) {
 }
 
 // Platforms whose Slack numbers are cross-checked against the cumulative total (누적판매량).
-const CHECKED = ['XBOX'];
+// APPLE is only checked on the DLC tab (it was only just added there and Slack's numbers aren't reliable yet).
+const CHECKED = { row: ['XBOX'], col: ['XBOX', 'APPLE'] };
 
 // Whole paste -> [{ label, platforms }] — one entry per "[date ... N시 기준]" header.
 function parseBatches(text) {
@@ -127,11 +128,11 @@ function parseBatches(text) {
 // Cross-check: (누적판매량 now) − (누적판매량 one hour earlier) should equal today + prev from Slack.
 // Sets on every batch:  issue[p] = { slack, deduced }  when they differ (the deduced value is the one to use),
 //                       unchecked[p] = true            when the hour before is not in the paste.
-function checkBatches(batches) {
+function checkBatches(batches, checked) {
   const byTs = new Map(batches.filter(b => b.ts !== undefined).map(b => [b.ts, b]));
   for (const b of batches) {
     b.issue = {}; b.unchecked = {};
-    for (const p of CHECKED) {
+    for (const p of checked) {
       const f = b.platforms[p];
       if (!f) continue;
       const before = byTs.get(b.ts - 3600000);
@@ -167,7 +168,7 @@ const HINTS = {
 
 function render() {
   const text = $('input').value;
-  const batches = text.trim() ? checkBatches(parseBatches(text).filter(b => Object.keys(b.platforms).length)) : [];
+  const batches = text.trim() ? checkBatches(parseBatches(text).filter(b => Object.keys(b.platforms).length), CHECKED[mode]) : [];
   const warnings = [], notes = [];
   rowsSums = [];
   shown = mode === 'col' ? PLATFORMS.filter(p => !DLC_SKIP.includes(p)) : PLATFORMS;
@@ -222,13 +223,13 @@ function render() {
   else { msg.className = 'msg'; msg.textContent = notes.join(' · '); }
 }
 
-const XBOX_HINT = ' XBOX는 슬랙 숫자가 틀릴 때가 있어, 한 시간 전 블록의 누적판매량과의 차이로 한 번 더 확인합니다. 다르면 차감값을 사용하고 ⚠로 표시합니다 (한 시간 전 블록도 함께 붙여넣어야 확인됩니다).';
+const xboxHint = m => ' ' + CHECKED[m].join('·') + '는 슬랙 숫자가 틀릴 때가 있어, 한 시간 전 블록의 누적판매량과의 차이로 한 번 더 확인합니다. 다르면 차감값을 사용하고 ⚠로 표시합니다 (한 시간 전 블록도 함께 붙여넣어야 확인됩니다).';
 
 function setMode(m) {
   mode = m;
   try { localStorage.setItem('sales-extractor-tab', m); } catch {}
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
-  $('hint').textContent = HINTS[m] + XBOX_HINT;
+  $('hint').textContent = HINTS[m] + xboxHint(m);
   $('copy').hidden = m === 'col';
   $('copygap').hidden = m !== 'col';
   render();
