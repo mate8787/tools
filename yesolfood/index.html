@@ -154,6 +154,13 @@
   .add input::placeholder { color: var(--muted); }
   .add .btn { padding: 12px 18px; }
 
+  .clear-row { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .clear-row .btn:disabled { opacity: .4; cursor: default; }
+  .confirm { display: grid; gap: 10px; font-size: 15px; }
+  .confirm-actions { display: flex; gap: 8px; }
+  .confirm-actions .btn { padding: 9px 18px; }
+  .btn.danger { background: var(--sun); color: var(--accent-ink); }
+
   .sugg-label { margin: 14px 0 8px; font-size: 13px; color: var(--muted); }
   .sugg { display: flex; flex-wrap: wrap; gap: 8px; }
   .sugg button {
@@ -161,6 +168,43 @@
     padding: 7px 14px; font-size: 15px; max-width: 100%; overflow-wrap: anywhere; text-align: left;
   }
   .sugg button:active { background: var(--accent-soft); border-color: var(--accent); }
+
+  /* header actions and messages */
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    position: relative; width: 40px; height: 40px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+    display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .reddot {
+    position: absolute; top: 5px; right: 5px; width: 11px; height: 11px; border-radius: 50%;
+    background: #e5484d; border: 2px solid var(--surface);
+  }
+  .msg-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .msg-top h2 { margin: 0; font-size: 18px; }
+  #pane-msgs .panel { margin-top: 12px; }
+  #pane-msgs .msg-top + .panel { margin-top: 0; }
+  .author-actions { display: flex; gap: 8px; }
+  #msgInput, #editInput {
+    width: 100%; resize: vertical; font: inherit; font-size: 16px;
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  }
+  .compose-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .muted-s { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .msg-list { list-style: none; margin: 0; padding: 0; }
+  .msg-item {
+    width: 100%; display: grid; grid-template-columns: 14px 1fr; gap: 4px 10px; align-items: center;
+    background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 12px 2px; text-align: left;
+  }
+  .msg-list li:last-child .msg-item { border-bottom: 0; }
+  .udot { width: 10px; height: 10px; border-radius: 50%; background: #e5484d; justify-self: center; }
+  .udot.off { background: transparent; }
+  .msg-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .msg-item.unread .msg-preview { font-weight: 700; }
+  .msg-time { grid-column: 2; color: var(--muted); font-size: 12.5px; }
+  .msg-date { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+  .msg-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 17px; line-height: 1.65; }
+  .detail-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; }
 
   /* tabs */
   .tabs { display: flex; gap: 6px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
@@ -218,7 +262,13 @@
         <img class="avatar" src="avatar.jpg" alt="" width="44" height="44">
         <h1>Yesolfood</h1>
       </div>
-      <button class="btn ghost" id="logoutBtn" type="button">로그아웃</button>
+      <div class="top-actions">
+        <button class="icon-btn" id="msgBtn" type="button" aria-label="메시지">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg>
+          <span class="reddot" id="msgDot" hidden></span>
+        </button>
+        <button class="btn ghost" id="logoutBtn" type="button">로그아웃</button>
+      </div>
     </header>
 
     <nav class="tabs" aria-label="화면 선택">
@@ -251,7 +301,7 @@
             <button type="button" id="poopPlus" aria-label="응가 횟수 늘리기">+</button>
           </div>
         </div>
-        <label class="poop"><input type="checkbox" id="exercise"><span id="exerciseLabel">오늘 운동 했어요 🏃</span></label>
+        <label class="poop"><input type="checkbox" id="exercise"><span id="exerciseLabel">오늘 운동 했어요 🏋️</span></label>
       </div>
       <ul class="chips" id="foods"></ul>
       <p class="none" id="none">아직 기록이 없어요. 아래에 먹은 것을 적어 주세요.</p>
@@ -261,6 +311,16 @@
       </form>
       <p class="sugg-label" id="suggLabel" hidden>이전에 먹은 음식 (눌러서 추가)</p>
       <div class="sugg" id="sugg"></div>
+      <div class="clear-row">
+        <button class="btn ghost" id="clearBtn" type="button">이 날 전체 지우기</button>
+        <div class="confirm" id="clearConfirm" hidden>
+          <span>이 날의 음식, 응가, 운동 기록을 모두 지울까요?</span>
+          <div class="confirm-actions">
+            <button class="btn danger" id="clearYes" type="button">지우기</button>
+            <button class="btn ghost" id="clearNo" type="button">취소</button>
+          </div>
+        </div>
+      </div>
     </section>
     </div>
 
@@ -277,6 +337,43 @@
       </div>
       <p class="fine">같은 날 응가는 세지 않고, 아무것도 기록하지 않은 날은 빼요. 기록이 쌓일수록 정확해지고, 참고용이에요.</p>
     </section>
+
+    <section id="pane-msgs" hidden>
+      <div class="msg-top">
+        <button class="btn ghost" id="msgBack" type="button">← 돌아가기</button>
+        <h2>메시지</h2>
+      </div>
+
+      <div class="panel" id="composeBox" hidden>
+        <textarea id="msgInput" rows="3" maxlength="300" placeholder="짧은 메시지를 적어 주세요" aria-label="새 메시지"></textarea>
+        <div class="compose-row">
+          <span class="muted-s" id="msgLen">0/300</span>
+          <button class="btn" id="msgSend" type="button">보내기</button>
+        </div>
+      </div>
+
+      <div class="panel" id="msgListBox">
+        <ul class="msg-list" id="msgList"></ul>
+        <p class="note" id="msgEmpty">아직 메시지가 없어요.</p>
+      </div>
+
+      <div class="panel" id="msgDetail" hidden>
+        <p class="msg-date" id="detailDate"></p>
+        <p class="msg-text" id="detailText"></p>
+        <textarea id="editInput" rows="4" maxlength="300" aria-label="메시지 수정" hidden></textarea>
+        <div class="detail-actions" id="detailActions">
+          <button class="btn ghost" id="detailBack" type="button">← 목록</button>
+          <span class="author-actions">
+            <button class="btn ghost" id="detailEdit" type="button" hidden>수정</button>
+            <button class="btn ghost" id="detailDelete" type="button" hidden>삭제</button>
+          </span>
+        </div>
+        <div class="detail-actions" id="editActions" hidden>
+          <button class="btn ghost" id="editCancel" type="button">취소</button>
+          <button class="btn" id="editSave" type="button">저장</button>
+        </div>
+      </div>
+    </section>
   </section>
 
 </main>
@@ -287,7 +384,8 @@
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
     from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
   import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
-           collection, doc, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove }
+           collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp,
+           arrayUnion, arrayRemove }
     from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -326,7 +424,7 @@
   let viewMonth = now.getMonth();
   let selected = todayKey;
   let days = {};          // { "2026-11-19": { foods: [...], poop: true } }
-  let unsubscribe = null;
+  let unsubs = [];        // live database listeners, closed on sign-out
 
   let toastTimer;
   function toast(msg) {
@@ -354,10 +452,11 @@
   $("#deniedLogout").addEventListener("click", logout);
 
   onAuthStateChanged(auth, (user) => {
-    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-    if (!user) { days = {}; show("login"); return; }
+    unsubs.forEach((stop) => stop());
+    unsubs = [];
+    if (!user) { days = {}; messages = []; readIds = new Set(); show("login"); return; }
     $("#deniedEmail").textContent = user.email || "";
-    unsubscribe = onSnapshot(
+    unsubs.push(onSnapshot(
       collection(db, "days"),
       (snap) => {
         days = {};
@@ -369,7 +468,26 @@
         if (err.code === "permission-denied") show("denied");
         else toast("데이터를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.");
       }
-    );
+    ));
+
+    // messages from the author, newest first
+    unsubs.push(onSnapshot(
+      query(collection(db, "messages"), orderBy("created", "desc")),
+      (snap) => {
+        messages = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
+        renderMsgs();
+      },
+      () => {}
+    ));
+    // which messages this account has opened
+    unsubs.push(onSnapshot(
+      doc(db, "reads", user.uid),
+      (snap) => {
+        readIds = new Set(snap.data()?.ids || []);
+        renderMsgs();
+      },
+      () => {}
+    ));
   });
 
   /* ---------- writes ---------- */
@@ -394,6 +512,16 @@
   }
   $("#poopMinus").addEventListener("click", () => changePoops(-1));
   $("#poopPlus").addEventListener("click", () => changePoops(1));
+  // clear everything for the selected day, with an in-page confirmation
+  let confirmClearFor = null;
+  $("#clearBtn").addEventListener("click", () => { confirmClearFor = selected; renderPanel(); });
+  $("#clearNo").addEventListener("click", () => { confirmClearFor = null; renderPanel(); });
+  $("#clearYes").addEventListener("click", () => {
+    const key = selected;
+    confirmClearFor = null;
+    deleteDoc(doc(db, "days", key)).catch(() => toast("지우지 못했어요. 다시 시도해 주세요."));
+    renderPanel();
+  });
   $("#exercise").addEventListener("change", (e) => {
     setDoc(doc(db, "days", selected), { exercise: e.target.checked }, { merge: true })
       .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
@@ -474,7 +602,7 @@
       if (info?.exercise) {
         const e = document.createElement("span");
         e.className = "emark";
-        e.textContent = "🏃";
+        e.textContent = "🏋️";
         slot.append(e);
       }
       btn.append(num, slot, marks);
@@ -499,7 +627,12 @@
     $("#poopMinus").disabled = poops <= 0;
     $("#poopPlus").disabled = poops >= MAX_POOPS;
     $("#exercise").checked = !!info.exercise;
-    $("#exerciseLabel").textContent = (selected === todayKey ? "오늘 " : "") + "운동 했어요 🏃";
+    $("#exerciseLabel").textContent = (selected === todayKey ? "오늘 " : "") + "운동 했어요 🏋️";
+    const hasData = (info.foods || []).length > 0 || poops > 0 || !!info.exercise;
+    const asking = hasData && confirmClearFor === selected;
+    $("#clearBtn").hidden = asking;
+    $("#clearBtn").disabled = !hasData;
+    $("#clearConfirm").hidden = !asking;
 
     const list = $("#foods");
     list.replaceChildren();
@@ -556,10 +689,14 @@
   const MIN_N = 2;        // a food needs this many usable records to be ranked
   const MIN_DAYS = 3;     // the analysis stays hidden until this many days are recorded
 
+  let lastTab = "cal";    // where the back button in messages returns to
   function setTab(t) {
     tab = t;
+    if (t !== "msgs") lastTab = t;
     $("#pane-cal").hidden = t !== "cal";
     $("#pane-stats").hidden = t !== "stats";
+    $("#pane-msgs").hidden = t !== "msgs";
+    document.querySelector(".tabs").hidden = t === "msgs";
     $("#tabCal").classList.toggle("on", t === "cal");
     $("#tabStats").classList.toggle("on", t === "stats");
     render();
@@ -649,7 +786,128 @@
     if (few.length) body.append(line(`더 기록이 필요한 음식: ${few.join(", ")}`, "note"));
   }
 
+  /* ---------- messages from the author ---------- */
+  // only this account can post (the database rules enforce it too)
+  const AUTHOR_UID = "ZeXC7Dzll1hnLfYkEXrmApndkFZ2";
+  let messages = [];      // newest first
+  let readIds = new Set();
+  let msgOpen = null;     // id of the message being read
+  let confirmDeleteMsg = false;
+  let editingMsg = false;
+
+  const me = () => auth.currentUser?.uid;
+  const isUnread = (m) => !readIds.has(m.id) && m.authorUid !== me();
+  const fmtTime = (ts) => {
+    const d = ts?.toDate ? ts.toDate() : new Date();
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  function openMessage(id) {
+    msgOpen = id;
+    confirmDeleteMsg = false;
+    editingMsg = false;
+    const m = messages.find((x) => x.id === id);
+    if (m && isUnread(m)) {
+      setDoc(doc(db, "reads", me()), { ids: arrayUnion(id) }, { merge: true }).catch(() => {});
+    }
+    renderMsgs();
+  }
+
+  function renderMsgs() {
+    const unread = messages.filter(isUnread).length;
+    $("#msgDot").hidden = unread === 0;
+    $("#msgBtn").setAttribute("aria-label", unread ? `메시지, 안 읽은 메시지 ${unread}개` : "메시지");
+    if (tab !== "msgs") return;
+
+    const isAuthor = me() === AUTHOR_UID;
+    const current = msgOpen ? messages.find((x) => x.id === msgOpen) : null;
+    if (msgOpen && !current) msgOpen = null;
+
+    $("#composeBox").hidden = !isAuthor || !!msgOpen;
+    $("#msgListBox").hidden = !!msgOpen;
+    $("#msgDetail").hidden = !msgOpen;
+
+    const list = $("#msgList");
+    list.replaceChildren();
+    messages.forEach((m) => {
+      const unreadNow = isUnread(m);
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "msg-item" + (unreadNow ? " unread" : "");
+      const dot = document.createElement("span");
+      dot.className = "udot" + (unreadNow ? "" : " off");
+      const preview = document.createElement("span");
+      preview.className = "msg-preview";
+      preview.textContent = (m.text || "").replace(/\s+/g, " ");
+      const time = document.createElement("span");
+      time.className = "msg-time";
+      time.textContent = fmtTime(m.created);
+      btn.append(dot, preview, time);
+      btn.addEventListener("click", () => openMessage(m.id));
+      li.append(btn);
+      list.append(li);
+    });
+    $("#msgEmpty").hidden = messages.length > 0;
+
+    if (!current) editingMsg = false;
+    if (current) {
+      const editing = isAuthor && editingMsg;
+      $("#detailDate").textContent = fmtTime(current.created) + (current.edited ? " · 수정됨" : "");
+      $("#detailText").textContent = current.text || "";
+      $("#detailText").hidden = editing;
+      $("#editInput").hidden = !editing;
+      $("#detailActions").hidden = editing;
+      $("#editActions").hidden = !editing;
+      $("#detailEdit").hidden = !isAuthor;
+      $("#detailDelete").hidden = !isAuthor;
+      $("#detailDelete").textContent = confirmDeleteMsg ? "한 번 더 누르면 삭제돼요" : "삭제";
+    }
+  }
+
+  $("#msgBtn").addEventListener("click", () => { msgOpen = null; editingMsg = false; setTab("msgs"); });
+  $("#msgBack").addEventListener("click", () => setTab(lastTab));
+  $("#detailBack").addEventListener("click", () => { msgOpen = null; confirmDeleteMsg = false; editingMsg = false; renderMsgs(); });
+  $("#detailEdit").addEventListener("click", () => {
+    const m = messages.find((x) => x.id === msgOpen);
+    if (!m) return;
+    confirmDeleteMsg = false;
+    editingMsg = true;
+    $("#editInput").value = m.text || "";
+    renderMsgs();
+    $("#editInput").focus();
+  });
+  $("#editCancel").addEventListener("click", () => { editingMsg = false; renderMsgs(); });
+  $("#editSave").addEventListener("click", () => {
+    const text = $("#editInput").value.trim().slice(0, 300);
+    if (!text) { toast("메시지를 비워 둘 수는 없어요."); return; }
+    const id = msgOpen;
+    editingMsg = false;
+    updateDoc(doc(db, "messages", id), { text, edited: true })
+      .catch(() => toast("수정하지 못했어요. 다시 시도해 주세요."));
+    renderMsgs();
+  });
+  $("#detailDelete").addEventListener("click", () => {
+    if (!confirmDeleteMsg) { confirmDeleteMsg = true; renderMsgs(); return; }
+    const id = msgOpen;
+    msgOpen = null;
+    confirmDeleteMsg = false;
+    deleteDoc(doc(db, "messages", id)).catch(() => toast("삭제하지 못했어요. 다시 시도해 주세요."));
+    renderMsgs();
+  });
+  $("#msgInput").addEventListener("input", (e) => { $("#msgLen").textContent = `${e.target.value.length}/300`; });
+  $("#msgSend").addEventListener("click", () => {
+    const input = $("#msgInput");
+    const text = input.value.trim();
+    if (!text) return;
+    addDoc(collection(db, "messages"), { text: text.slice(0, 300), created: serverTimestamp(), authorUid: me() })
+      .catch(() => toast("보내지 못했어요. 다시 시도해 주세요."));
+    input.value = "";
+    $("#msgLen").textContent = "0/300";
+  });
+
   function render() {
+    if (tab === "msgs") { renderMsgs(); return; }
     if (tab === "stats") { renderStats(); return; }
     renderCalendar();
     renderPanel();

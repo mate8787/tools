@@ -1,14 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Yesolfood: only the listed Google accounts can read or write the daily entries.
-    match /days/{day} {
-      allow read, write: if request.auth != null
+    // Reference copy of the rules published in the Firebase console.
+    // The real email addresses and author ID are kept only in the console,
+    // not in this public repo.
+    function ok() {
+      return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email in [
-          'bialy676@gmail.com'
-          // add her Google email here
-        ];
+        && request.auth.token.email in ['ALLOWED_EMAIL_1', 'ALLOWED_EMAIL_2'];
+    }
+
+    // daily food / poop / exercise entries
+    match /days/{day} {
+      allow read, write: if ok();
+    }
+
+    // short messages: everyone allowed can read, only the author can post or delete
+    match /messages/{id} {
+      allow read: if ok();
+      allow create, update, delete: if ok() && request.auth.uid == 'AUTHOR_UID';
+    }
+
+    // which messages each person has opened, private to that person
+    match /reads/{uid} {
+      allow read, write: if ok() && request.auth.uid == uid;
     }
   }
 }
