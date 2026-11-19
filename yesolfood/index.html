@@ -199,6 +199,37 @@
   .byday-date { font-size: 13px; color: var(--muted); font-weight: 600; }
   .byday-foods { overflow-wrap: anywhere; }
 
+  /* ledger */
+  .subtabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .subtabs button { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 0; font-size: 14px; }
+  .subtabs button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  #pane-ledger .panel { margin-top: 12px; }
+  #pane-ledger .subtabs + div > .panel:first-child { margin-top: 0; }
+  .ld-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .ld-nav h3 { margin: 0; flex: 1; text-align: center; font-size: 16px; }
+  .spend-form { display: grid; gap: 10px; }
+  .field { width: 100%; font: inherit; font-size: 16px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .field::placeholder { color: var(--muted); }
+  .cats { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cat-chip { background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
+  .cat-chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .spend-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+  .spend-head h3 { margin: 0; }
+  .spend-head strong { font-variant-numeric: tabular-nums; }
+  .spend-list { list-style: none; margin: 0; padding: 0; }
+  .spend-row { display: grid; grid-template-columns: 1fr auto auto; gap: 2px 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .spend-list li:last-child .spend-row { border-bottom: 0; }
+  .spend-name { overflow-wrap: anywhere; }
+  .spend-meta { grid-column: 1; color: var(--muted); font-size: 13px; }
+  .spend-amt { grid-column: 2; grid-row: 1 / span 2; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .spend-del { grid-column: 3; grid-row: 1 / span 2; background: transparent; border: 0; color: var(--muted); width: 30px; height: 30px; border-radius: 50%; font-size: 18px; line-height: 1; }
+  .spend-del:active { background: var(--accent-soft); }
+  .stat-row { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; font: inherit; color: inherit; }
+  .spend-list li:last-child .stat-row { border-bottom: 0; }
+  .stat-row .amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat-row .sub { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+  .big-total { margin: 0 0 4px; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
   /* header actions and messages */
   .top-actions { display: flex; align-items: center; gap: 8px; }
   .icon-btn {
@@ -307,6 +338,7 @@
       <button class="tab on" id="tabCal" type="button">달력</button>
       <button class="tab" id="tabStats" type="button">분석</button>
       <button class="tab" id="tabFoods" type="button">음식</button>
+      <button class="tab" id="tabLedger" type="button">가계부</button>
     </nav>
 
     <div id="pane-cal">
@@ -397,6 +429,60 @@
         <h3>날짜별 음식</h3>
         <div class="byday" id="byDay"></div>
         <p class="note" id="byDayEmpty">아직 기록한 음식이 없어요.</p>
+      </div>
+    </section>
+
+    <section id="pane-ledger" hidden>
+      <div class="subtabs" role="group" aria-label="가계부 보기">
+        <button type="button" class="on" id="lvDay">일별</button>
+        <button type="button" id="lvMonth">월별 리포트</button>
+      </div>
+
+      <div id="ledgerDay">
+        <div class="panel">
+          <div class="ld-nav">
+            <button class="nav-btn" id="ldPrev" type="button" aria-label="전날">‹</button>
+            <h3 id="ldTitle"></h3>
+            <button class="today-btn" id="ldToday" type="button">오늘</button>
+            <button class="nav-btn" id="ldNext" type="button" aria-label="다음 날">›</button>
+          </div>
+          <form class="spend-form" id="spendForm" autocomplete="off">
+            <input class="field" id="spendName" type="text" maxlength="30" placeholder="어디에 썼나요? (예: 점심, 커피)" aria-label="항목">
+            <input class="field" id="spendAmount" type="text" inputmode="numeric" maxlength="14" placeholder="금액 (원)" aria-label="금액">
+            <div class="cats" id="catPick" role="group" aria-label="분류"></div>
+            <button class="btn wide" type="submit">추가</button>
+          </form>
+        </div>
+        <div class="panel">
+          <div class="spend-head"><h3>이 날의 지출</h3><strong id="ldTotal"></strong></div>
+          <ul class="spend-list" id="spendList"></ul>
+          <p class="note" id="spendEmpty">아직 적은 지출이 없어요.</p>
+        </div>
+      </div>
+
+      <div id="ledgerMonth" hidden>
+        <div class="panel">
+          <div class="ld-nav">
+            <button class="nav-btn" id="lmPrev" type="button" aria-label="이전 달">‹</button>
+            <h3 id="lmTitle"></h3>
+            <button class="nav-btn" id="lmNext" type="button" aria-label="다음 달">›</button>
+          </div>
+          <p class="big-total" id="lmTotal"></p>
+          <p class="note" id="lmSub"></p>
+          <p class="note" id="lmCompare"></p>
+        </div>
+        <div class="panel" id="lmCatBox" hidden>
+          <h3>항목별</h3>
+          <ul class="spend-list" id="lmCats"></ul>
+        </div>
+        <div class="panel" id="lmDayBox" hidden>
+          <h3>날짜별</h3>
+          <ul class="spend-list" id="lmDays"></ul>
+        </div>
+        <div class="panel" id="lmTopBox" hidden>
+          <h3>가장 큰 지출</h3>
+          <ul class="spend-list" id="lmTop"></ul>
+        </div>
       </div>
     </section>
 
@@ -520,7 +606,7 @@
     unsubs.forEach((stop) => stop());
     unsubs = [];
     if (!user) {
-      days = {}; messages = []; readIds = new Set();
+      days = {}; messages = []; readIds = new Set(); expenses = [];
       foodPrefs = { excluded: new Set(), included: new Set() };
       show("login");
       return;
@@ -546,6 +632,15 @@
       (snap) => {
         messages = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
         renderMsgs();
+      },
+      () => {}
+    ));
+    // household ledger entries
+    unsubs.push(onSnapshot(
+      collection(db, "expenses"),
+      (snap) => {
+        expenses = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
+        if (tab === "ledger") renderLedger();
       },
       () => {}
     ));
@@ -767,16 +862,19 @@
     $("#pane-cal").hidden = t !== "cal";
     $("#pane-stats").hidden = t !== "stats";
     $("#pane-foods").hidden = t !== "foods";
+    $("#pane-ledger").hidden = t !== "ledger";
     $("#pane-msgs").hidden = t !== "msgs";
     document.querySelector(".tabs").hidden = t === "msgs";
     $("#tabCal").classList.toggle("on", t === "cal");
     $("#tabStats").classList.toggle("on", t === "stats");
     $("#tabFoods").classList.toggle("on", t === "foods");
+    $("#tabLedger").classList.toggle("on", t === "ledger");
     render();
   }
   $("#tabCal").addEventListener("click", () => setTab("cal"));
   $("#tabStats").addEventListener("click", () => setTab("stats"));
   $("#tabFoods").addEventListener("click", () => setTab("foods"));
+  $("#tabLedger").addEventListener("click", () => setTab("ledger"));
   document.querySelectorAll(".seg button").forEach((b) => {
     b.addEventListener("click", () => {
       statsWin = Number(b.dataset.win);
@@ -1147,7 +1245,191 @@
   $("#recBtn").addEventListener("click", showRecommendation);
   $("#recAgain").addEventListener("click", showRecommendation);
 
+  /* ---------- 가계부 (household ledger) ---------- */
+  const CATS = ["식비", "카페·간식", "교통", "쇼핑", "생활", "의료", "문화·여가", "기타"];
+  let expenses = [];                                   // {id, date, name, amount, cat, created}
+  let ledgerDate = todayKey;                           // day shown in the day view
+  let ledgerView = "day";                              // "day" or "month"
+  let ledgerYM = [now.getFullYear(), now.getMonth()];  // month shown in the report
+  let spendCat = CATS[0];
+
+  const fmtWon = (n) => n.toLocaleString("ko-KR") + "원";
+  const createdMs = (e) => e.created?.toMillis?.() ?? 0;
+  const spendOn = (key) => expenses.filter((e) => e.date === key).sort((a, b) => createdMs(a) - createdMs(b));
+  const monthItems = (y, m0) => expenses.filter((e) => e.date.startsWith(`${y}-${pad(m0 + 1)}-`));
+  const sumOf = (list) => list.reduce((t, e) => t + e.amount, 0);
+  const dayLabel = (key) => {
+    const [y, m, d] = key.split("-").map(Number);
+    return `${m}월 ${d}일 (${WEEKDAYS[new Date(y, m - 1, d).getDay()]})`;
+  };
+
+  function renderCats() {
+    $("#catPick").replaceChildren(...CATS.map((c) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cat-chip" + (c === spendCat ? " on" : "");
+      b.textContent = c;
+      b.addEventListener("click", () => { spendCat = c; renderCats(); });
+      return b;
+    }));
+  }
+
+  // pick the category she used last time for the same item
+  $("#spendName").addEventListener("input", (e) => {
+    const name = e.target.value.replace(/\s+/g, " ").trim();
+    const last = expenses.filter((x) => x.name === name).sort((a, b) => createdMs(b) - createdMs(a))[0];
+    if (last && CATS.includes(last.cat) && last.cat !== spendCat) { spendCat = last.cat; renderCats(); }
+  });
+  $("#spendAmount").addEventListener("input", (e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+    e.target.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+  });
+  $("#spendForm").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const name = $("#spendName").value.replace(/\s+/g, " ").trim().slice(0, 30);
+    const amount = Number($("#spendAmount").value.replace(/\D/g, ""));
+    if (!name) { toast("어디에 썼는지 적어 주세요."); $("#spendName").focus(); return; }
+    if (!amount) { toast("금액을 적어 주세요."); $("#spendAmount").focus(); return; }
+    addDoc(collection(db, "expenses"), { date: ledgerDate, name, amount, cat: spendCat, created: serverTimestamp() })
+      .catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
+    $("#spendName").value = "";
+    $("#spendAmount").value = "";
+    $("#spendName").focus();
+  });
+
+  function renderLedgerDay() {
+    const [y, m, d] = ledgerDate.split("-").map(Number);
+    $("#ldTitle").textContent = `${m}월 ${d}일 ${WEEKDAYS[new Date(y, m - 1, d).getDay()]}요일` + (ledgerDate === todayKey ? " · 오늘" : "");
+    const list = spendOn(ledgerDate);
+    $("#ldTotal").textContent = list.length ? fmtWon(sumOf(list)) : "";
+    $("#spendList").replaceChildren(...list.map((e) => {
+      const li = document.createElement("li");
+      const row = document.createElement("div");
+      row.className = "spend-row";
+      const name = document.createElement("span");
+      name.className = "spend-name";
+      name.textContent = e.name;
+      const meta = document.createElement("span");
+      meta.className = "spend-meta";
+      meta.textContent = e.cat;
+      const amt = document.createElement("span");
+      amt.className = "spend-amt";
+      amt.textContent = fmtWon(e.amount);
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "spend-del";
+      del.textContent = "×";
+      del.setAttribute("aria-label", `${e.name} ${fmtWon(e.amount)} 삭제`);
+      del.addEventListener("click", () => {
+        deleteDoc(doc(db, "expenses", e.id)).catch(() => toast("삭제하지 못했어요. 다시 시도해 주세요."));
+      });
+      row.append(name, meta, amt, del);
+      li.append(row);
+      return li;
+    }));
+    $("#spendEmpty").hidden = list.length > 0;
+  }
+
+  function statRow(title, amount, sub, onClick) {
+    const li = document.createElement("li");
+    const row = document.createElement(onClick ? "button" : "div");
+    if (onClick) { row.type = "button"; row.addEventListener("click", onClick); }
+    row.className = "stat-row";
+    const a = document.createElement("span");
+    a.textContent = title;
+    const b = document.createElement("span");
+    b.className = "amt";
+    b.textContent = amount;
+    row.append(a, b);
+    if (sub) {
+      const s = document.createElement("span");
+      s.className = "sub";
+      s.textContent = sub;
+      row.append(s);
+    }
+    li.append(row);
+    return li;
+  }
+
+  function renderLedgerMonth() {
+    const [y, m0] = ledgerYM;
+    $("#lmTitle").textContent = `${y}년 ${m0 + 1}월`;
+    const items = monthItems(y, m0);
+    const boxes = ["#lmCatBox", "#lmDayBox", "#lmTopBox"];
+    if (!items.length) {
+      $("#lmTotal").textContent = "지출 기록이 없어요";
+      $("#lmSub").textContent = "일별 화면에서 지출을 적으면 여기에 모여요.";
+      $("#lmCompare").textContent = "";
+      boxes.forEach((b) => { $(b).hidden = true; });
+      return;
+    }
+    const total = sumOf(items);
+    const dayKeys = [...new Set(items.map((e) => e.date))];
+    $("#lmTotal").textContent = fmtWon(total);
+    $("#lmSub").textContent = `${items.length}건 · 지출한 날 ${dayKeys.length}일 · 하루 평균 ${fmtWon(Math.round(total / dayKeys.length))}`;
+
+    const prev = new Date(y, m0 - 1, 1);
+    const prevTotal = sumOf(monthItems(prev.getFullYear(), prev.getMonth()));
+    $("#lmCompare").textContent = !prevTotal ? ""
+      : total > prevTotal ? `지난달보다 ${fmtWon(total - prevTotal)} 더 썼어요.`
+      : total < prevTotal ? `지난달보다 ${fmtWon(prevTotal - total)} 덜 썼어요.`
+      : "지난달과 같이 썼어요.";
+
+    // by category, biggest first
+    const byCat = new Map();
+    items.forEach((e) => byCat.set(e.cat, (byCat.get(e.cat) || 0) + e.amount));
+    $("#lmCats").replaceChildren(...[...byCat.entries()].sort((a, b) => b[1] - a[1]).map(
+      ([cat, sum]) => statRow(cat, fmtWon(sum), `전체의 ${Math.round((sum / total) * 100)}%`)
+    ));
+
+    // by day, newest first; tapping a day opens it
+    $("#lmDays").replaceChildren(...dayKeys.sort().reverse().map((k) => {
+      const list = items.filter((e) => e.date === k);
+      return statRow(dayLabel(k), fmtWon(sumOf(list)), `${list.length}건`, () => {
+        ledgerDate = k;
+        ledgerView = "day";
+        renderLedger();
+      });
+    }));
+
+    // five biggest single expenses
+    $("#lmTop").replaceChildren(...[...items].sort((a, b) => b.amount - a.amount).slice(0, 5).map(
+      (e) => statRow(e.name, fmtWon(e.amount), `${dayLabel(e.date)} · ${e.cat}`)
+    ));
+    boxes.forEach((b) => { $(b).hidden = false; });
+  }
+
+  function renderLedger() {
+    $("#ledgerDay").hidden = ledgerView !== "day";
+    $("#ledgerMonth").hidden = ledgerView !== "month";
+    $("#lvDay").classList.toggle("on", ledgerView === "day");
+    $("#lvMonth").classList.toggle("on", ledgerView === "month");
+    renderCats();
+    if (ledgerView === "day") renderLedgerDay(); else renderLedgerMonth();
+  }
+  $("#lvDay").addEventListener("click", () => { ledgerView = "day"; renderLedger(); });
+  $("#lvMonth").addEventListener("click", () => {
+    const [y, m] = ledgerDate.split("-").map(Number);
+    ledgerYM = [y, m - 1];
+    ledgerView = "month";
+    renderLedger();
+  });
+  $("#ldPrev").addEventListener("click", () => { ledgerDate = addDays(ledgerDate, -1); renderLedger(); });
+  $("#ldNext").addEventListener("click", () => { ledgerDate = addDays(ledgerDate, 1); renderLedger(); });
+  $("#ldToday").addEventListener("click", () => { ledgerDate = todayKey; renderLedger(); });
+  $("#lmPrev").addEventListener("click", () => {
+    const d = new Date(ledgerYM[0], ledgerYM[1] - 1, 1);
+    ledgerYM = [d.getFullYear(), d.getMonth()];
+    renderLedger();
+  });
+  $("#lmNext").addEventListener("click", () => {
+    const d = new Date(ledgerYM[0], ledgerYM[1] + 1, 1);
+    ledgerYM = [d.getFullYear(), d.getMonth()];
+    renderLedger();
+  });
+
   function render() {
+    if (tab === "ledger") { renderLedger(); return; }
     if (tab === "foods") { renderFoods(); return; }
     if (tab === "msgs") { renderMsgs(); return; }
     if (tab === "stats") { renderStats(); return; }

@@ -7,11 +7,16 @@ service cloud.firestore {
     function ok() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email in ['ALLOWED_EMAIL_1', 'ALLOWED_EMAIL_2'];
+        && request.auth.token.email in ['ALLOWED_EMAIL_1', 'ALLOWED_EMAIL_2', 'ALLOWED_EMAIL_3'];
     }
 
     // daily food / poop / exercise entries
     match /days/{day} {
+      allow read, write: if ok();
+    }
+
+    // household ledger (가계부) entries
+    match /expenses/{id} {
       allow read, write: if ok();
     }
 
