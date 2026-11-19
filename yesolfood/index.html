@@ -118,10 +118,12 @@
     font-variant-numeric: tabular-nums;
   }
   .day.selected .count { background: var(--accent-ink); color: var(--accent); }
-  .pslot { display: flex; align-items: center; justify-content: center; height: 18px; gap: 1px; max-width: 100%; }
-  .pmark { font-size: 16px; line-height: 1; }
-  .emark { font-size: 14px; line-height: 1; }
-  .pcount { font-size: 10px; font-weight: 700; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
+  /* the cell width sets the icon sizes, so poop, ×n and exercise always stay inside the cell */
+  .day { container-type: inline-size; }
+  .pslot { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; height: 18px; gap: 0; width: 100%; overflow: hidden; }
+  .pmark { flex: none; font-size: 14px; font-size: min(14px, 28cqw); line-height: 1; }
+  .emark { flex: none; font-size: 13px; font-size: min(13px, 25cqw); line-height: 1; }
+  .pcount { flex: none; font-size: 9px; font-size: min(9px, 17cqw); font-weight: 700; line-height: 1; margin: 0 1px 0 -1px; color: var(--accent); font-variant-numeric: tabular-nums; }
   .day.selected .pcount { color: var(--accent-ink); }
 
   /* day panel */
@@ -204,7 +206,19 @@
   .subtabs button { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 0; font-size: 14px; }
   .subtabs button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
   #pane-ledger .panel { margin-top: 12px; }
-  #pane-ledger .subtabs + div > .panel:first-child { margin-top: 0; }
+  #pane-ledger .subtabs ~ div > .panel:first-child { margin-top: 0; }
+  .lc-sum { margin: 0 0 10px; text-align: center; }
+  #lcGrid .day { aspect-ratio: 1 / 1.1; gap: 2px; }
+  .day .won { font-size: 10.5px; font-weight: 700; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .yc { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; height: 150px; }
+  .yc-col { display: flex; flex-direction: column; gap: 6px; padding: 0; background: transparent; border: 0; min-width: 0; }
+  .yc-track { position: relative; flex: 1; }
+  .yc-bar { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 4px 4px 2px 2px; background: var(--accent); opacity: .35; }
+  .yc-col.on .yc-bar { opacity: 1; }
+  .yc-col.zero .yc-bar { height: 3px; opacity: .25; }
+  .yc-lab { font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+  .yc-col.on .yc-lab { color: var(--accent); font-weight: 700; }
+  .yc-cap { margin: 0 0 12px; text-align: center; font-size: 15px; }
   .ld-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
   .ld-nav h3 { margin: 0; flex: 1; text-align: center; font-size: 16px; }
   .spend-form { display: grid; gap: 10px; }
@@ -435,6 +449,7 @@
     <section id="pane-ledger" hidden>
       <div class="subtabs" role="group" aria-label="가계부 보기">
         <button type="button" class="on" id="lvDay">일별</button>
+        <button type="button" id="lvCal">달력</button>
         <button type="button" id="lvMonth">월별 리포트</button>
       </div>
 
@@ -460,7 +475,29 @@
         </div>
       </div>
 
+      <div id="ledgerCal" hidden>
+        <div class="panel">
+          <div class="ld-nav">
+            <button class="nav-btn" id="lcPrev" type="button" aria-label="이전 달">‹</button>
+            <h3 id="lcTitle"></h3>
+            <button class="nav-btn" id="lcNext" type="button" aria-label="다음 달">›</button>
+          </div>
+          <p class="note lc-sum" id="lcSum"></p>
+          <div class="dow" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+          <div class="grid" id="lcGrid"></div>
+        </div>
+      </div>
+
       <div id="ledgerMonth" hidden>
+        <div class="panel">
+          <div class="ld-nav">
+            <button class="nav-btn" id="ycPrev" type="button" aria-label="이전 해">‹</button>
+            <h3 id="ycTitle"></h3>
+            <button class="nav-btn" id="ycNext" type="button" aria-label="다음 해">›</button>
+          </div>
+          <p class="yc-cap" id="ycCaption"></p>
+          <div class="yc" id="ycBars"></div>
+        </div>
         <div class="panel">
           <div class="ld-nav">
             <button class="nav-btn" id="lmPrev" type="button" aria-label="이전 달">‹</button>
@@ -1254,6 +1291,9 @@
   let spendCat = CATS[0];
 
   const fmtWon = (n) => n.toLocaleString("ko-KR") + "원";
+  // short form for small calendar cells: 4,500 or 13.8만
+  const fmtCompact = (n) =>
+    n >= 10000 ? `${String(Math.round(n / 1000) / 10).replace(/\.0$/, "")}만` : n.toLocaleString("ko-KR");
   const createdMs = (e) => e.created?.toMillis?.() ?? 0;
   const spendOn = (key) => expenses.filter((e) => e.date === key).sort((a, b) => createdMs(a) - createdMs(b));
   const monthItems = (y, m0) => expenses.filter((e) => e.date.startsWith(`${y}-${pad(m0 + 1)}-`));
@@ -1351,8 +1391,74 @@
     return li;
   }
 
+  // a month calendar with the amount spent on each day
+  function renderLedgerCal() {
+    const [y, m0] = ledgerYM;
+    $("#lcTitle").textContent = `${y}년 ${m0 + 1}월`;
+    const items = monthItems(y, m0);
+    $("#lcSum").textContent = items.length ? `이 달 합계 ${fmtWon(sumOf(items))}` : "이 달에는 아직 지출이 없어요.";
+    const perDay = new Map();
+    items.forEach((e) => perDay.set(e.date, (perDay.get(e.date) || 0) + e.amount));
+
+    const grid = $("#lcGrid");
+    grid.replaceChildren();
+    const firstDow = new Date(y, m0, 1).getDay();
+    const total = new Date(y, m0 + 1, 0).getDate();
+    for (let i = 0; i < firstDow; i++) {
+      const blank = document.createElement("div");
+      blank.className = "day empty";
+      grid.append(blank);
+    }
+    for (let d = 1; d <= total; d++) {
+      const key = keyOf(y, m0, d);
+      const dow = (firstDow + d - 1) % 7;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "day" + (dow === 0 ? " sun" : dow === 6 ? " sat" : "") + (key === todayKey ? " today" : "");
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = d;
+      const won = document.createElement("span");
+      won.className = "won";
+      const spent = perDay.get(key);
+      won.textContent = spent ? fmtCompact(spent) : "";
+      btn.append(num, won);
+      btn.setAttribute("aria-label", spent ? `${m0 + 1}월 ${d}일, ${fmtWon(spent)}` : `${m0 + 1}월 ${d}일`);
+      btn.addEventListener("click", () => { ledgerDate = key; ledgerView = "day"; renderLedger(); });
+      grid.append(btn);
+    }
+  }
+
+  // twelve columns: spending for every month of the year being viewed
+  function renderYearChart() {
+    const [y, m0] = ledgerYM;
+    const totals = Array.from({ length: 12 }, (_, i) => sumOf(monthItems(y, i)));
+    const max = Math.max(...totals, 1);
+    $("#ycTitle").textContent = `${y}년 월별 지출`;
+    $("#ycCaption").textContent = `${m0 + 1}월 ${totals[m0] ? fmtWon(totals[m0]) : "지출 없음"}`;
+    $("#ycBars").replaceChildren(...totals.map((t, i) => {
+      const col = document.createElement("button");
+      col.type = "button";
+      col.className = "yc-col" + (i === m0 ? " on" : "") + (t ? "" : " zero");
+      col.setAttribute("aria-label", `${i + 1}월 ${t ? fmtWon(t) : "지출 없음"}`);
+      const track = document.createElement("span");
+      track.className = "yc-track";
+      const bar = document.createElement("span");
+      bar.className = "yc-bar";
+      if (t) bar.style.height = Math.max(4, Math.round((t / max) * 100)) + "%";
+      track.append(bar);
+      const lab = document.createElement("span");
+      lab.className = "yc-lab";
+      lab.textContent = i + 1;
+      col.append(track, lab);
+      col.addEventListener("click", () => { ledgerYM = [y, i]; renderLedger(); });
+      return col;
+    }));
+  }
+
   function renderLedgerMonth() {
     const [y, m0] = ledgerYM;
+    renderYearChart();
     $("#lmTitle").textContent = `${y}년 ${m0 + 1}월`;
     const items = monthItems(y, m0);
     const boxes = ["#lmCatBox", "#lmDayBox", "#lmTopBox"];
@@ -1401,19 +1507,35 @@
 
   function renderLedger() {
     $("#ledgerDay").hidden = ledgerView !== "day";
+    $("#ledgerCal").hidden = ledgerView !== "cal";
     $("#ledgerMonth").hidden = ledgerView !== "month";
     $("#lvDay").classList.toggle("on", ledgerView === "day");
+    $("#lvCal").classList.toggle("on", ledgerView === "cal");
     $("#lvMonth").classList.toggle("on", ledgerView === "month");
     renderCats();
-    if (ledgerView === "day") renderLedgerDay(); else renderLedgerMonth();
+    if (ledgerView === "day") renderLedgerDay();
+    else if (ledgerView === "cal") renderLedgerCal();
+    else renderLedgerMonth();
   }
-  $("#lvDay").addEventListener("click", () => { ledgerView = "day"; renderLedger(); });
-  $("#lvMonth").addEventListener("click", () => {
+  // opening the calendar or the report starts on the month of the day being viewed
+  function openLedgerMonth(view) {
     const [y, m] = ledgerDate.split("-").map(Number);
     ledgerYM = [y, m - 1];
-    ledgerView = "month";
+    ledgerView = view;
     renderLedger();
-  });
+  }
+  $("#lvDay").addEventListener("click", () => { ledgerView = "day"; renderLedger(); });
+  $("#lvCal").addEventListener("click", () => openLedgerMonth("cal"));
+  $("#lvMonth").addEventListener("click", () => openLedgerMonth("month"));
+  const shiftLedgerMonth = (delta) => {
+    const d = new Date(ledgerYM[0], ledgerYM[1] + delta, 1);
+    ledgerYM = [d.getFullYear(), d.getMonth()];
+    renderLedger();
+  };
+  $("#lcPrev").addEventListener("click", () => shiftLedgerMonth(-1));
+  $("#lcNext").addEventListener("click", () => shiftLedgerMonth(1));
+  $("#ycPrev").addEventListener("click", () => shiftLedgerMonth(-12));
+  $("#ycNext").addEventListener("click", () => shiftLedgerMonth(12));
   $("#ldPrev").addEventListener("click", () => { ledgerDate = addDays(ledgerDate, -1); renderLedger(); });
   $("#ldNext").addEventListener("click", () => { ledgerDate = addDays(ledgerDate, 1); renderLedger(); });
   $("#ldToday").addEventListener("click", () => { ledgerDate = todayKey; renderLedger(); });
