@@ -229,6 +229,7 @@
   .msg-time { grid-column: 2; color: var(--muted); font-size: 12.5px; }
   .msg-date { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
   .msg-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 17px; line-height: 1.65; }
+  .msg-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .detail-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; }
 
   /* tabs */
@@ -869,6 +870,29 @@
     return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
+  // plain text with web addresses turned into tappable links (never innerHTML)
+  function setLinkedText(el, text) {
+    el.replaceChildren();
+    const re = /(?:https?:\/\/|www\.)[A-Za-z0-9\-._~:\/?#\[\]@!$&'()*+,;=%]+/g;
+    let last = 0;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      // trailing punctuation belongs to the sentence, not the link
+      const url = m[0].replace(/[.,!?;:)\]'"]+$/, "");
+      if (!url) continue;
+      if (m.index > last) el.append(text.slice(last, m.index));
+      const a = document.createElement("a");
+      a.href = url.startsWith("www.") ? "https://" + url : url;
+      a.textContent = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      el.append(a);
+      last = m.index + url.length;
+      re.lastIndex = last;
+    }
+    if (last < text.length) el.append(text.slice(last));
+  }
+
   function openMessage(id) {
     msgOpen = id;
     confirmDeleteMsg = false;
@@ -921,7 +945,7 @@
     if (current) {
       const editing = isAuthor && editingMsg;
       $("#detailDate").textContent = fmtTime(current.created) + (current.edited ? " · 수정됨" : "");
-      $("#detailText").textContent = current.text || "";
+      setLinkedText($("#detailText"), current.text || "");
       $("#detailText").hidden = editing;
       $("#editInput").hidden = !editing;
       $("#detailActions").hidden = editing;
