@@ -281,6 +281,31 @@
   .msg-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 17px; line-height: 1.65; }
   .msg-text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .detail-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; }
+  .compose-left { display: flex; align-items: center; gap: 10px; }
+  .photo-btn { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* pictures in messages: small squares, full size on tap */
+  .msg-photos { display: flex; flex-wrap: wrap; gap: 8px; }
+  .msg-photos:empty { display: none; }
+  #composePhotos { margin-top: 10px; }
+  #detailPhotos { margin-top: 14px; }
+  .msg-photos .ph { position: relative; width: 84px; height: 84px; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg); }
+  .msg-photos .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .msg-photos .ph-del {
+    position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; padding: 0;
+    background: rgba(0, 0, 0, .65); color: #fff; font-size: 14px; line-height: 24px; text-align: center;
+  }
+  #photoViewer {
+    position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .96);
+    display: flex; align-items: center; justify-content: center;
+    padding: max(56px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom));
+  }
+  #photoViewer img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+  #photoClose {
+    position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right));
+    background: rgba(255, 255, 255, .16); color: #fff; border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 999px; padding: 8px 16px; font-size: 15px; font-weight: 600;
+  }
 
   /* tabs */
   .tabs { display: flex; gap: 6px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
@@ -531,10 +556,15 @@
 
       <div class="panel" id="composeBox" hidden>
         <textarea id="msgInput" rows="3" maxlength="300" placeholder="짧은 메시지를 적어 주세요" aria-label="새 메시지"></textarea>
+        <div class="msg-photos" id="composePhotos"></div>
         <div class="compose-row">
-          <span class="muted-s" id="msgLen">0/300</span>
+          <span class="compose-left">
+            <button class="btn ghost photo-btn" id="photoAdd" type="button" aria-label="사진 추가">📷 사진</button>
+            <span class="muted-s" id="msgLen">0/300</span>
+          </span>
           <button class="btn" id="msgSend" type="button">보내기</button>
         </div>
+        <input type="file" id="photoInput" accept="image/*" multiple hidden>
       </div>
 
       <div class="panel" id="msgListBox">
@@ -545,6 +575,7 @@
       <div class="panel" id="msgDetail" hidden>
         <p class="msg-date" id="detailDate"></p>
         <p class="msg-text" id="detailText"></p>
+        <div class="msg-photos" id="detailPhotos"></div>
         <textarea id="editInput" rows="4" maxlength="300" aria-label="메시지 수정" hidden></textarea>
         <div class="detail-actions" id="detailActions">
           <button class="btn ghost" id="detailBack" type="button">← 목록</button>
@@ -563,6 +594,10 @@
 
 </main>
 <div id="toast" role="status" hidden></div>
+<div id="photoViewer" role="dialog" aria-modal="true" aria-label="사진 크게 보기" hidden>
+  <button id="photoClose" type="button">✕ 닫기</button>
+  <img id="photoFull" alt="메시지 사진">
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -1011,10 +1046,12 @@
     return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
-  // plain text with web addresses turned into tappable links (never innerHTML)
+  const URL_RE = /(?:https?:\/\/|www\.)[A-Za-z0-9\-._~:\/?#\[\]@!$&'()*+,;=%]+/g;
+
+  // plain text with web addresses shown as a short tappable "Link" (never innerHTML)
   function setLinkedText(el, text) {
     el.replaceChildren();
-    const re = /(?:https?:\/\/|www\.)[A-Za-z0-9\-._~:\/?#\[\]@!$&'()*+,;=%]+/g;
+    const re = new RegExp(URL_RE.source, "g");
     let last = 0;
     let m;
     while ((m = re.exec(text)) !== null) {
@@ -1024,7 +1061,8 @@
       if (m.index > last) el.append(text.slice(last, m.index));
       const a = document.createElement("a");
       a.href = url.startsWith("www.") ? "https://" + url : url;
-      a.textContent = url;
+      a.textContent = "Link";
+      a.title = url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       el.append(a);
@@ -1033,6 +1071,129 @@
     }
     if (last < text.length) el.append(text.slice(last));
   }
+
+  /* ---------- pictures in messages ---------- */
+  // stored inside the message itself as small JPEGs, so no extra storage service is needed;
+  // a message must stay under Firestore's 1 MB limit, hence the size cap per picture
+  const MAX_PHOTOS = 3;
+  const PHOTO_MAX_SIDE = 1280;
+  const PHOTO_MAX_CHARS = 300000;   // ~220 KB per picture
+  let draftPhotos = [];             // pictures waiting to be sent
+  let photoBusy = false;
+  const photosOf = (m) => (Array.isArray(m?.photos) ? m.photos : []).filter((p) => typeof p === "string" && p.startsWith("data:image/"));
+
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+      img.src = url;
+    });
+  }
+
+  async function shrinkPhoto(file) {
+    const img = await loadImage(file);
+    let side = PHOTO_MAX_SIDE;
+    for (let tries = 0; tries < 6; tries++) {
+      const scale = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";   // transparent PNGs get a white background, not black
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      for (const q of [0.82, 0.7, 0.58]) {
+        const data = canvas.toDataURL("image/jpeg", q);
+        if (data.length <= PHOTO_MAX_CHARS) return data;
+      }
+      side = Math.round(side * 0.75);
+    }
+    throw new Error("too big");
+  }
+
+  async function addPhotos(files) {
+    const images = [...files].filter((f) => f.type.startsWith("image/"));
+    if (!images.length) return;
+    const room = MAX_PHOTOS - draftPhotos.length;
+    if (room <= 0) { toast(`사진은 ${MAX_PHOTOS}장까지 보낼 수 있어요.`); return; }
+    if (images.length > room) toast(`사진은 ${MAX_PHOTOS}장까지 보낼 수 있어요.`);
+    photoBusy = true;
+    $("#msgSend").disabled = true;
+    for (const f of images.slice(0, room)) {
+      try { draftPhotos.push(await shrinkPhoto(f)); }
+      catch (e) { toast("이 사진은 넣을 수 없어요."); }
+    }
+    photoBusy = false;
+    $("#msgSend").disabled = false;
+    renderDraftPhotos();
+  }
+
+  function renderDraftPhotos() {
+    const box = $("#composePhotos");
+    box.replaceChildren();
+    draftPhotos.forEach((src, i) => {
+      const wrap = document.createElement("div");
+      wrap.className = "ph";
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = `첨부한 사진 ${i + 1}`;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "ph-del";
+      del.textContent = "✕";
+      del.setAttribute("aria-label", `사진 ${i + 1} 빼기`);
+      del.addEventListener("click", () => { draftPhotos.splice(i, 1); renderDraftPhotos(); });
+      wrap.append(img, del);
+      box.append(wrap);
+    });
+    $("#photoAdd").hidden = draftPhotos.length >= MAX_PHOTOS;
+  }
+
+  function renderDetailPhotos(m) {
+    const box = $("#detailPhotos");
+    box.replaceChildren();
+    photosOf(m).forEach((src, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ph";
+      btn.setAttribute("aria-label", `사진 ${i + 1} 크게 보기`);
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = "";
+      btn.append(img);
+      btn.addEventListener("click", () => openViewer(src));
+      box.append(btn);
+    });
+  }
+
+  let viewerReturnFocus = null;
+  function openViewer(src) {
+    viewerReturnFocus = document.activeElement;
+    $("#photoFull").src = src;
+    $("#photoViewer").hidden = false;
+    document.body.style.overflow = "hidden";
+    $("#photoClose").focus();
+  }
+  function closeViewer() {
+    if ($("#photoViewer").hidden) return;
+    $("#photoViewer").hidden = true;
+    $("#photoFull").removeAttribute("src");
+    document.body.style.overflow = "";
+    viewerReturnFocus?.focus?.();
+  }
+  $("#photoClose").addEventListener("click", closeViewer);
+  $("#photoViewer").addEventListener("click", (e) => { if (e.target.id === "photoViewer") closeViewer(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeViewer(); });
+
+  $("#photoAdd").addEventListener("click", () => $("#photoInput").click());
+  $("#photoInput").addEventListener("change", (e) => { addPhotos(e.target.files); e.target.value = ""; });
+  // a picture pasted into the message box is attached too
+  $("#msgInput").addEventListener("paste", (e) => {
+    const files = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith("image/"));
+    if (files.length) { e.preventDefault(); addPhotos(files); }
+  });
 
   function openMessage(id) {
     msgOpen = id;
@@ -1071,7 +1232,9 @@
       dot.className = "udot" + (unreadNow ? "" : " off");
       const preview = document.createElement("span");
       preview.className = "msg-preview";
-      preview.textContent = (m.text || "").replace(/\s+/g, " ");
+      const shortText = (m.text || "").replace(new RegExp(URL_RE.source, "g"), "Link").replace(/\s+/g, " ").trim();
+      const hasPhotos = photosOf(m).length > 0;
+      preview.textContent = (hasPhotos ? "📷 " : "") + (shortText || (hasPhotos ? "사진" : ""));
       const time = document.createElement("span");
       time.className = "msg-time";
       time.textContent = fmtTime(m.created);
@@ -1087,7 +1250,8 @@
       const editing = isAuthor && editingMsg;
       $("#detailDate").textContent = fmtTime(current.created) + (current.edited ? " · 수정됨" : "");
       setLinkedText($("#detailText"), current.text || "");
-      $("#detailText").hidden = editing;
+      renderDetailPhotos(current);
+      $("#detailText").hidden = editing || !current.text;
       $("#editInput").hidden = !editing;
       $("#detailActions").hidden = editing;
       $("#editActions").hidden = !editing;
@@ -1112,8 +1276,9 @@
   $("#editCancel").addEventListener("click", () => { editingMsg = false; renderMsgs(); });
   $("#editSave").addEventListener("click", () => {
     const text = $("#editInput").value.trim().slice(0, 300);
-    if (!text) { toast("메시지를 비워 둘 수는 없어요."); return; }
     const id = msgOpen;
+    const hasPhotos = photosOf(messages.find((x) => x.id === id)).length > 0;
+    if (!text && !hasPhotos) { toast("메시지를 비워 둘 수는 없어요."); return; }
     editingMsg = false;
     updateDoc(doc(db, "messages", id), { text, edited: true })
       .catch(() => toast("수정하지 못했어요. 다시 시도해 주세요."));
@@ -1131,11 +1296,16 @@
   $("#msgSend").addEventListener("click", () => {
     const input = $("#msgInput");
     const text = input.value.trim();
-    if (!text) return;
-    addDoc(collection(db, "messages"), { text: text.slice(0, 300), created: serverTimestamp(), authorUid: me() })
+    if (photoBusy) return;
+    if (!text && !draftPhotos.length) return;
+    const data = { text: text.slice(0, 300), created: serverTimestamp(), authorUid: me() };
+    if (draftPhotos.length) data.photos = draftPhotos.slice();
+    addDoc(collection(db, "messages"), data)
       .catch(() => toast("보내지 못했어요. 다시 시도해 주세요."));
     input.value = "";
     $("#msgLen").textContent = "0/300";
+    draftPhotos = [];
+    renderDraftPhotos();
   });
 
   /* ---------- food list and menu recommendation ---------- */
