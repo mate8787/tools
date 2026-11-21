@@ -242,6 +242,10 @@
   .spend-list li:last-child .stat-row { border-bottom: 0; }
   .stat-row .amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .stat-row .sub { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+  /* bar under a day's total: how it compares with the month's biggest day */
+  .stat-row .day-track { grid-column: 1 / -1; height: 8px; margin: 4px 0 2px; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
+  .stat-row .day-bar { display: block; height: 100%; border-radius: 999px; background: var(--accent); opacity: .5; }
+  .stat-row .day-bar.top { opacity: 1; }
   .big-total { margin: 0 0 4px; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* header actions and messages */
@@ -1540,7 +1544,8 @@
     $("#spendEmpty").hidden = list.length > 0;
   }
 
-  function statRow(title, amount, sub, onClick) {
+  // bar: optional 0..1 share of the biggest value, drawn as a line under the amount
+  function statRow(title, amount, sub, onClick, bar) {
     const li = document.createElement("li");
     const row = document.createElement(onClick ? "button" : "div");
     if (onClick) { row.type = "button"; row.addEventListener("click", onClick); }
@@ -1551,6 +1556,16 @@
     b.className = "amt";
     b.textContent = amount;
     row.append(a, b);
+    if (bar != null) {
+      const track = document.createElement("span");
+      track.className = "day-track";
+      track.setAttribute("aria-hidden", "true");
+      const fill = document.createElement("span");
+      fill.className = "day-bar" + (bar >= 1 ? " top" : "");
+      fill.style.width = Math.max(2, Math.round(bar * 100)) + "%";
+      track.append(fill);
+      row.append(track);
+    }
     if (sub) {
       const s = document.createElement("span");
       s.className = "sub";
@@ -1658,14 +1673,17 @@
       ([cat, sum]) => statRow(cat, fmtWon(sum), `전체의 ${Math.round((sum / total) * 100)}%`)
     ));
 
-    // by day, newest first; tapping a day opens it
+    // by day, newest first, each with a bar against the month's biggest day; tapping a day opens it
+    const dayTotals = new Map(dayKeys.map((k) => [k, sumOf(items.filter((e) => e.date === k))]));
+    const maxDay = Math.max(...dayTotals.values(), 1);
     $("#lmDays").replaceChildren(...dayKeys.sort().reverse().map((k) => {
-      const list = items.filter((e) => e.date === k);
-      return statRow(dayLabel(k), fmtWon(sumOf(list)), `${list.length}건`, () => {
+      const count = items.filter((e) => e.date === k).length;
+      const sum = dayTotals.get(k);
+      return statRow(dayLabel(k), fmtWon(sum), `${count}건`, () => {
         ledgerDate = k;
         ledgerView = "day";
         renderLedger();
-      });
+      }, sum / maxDay);
     }));
 
     // five biggest single expenses
