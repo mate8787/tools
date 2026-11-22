@@ -207,6 +207,25 @@
   .subtabs button.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
   #pane-ledger .panel { margin-top: 12px; }
   #pane-ledger .subtabs ~ div > .panel:first-child { margin-top: 0; }
+
+  /* bank account balance at the top of 가계부 */
+  #pane-ledger .bank-card { margin: 0 0 12px; }
+  .bank-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .bank-label { color: var(--muted); font-size: 14px; font-weight: 600; }
+  .bank-reset { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+  .bank-reset.confirm { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); font-weight: 600; }
+  .bank-amt { margin: 6px 0 2px; font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .bank-amt.neg { color: var(--danger); }
+  .bank-sub { margin: 0 0 12px; }
+  .bank-add { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; font-size: 16px; }
+  .won-ic {
+    display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent-ink); color: var(--accent); font-size: 14px; font-weight: 800; line-height: 1;
+  }
+  .bank-form { display: grid; gap: 10px; }
+  .bank-form-btns { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+  .bank-form-btns .btn { padding: 12px; }
+  .bank-form-btns .btn.ghost { font-size: 15px; }
   .lc-sum { margin: 0 0 10px; text-align: center; }
   #lcGrid .day { aspect-ratio: 1 / 1.1; gap: 2px; }
   .day .won { font-size: 10.5px; font-weight: 700; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -476,6 +495,23 @@
     </section>
 
     <section id="pane-ledger" hidden>
+      <div class="panel bank-card" id="bankCard">
+        <div class="bank-top">
+          <span class="bank-label">통장 잔액</span>
+          <button class="bank-reset" id="bankReset" type="button">0원으로 초기화</button>
+        </div>
+        <p class="bank-amt" id="bankAmt" aria-live="polite">0원</p>
+        <p class="note bank-sub" id="bankSub"></p>
+        <button class="btn bank-add" id="bankAddBtn" type="button"><span class="won-ic" aria-hidden="true">₩</span>금액 추가</button>
+        <form class="bank-form" id="bankForm" autocomplete="off" hidden>
+          <input class="field" id="bankInput" type="text" inputmode="numeric" maxlength="14" placeholder="통장에 넣은 금액 (원)" aria-label="추가할 금액">
+          <div class="bank-form-btns">
+            <button class="btn ghost" id="bankCancel" type="button">취소</button>
+            <button class="btn" type="submit">추가</button>
+          </div>
+        </form>
+      </div>
+
       <div class="subtabs" role="group" aria-label="가계부 보기">
         <button type="button" class="on" id="lvDay">일별</button>
         <button type="button" id="lvCal">달력</button>
@@ -682,7 +718,7 @@
     unsubs.forEach((stop) => stop());
     unsubs = [];
     if (!user) {
-      days = {}; messages = []; readIds = new Set(); expenses = [];
+      days = {}; messages = []; readIds = new Set(); expenses = []; bank = null;
       foodPrefs = { excluded: new Set(), included: new Set() };
       show("login");
       return;
@@ -727,6 +763,15 @@
         const d = snap.data() || {};
         foodPrefs = { excluded: new Set(d.excluded || []), included: new Set(d.included || []) };
         if (tab === "foods") renderFoods();
+      },
+      () => {}
+    ));
+    // money in the separate bank account used for 가계부
+    unsubs.push(onSnapshot(
+      doc(db, "settings", "bank"),
+      (snap) => {
+        bank = snap.data({ serverTimestamps: "estimate" }) || null;
+        if (tab === "ledger") renderBank();
       },
       () => {}
     ));
@@ -1693,7 +1738,86 @@
     boxes.forEach((b) => { $(b).hidden = false; });
   }
 
+  /* ---------- bank account balance ---------- */
+  // settings/bank = { start, deposits: [{ amount, at }] }
+  // balance = money added since `start` − expenses written down since `start`;
+  // it is worked out from the expense list, so deleting or fixing an expense updates it too
+  let bank = null;
+  let bankResetConfirm = false;
+  let bankResetTimer;
+  const bankRef = () => doc(db, "settings", "bank");
+
+  function bankNumbers() {
+    if (!bank) return null;
+    const startMs = bank.start?.toMillis?.() ?? 0;
+    const added = (bank.deposits || []).reduce((t, d) => t + (Number(d.amount) || 0), 0);
+    const spent = sumOf(expenses.filter((e) => createdMs(e) >= startMs));
+    return { added, spent, balance: added - spent };
+  }
+
+  function renderBank() {
+    const n = bankNumbers();
+    const amt = $("#bankAmt");
+    if (!n) {
+      amt.textContent = "0원";
+      amt.classList.remove("neg");
+      $("#bankSub").textContent = "통장에 넣은 돈을 추가하면, 그다음부터 적는 지출이 여기서 빠져요.";
+    } else {
+      amt.textContent = (n.balance < 0 ? "-" : "") + fmtWon(Math.abs(n.balance));
+      amt.classList.toggle("neg", n.balance < 0);
+      $("#bankSub").textContent = `넣은 돈 ${fmtWon(n.added)} − 쓴 돈 ${fmtWon(n.spent)}`;
+    }
+    const r = $("#bankReset");
+    r.hidden = !n;
+    r.textContent = bankResetConfirm ? "한 번 더 누르면 0원이 돼요" : "0원으로 초기화";
+    r.classList.toggle("confirm", bankResetConfirm);
+  }
+
+  function closeBankForm() {
+    $("#bankForm").hidden = true;
+    $("#bankAddBtn").hidden = false;
+    $("#bankInput").value = "";
+  }
+  $("#bankAddBtn").addEventListener("click", () => {
+    $("#bankAddBtn").hidden = true;
+    $("#bankForm").hidden = false;
+    $("#bankInput").focus();
+  });
+  $("#bankCancel").addEventListener("click", closeBankForm);
+  $("#bankInput").addEventListener("input", (e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+    e.target.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+  });
+  $("#bankForm").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const amount = Number($("#bankInput").value.replace(/\D/g, ""));
+    if (!amount) { toast("금액을 적어 주세요."); $("#bankInput").focus(); return; }
+    // random part keeps two identical deposits in the same moment from merging into one
+    const entry = { amount, at: Date.now(), r: Math.random().toString(36).slice(2, 8) };
+    const save = bank
+      ? updateDoc(bankRef(), { deposits: arrayUnion(entry) })
+      : setDoc(bankRef(), { start: serverTimestamp(), deposits: [entry] });
+    save.catch(() => toast("저장하지 못했어요. 다시 시도해 주세요."));
+    closeBankForm();
+    toast(`${fmtWon(amount)}을 추가했어요.`);
+  });
+  $("#bankReset").addEventListener("click", () => {
+    clearTimeout(bankResetTimer);
+    if (!bankResetConfirm) {
+      bankResetConfirm = true;
+      renderBank();
+      bankResetTimer = setTimeout(() => { bankResetConfirm = false; renderBank(); }, 4000);
+      return;
+    }
+    bankResetConfirm = false;
+    // start counting again from now, with nothing added yet
+    setDoc(bankRef(), { start: serverTimestamp(), deposits: [] })
+      .catch(() => toast("초기화하지 못했어요. 다시 시도해 주세요."));
+    renderBank();
+  });
+
   function renderLedger() {
+    renderBank();
     $("#ledgerDay").hidden = ledgerView !== "day";
     $("#ledgerCal").hidden = ledgerView !== "cal";
     $("#ledgerMonth").hidden = ledgerView !== "month";
