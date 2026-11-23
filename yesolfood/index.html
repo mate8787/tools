@@ -365,6 +365,9 @@
   #statsBody p { margin: 0; overflow-wrap: anywhere; }
   .line { font-size: 16px; line-height: 1.65; }
   #statsBody .note { margin: 0; }
+  #rateBody { display: grid; gap: 8px; }
+  #rateBody p { margin: 0; font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+  #rateBody b { color: var(--accent); font-weight: 800; }
   .fine { margin: 12px 4px 0; color: var(--muted); font-size: 12.5px; }
 
   #toast {
@@ -466,6 +469,9 @@
     </div>
 
     <section id="pane-stats" hidden>
+      <div class="panel" id="rateBox" hidden>
+        <div id="rateBody"></div>
+      </div>
       <div class="panel">
         <h3>먹은 뒤 응가 분석</h3>
         <p class="note">음식을 먹은 다음 날부터 며칠 안에 응가를 했는지 보여줘요.</p>
@@ -1092,7 +1098,36 @@
     return p;
   }
 
+  // how often she poops over the last 7 / 14 / 30 days (a day with several counts once)
+  const RATE_WINDOWS = [7, 14, 30];
+  function renderRates() {
+    const box = $("#rateBox");
+    const out = $("#rateBody");
+    out.replaceChildren();
+    const logged = Object.keys(days).filter(isLogged).sort();
+    if (!logged.length) { box.hidden = true; return; }
+    const t = new Date();
+    const today = keyOf(t.getFullYear(), t.getMonth(), t.getDate());
+    const first = logged[0];
+    RATE_WINDOWS.forEach((n) => {
+      // 14 and 30 days wait until the records reach back that far
+      if (n > 7 && first > addDays(today, -(n - 1))) return;
+      let count = 0;
+      for (let i = 0; i < n; i++) if (poopsOf(days[addDays(today, -i)]) > 0) count++;
+      const p = document.createElement("p");
+      const bold = (s) => { const b = document.createElement("b"); b.textContent = s; return b; };
+      if (count === 0) {
+        p.append(`지난 ${n}일 동안 응가를 한 날이 없어요.`);
+      } else {
+        p.append(`지난 ${n}일 동안 응가 `, bold(`${count}번`), " 했고, 평균적으로 ", bold(`${(n / count).toFixed(1)}일마다`), " 했어요");
+      }
+      out.append(p);
+    });
+    box.hidden = false;
+  }
+
   function renderStats() {
+    renderRates();
     const body = $("#statsBody");
     body.replaceChildren();
 
