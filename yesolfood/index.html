@@ -211,7 +211,9 @@
   #pane-ledger .subtabs ~ div > .panel:first-child { margin-top: 0; }
 
   /* bank account balance at the top of 가계부 */
-  .bank-open { margin: 0 0 12px; }
+  #pane-ledger .bank-mini-card { margin: 0 0 12px; }
+  .bank-mini-card .bank-amt { margin: 6px 0 12px; }
+  .bank-open { margin: 0; }
   .bank-card { margin: 0; }
   #pane-bank .panel { margin-top: 12px; }
   #pane-bank .msg-top + .panel { margin-top: 0; }
@@ -511,7 +513,11 @@
     </section>
 
     <section id="pane-ledger" hidden>
-      <button class="btn bank-add bank-open" id="bankOpenBtn" type="button"><span class="won-ic" aria-hidden="true">₩</span>통장 확인</button>
+      <div class="panel bank-mini-card">
+        <span class="bank-label">통장 잔액</span>
+        <p class="bank-amt" id="bankMiniAmt" aria-live="polite">0원</p>
+        <button class="btn bank-add bank-open" id="bankOpenBtn" type="button"><span class="won-ic" aria-hidden="true">₩</span>통장 확인</button>
+      </div>
 
       <div class="subtabs" role="group" aria-label="가계부 보기">
         <button type="button" class="on" id="lvDay">일별</button>
@@ -804,6 +810,7 @@
       (snap) => {
         bank = snap.data({ serverTimestamps: "estimate" }) || null;
         if (tab === "bank") renderBankView();
+        if (tab === "ledger") renderBankMini();
       },
       () => {}
     ));
@@ -1901,10 +1908,20 @@
     renderBank();
     renderTx();
   }
+
+  // the balance shown above the 통장 확인 button on the 가계부 screen
+  function renderBankMini() {
+    const n = bankNumbers();
+    const balance = n ? n.balance : 0;
+    const amt = $("#bankMiniAmt");
+    amt.textContent = (balance < 0 ? "-" : "") + fmtWon(Math.abs(balance));
+    amt.classList.toggle("neg", balance < 0);
+  }
   $("#bankOpenBtn").addEventListener("click", () => setTab("bank"));
   $("#bankBack").addEventListener("click", () => { closeBankForm(); setTab("ledger"); });
 
   function renderLedger() {
+    renderBankMini();
     $("#ledgerDay").hidden = ledgerView !== "day";
     $("#ledgerCal").hidden = ledgerView !== "cal";
     $("#ledgerMonth").hidden = ledgerView !== "month";
