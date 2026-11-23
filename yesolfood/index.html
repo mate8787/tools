@@ -25,6 +25,7 @@
     --sat: #4f7bd9;
     --danger: #d6313d;
     --danger-soft: #fdeaec;
+    --income: #2563eb;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
@@ -41,6 +42,7 @@
       --sat: #7ea2ff;
       --danger: #ff6b78;
       --danger-soft: #3a2226;
+      --income: #6ea8ff;
       color-scheme: dark;
     }
   }
@@ -209,7 +211,21 @@
   #pane-ledger .subtabs ~ div > .panel:first-child { margin-top: 0; }
 
   /* bank account balance at the top of 가계부 */
-  #pane-ledger .bank-card { margin: 0 0 12px; }
+  .bank-open { margin: 0 0 12px; }
+  .bank-card { margin: 0; }
+  #pane-bank .panel { margin-top: 12px; }
+  #pane-bank .msg-top + .panel { margin-top: 0; }
+  /* passbook list: 입금 in blue, 출금 in red with what it was spent on underneath */
+  .tx-list { list-style: none; margin: 8px 0 0; padding: 0; }
+  .tx { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .tx:last-child { border-bottom: 0; }
+  .tx-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .tx-kind { font-size: 15px; font-weight: 700; }
+  .tx-date { color: var(--muted); font-size: 12.5px; }
+  .tx-name { grid-column: 1; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+  .tx-amt { grid-column: 2; grid-row: 1 / span 2; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .tx.in .tx-kind, .tx.in .tx-amt { color: var(--income); }
+  .tx.out .tx-kind, .tx.out .tx-amt { color: var(--danger); }
   .bank-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .bank-label { color: var(--muted); font-size: 14px; font-weight: 600; }
   .bank-reset { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
@@ -495,22 +511,7 @@
     </section>
 
     <section id="pane-ledger" hidden>
-      <div class="panel bank-card" id="bankCard">
-        <div class="bank-top">
-          <span class="bank-label">통장 잔액</span>
-          <button class="bank-reset" id="bankReset" type="button">0원으로 초기화</button>
-        </div>
-        <p class="bank-amt" id="bankAmt" aria-live="polite">0원</p>
-        <p class="note bank-sub" id="bankSub"></p>
-        <button class="btn bank-add" id="bankAddBtn" type="button"><span class="won-ic" aria-hidden="true">₩</span>금액 추가</button>
-        <form class="bank-form" id="bankForm" autocomplete="off" hidden>
-          <input class="field" id="bankInput" type="text" inputmode="numeric" maxlength="14" placeholder="통장에 넣은 금액 (원)" aria-label="추가할 금액">
-          <div class="bank-form-btns">
-            <button class="btn ghost" id="bankCancel" type="button">취소</button>
-            <button class="btn" type="submit">추가</button>
-          </div>
-        </form>
-      </div>
+      <button class="btn bank-add bank-open" id="bankOpenBtn" type="button"><span class="won-ic" aria-hidden="true">₩</span>통장 확인</button>
 
       <div class="subtabs" role="group" aria-label="가계부 보기">
         <button type="button" class="on" id="lvDay">일별</button>
@@ -585,6 +586,36 @@
           <h3>가장 큰 지출</h3>
           <ul class="spend-list" id="lmTop"></ul>
         </div>
+      </div>
+    </section>
+
+    <section id="pane-bank" hidden>
+      <div class="msg-top">
+        <button class="btn ghost" id="bankBack" type="button">← 가계부</button>
+        <h2>통장</h2>
+      </div>
+
+      <div class="panel bank-card" id="bankCard">
+        <div class="bank-top">
+          <span class="bank-label">통장 잔액</span>
+          <button class="bank-reset" id="bankReset" type="button">0원으로 초기화</button>
+        </div>
+        <p class="bank-amt" id="bankAmt" aria-live="polite">0원</p>
+        <p class="note bank-sub" id="bankSub"></p>
+        <button class="btn bank-add" id="bankAddBtn" type="button"><span class="won-ic" aria-hidden="true">₩</span>금액 추가</button>
+        <form class="bank-form" id="bankForm" autocomplete="off" hidden>
+          <input class="field" id="bankInput" type="text" inputmode="numeric" maxlength="14" placeholder="통장에 넣은 금액 (원)" aria-label="추가할 금액">
+          <div class="bank-form-btns">
+            <button class="btn ghost" id="bankCancel" type="button">취소</button>
+            <button class="btn" type="submit">추가</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>입출금 내역</h3>
+        <ul class="tx-list" id="txList"></ul>
+        <p class="note" id="txEmpty">아직 내역이 없어요. 금액을 추가하면 입금 내역이 여기에 쌓여요.</p>
       </div>
     </section>
 
@@ -753,6 +784,7 @@
       (snap) => {
         expenses = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
         if (tab === "ledger") renderLedger();
+        if (tab === "bank") renderBankView();
       },
       () => {}
     ));
@@ -771,7 +803,7 @@
       doc(db, "settings", "bank"),
       (snap) => {
         bank = snap.data({ serverTimestamps: "estimate" }) || null;
-        if (tab === "ledger") renderBank();
+        if (tab === "bank") renderBankView();
       },
       () => {}
     ));
@@ -979,13 +1011,14 @@
   let lastTab = "cal";    // where the back button in messages returns to
   function setTab(t) {
     tab = t;
-    if (t !== "msgs") lastTab = t;
+    if (t !== "msgs" && t !== "bank") lastTab = t;
     $("#pane-cal").hidden = t !== "cal";
     $("#pane-stats").hidden = t !== "stats";
     $("#pane-foods").hidden = t !== "foods";
     $("#pane-ledger").hidden = t !== "ledger";
+    $("#pane-bank").hidden = t !== "bank";
     $("#pane-msgs").hidden = t !== "msgs";
-    document.querySelector(".tabs").hidden = t === "msgs";
+    document.querySelector(".tabs").hidden = t === "msgs" || t === "bank";
     $("#tabCal").classList.toggle("on", t === "cal");
     $("#tabStats").classList.toggle("on", t === "stats");
     $("#tabFoods").classList.toggle("on", t === "foods");
@@ -1816,8 +1849,62 @@
     renderBank();
   });
 
-  function renderLedger() {
+  // passbook: deposits (입금) and withdrawals (출금) since the account was started or reset, newest first.
+  // withdrawals are the expenses written down in 가계부, the same ones the balance subtracts.
+  function renderTx() {
+    const startMs = bank?.start?.toMillis?.() ?? 0;
+    const rows = [];
+    (bank?.deposits || []).forEach((d) => {
+      const at = Number(d.at) || 0;
+      const t = new Date(at);
+      rows.push({
+        kind: "in", at, amount: Number(d.amount) || 0,
+        date: dayLabel(keyOf(t.getFullYear(), t.getMonth(), t.getDate())),
+      });
+    });
+    if (bank) {
+      expenses.filter((e) => createdMs(e) >= startMs).forEach((e) => {
+        rows.push({ kind: "out", at: createdMs(e), amount: e.amount, name: e.name, date: dayLabel(e.date) });
+      });
+    }
+    rows.sort((a, b) => b.at - a.at);
+
+    $("#txList").replaceChildren(...rows.map((r) => {
+      const li = document.createElement("li");
+      li.className = "tx " + r.kind;
+      const top = document.createElement("div");
+      top.className = "tx-top";
+      const kind = document.createElement("span");
+      kind.className = "tx-kind";
+      kind.textContent = r.kind === "in" ? "입금" : "출금";
+      const date = document.createElement("span");
+      date.className = "tx-date";
+      date.textContent = r.date;
+      top.append(kind, date);
+      li.append(top);
+      if (r.kind === "out") {
+        const name = document.createElement("span");
+        name.className = "tx-name";
+        name.textContent = r.name;
+        li.append(name);
+      }
+      const amt = document.createElement("span");
+      amt.className = "tx-amt";
+      amt.textContent = (r.kind === "in" ? "+" : "-") + fmtWon(r.amount);
+      li.append(amt);
+      return li;
+    }));
+    $("#txEmpty").hidden = rows.length > 0;
+  }
+
+  function renderBankView() {
     renderBank();
+    renderTx();
+  }
+  $("#bankOpenBtn").addEventListener("click", () => setTab("bank"));
+  $("#bankBack").addEventListener("click", () => { closeBankForm(); setTab("ledger"); });
+
+  function renderLedger() {
     $("#ledgerDay").hidden = ledgerView !== "day";
     $("#ledgerCal").hidden = ledgerView !== "cal";
     $("#ledgerMonth").hidden = ledgerView !== "month";
@@ -1863,6 +1950,7 @@
   });
 
   function render() {
+    if (tab === "bank") { renderBankView(); return; }
     if (tab === "ledger") { renderLedger(); return; }
     if (tab === "foods") { renderFoods(); return; }
     if (tab === "msgs") { renderMsgs(); return; }
