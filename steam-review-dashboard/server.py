@@ -123,12 +123,23 @@ def compact(r):
     }
 
 
+def heal_coverage(reviews, covered):
+    """If the cache has a hole (more than 36 h without a single review in a busy stretch), everything
+    older than the hole is not trustworthy: report coverage only down to the hole's newer edge."""
+    ts = sorted((r['c'] for r in reviews), reverse=True)
+    for newer, older in zip(ts, ts[1:]):
+        if newer - older > 36 * 3600:
+            return max(covered or 0, newer)
+    return covered
+
+
 def sync(app, days):
     """Walk Steam's newest-first review list until the requested window is cached."""
     try:
         cache = load_cache(app)
         known = {r['i']: r for r in cache['reviews']}
-        prev_cov = cache.get('covered')  # all reviews newer than this are cached; 0 = everything
+        known_max = max((r['c'] for r in known.values()), default=None)  # newest review we already had
+        prev_cov = heal_coverage(cache['reviews'], cache.get('covered'))  # all reviews newer than this are cached; 0 = everything
         target = int(time.time()) - days * 86400 if days else 0
         cursor, seen_cursors, covered = '*', set(), prev_cov
         pages = 0
@@ -156,7 +167,8 @@ def sync(app, days):
                 state['fetched'] += len(revs)
                 state['new'] += new
                 state['oldest'] = oldest
-            if oldest < target:
+            # reached the requested window AND joined up with what was cached before; otherwise keep going so no hole is left
+            if oldest < target and (known_max is None or oldest <= known_max):
                 covered = oldest if covered is None else min(covered, oldest)
                 break
             if new == 0 and prev_cov is not None and prev_cov <= target:
