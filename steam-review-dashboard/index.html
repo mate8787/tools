@@ -205,7 +205,7 @@
     <div id="timeChartWrap" style="position:relative"><div id="timeChart"></div><div id="chartTip" class="tip" hidden></div></div>
   </section>
 
-  <section class="card">
+  <section class="card" id="ptCard">
     <h2 data-i18n="pt.title"></h2>
     <div class="hint" data-i18n="pt.hint"></div>
     <table class="pt-table" id="ptTable"></table>
@@ -255,7 +255,7 @@ const I18N = {
     'ctl.app': 'Steam App ID', 'ctl.load': 'Load', 'ctl.game': 'Loaded game',
     'game.loading': 'Loading…', 'game.unknown': 'Unknown app', 'game.error': 'Name unavailable',
     'game.dlc': 'DLC (has its own reviews, separate from the base game)',
-    'game.base': 'Switch to base game: {0} ({1})',
+    'game.base': 'Switch to base game: {0} ({1})', 'game.dlcBtn': 'Switch to DLC: {0} ({1})',
     'demo.status': 'Read-only snapshot of {0} reviews, last updated {1}. Downloading new reviews is only possible in the local version.',
     'ctl.download': 'Download window', 'ctl.update': 'Update reviews',
     'ctl.language': 'Review language', 'ctl.dates': 'Date range', 'ctl.allTime': 'All time', 'ctl.range': 'Select range',
@@ -313,7 +313,7 @@ const I18N = {
     'ctl.app': '스팀 앱 ID', 'ctl.load': '불러오기', 'ctl.game': '불러온 게임',
     'game.loading': '불러오는 중…', 'game.unknown': '알 수 없는 앱', 'game.error': '이름을 확인할 수 없음',
     'game.dlc': 'DLC (본편과 별도로 자체 리뷰가 있음)',
-    'game.base': '본편으로 전환: {0} ({1})',
+    'game.base': '본편으로 전환: {0} ({1})', 'game.dlcBtn': 'DLC로 전환: {0} ({1})',
     'demo.status': '리뷰 {0}개의 읽기 전용 스냅샷 (최종 업데이트 {1}). 새 리뷰 다운로드는 로컬 버전에서만 가능합니다.',
     'ctl.download': '다운로드 범위', 'ctl.update': '리뷰 업데이트',
     'ctl.language': '리뷰 언어', 'ctl.dates': '기간', 'ctl.allTime': '전체 기간', 'ctl.range': '기간 선택',
@@ -446,6 +446,11 @@ function showAppName(app, info) {
     (info.type === 'dlc' ? `<small class="warn">${t('game.dlc')}</small>` : '') +
     (info.fullgame && (!WEB || WEB.apps.some(a => String(a.id) === String(info.fullgame.appid))) ? `<button id="baseBtn" data-app="${esc(info.fullgame.appid)}">${esc(t('game.base', info.fullgame.name, info.fullgame.appid))}</button>` : '');
   const bb = $('baseBtn'); if (bb) bb.onclick = () => { S.from = S.to = ''; loadApp(bb.dataset.app); };
+  if (WEB) { // published folder has no game dropdown: link a base game to its published DLCs
+    const dlcs = WEB.apps.filter(a => a.fullgame && String(a.fullgame) === String(app));
+    el.insertAdjacentHTML('beforeend', dlcs.map(a => `<button class="dlcBtn" data-app="${esc(a.id)}">${esc(t('game.dlcBtn', a.name || a.id, a.id))}</button>`).join(''));
+    el.querySelectorAll('.dlcBtn').forEach(b => b.onclick = () => { S.from = S.to = ''; loadApp(b.dataset.app); });
+  }
 }
 
 // written analysis for the current UI language (analysis/<app>.ko.json for Korean, else the English file)
@@ -609,6 +614,10 @@ function heatColor(v, min, mid, max) {
   return `rgb(${c.join(',')})`;
 }
 function renderPlaytime() {
+  // DLC reviews carry no playtime (Steam counts hours on the base game), so the table would be meaningless
+  const show = !(S.info && S.info.type === 'dlc') && S.reviews.some(r => r.p > 0);
+  $('ptCard').hidden = !show;
+  if (!show) return;
   const rows = PT_EDGES.map(() => [0, 0]).concat([[0, 0]]); // [negative, positive]
   for (const i of S.idx) { const r = S.reviews[i]; rows[ptBucket(r.p / 60)][r.u ? 1 : 0]++; }
   const ratios = rows.map(([n, p]) => n ? p / n : null);
@@ -916,7 +925,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('modalBg
   let startApp = EMBED ? EMBED.app : store.get('app', WEB ? null : '3321460'); // web folder: first published game unless they picked another before
   if (WEB) {
     // published folder: pick from the games that were published instead of typing an App ID
-    $('appField').hidden = true; $('loadBtn').hidden = true; $('pickField').hidden = false;
+    $('appField').hidden = true; $('loadBtn').hidden = true; $('pickField').hidden = true; // no dropdown: the game buttons next to the name switch between games
     $('appPick').innerHTML = WEB.apps.map(a => `<option value="${esc(a.id)}">${esc(a.name || a.id)} (${esc(a.id)})</option>`).join('');
     $('appPick').onchange = e => { S.from = S.to = ''; loadApp(e.target.value); };
     if (!WEB.apps.some(a => String(a.id) === String(startApp))) startApp = WEB.apps[0] && WEB.apps[0].id;

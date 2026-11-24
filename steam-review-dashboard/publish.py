@@ -85,6 +85,7 @@ def main():
     index = {
         'generated': generated, 'topics': topics,
         'apps': [{'id': g['app'], 'name': g['info'].get('name'), 'type': g['info'].get('type'),
+                  'fullgame': (g['info'].get('fullgame') or {}).get('appid'),
                   'count': len(g['data']['reviews']), 'updated': g['data'].get('updated')} for g in games],
     }
     for out in outs:
