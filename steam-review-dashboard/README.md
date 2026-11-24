@@ -16,6 +16,10 @@ Steam does not allow its review API to be called from a web page, so `server.py`
 - **Opening it:** SharePoint's web view downloads `.html` files instead of showing them, so a SharePoint link alone will not display the page. Teammates either sync/add the folder to OneDrive and double-click `index.html` (opens in their browser, no install), or the same folder is put on any web host (GitHub Pages, an internal web server) where it opens as a normal link.
 - Republish after every **Update reviews** (and after Claude refreshes a summary): run `publish.py` again; only the `data/` files and `index.html` change.
 
+## Give it to a teammate (full tool, runs on their PC)
+
+`python package.py` builds `dist/SteamReviewDashboard.zip` (about 11 MB): the dashboard, a trimmed copy of this PC's Python so nothing has to be installed, and the reviews cached so far. They extract it and double-click `Start Steam Review Dashboard.bat`; the tool then runs on their PC, keeps its reviews in its own `data` folder and downloads new ones when they press **Update reviews**. `--apps 5001840` chooses which cached games are included. The `dist/` folder is not committed.
+
 ## Using it
 
 - **Steam App ID**: Crimson Desert Enhanced is `5001840`. `3321460` (the original) is useful for testing before launch.
