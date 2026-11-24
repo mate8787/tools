@@ -31,6 +31,14 @@ service cloud.firestore {
       allow create, update, delete: if ok() && request.auth.uid == 'AUTHOR_UID';
     }
 
+    // comments on messages: everyone allowed can read and comment as themselves;
+    // a comment can be removed by whoever wrote it or by the message author
+    match /comments/{id} {
+      allow read: if ok();
+      allow create: if ok() && request.resource.data.authorUid == request.auth.uid;
+      allow delete: if ok() && (resource.data.authorUid == request.auth.uid || request.auth.uid == 'AUTHOR_UID');
+    }
+
     // which messages each person has opened, private to that person
     match /reads/{uid} {
       allow read, write: if ok() && request.auth.uid == uid;

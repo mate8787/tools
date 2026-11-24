@@ -307,6 +307,23 @@
   }
   .compose-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
   .muted-s { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  /* comments under a message */
+  .comments { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .comments h3 { margin: 0 0 10px; font-size: 15px; }
+  .comments .note { margin: 0 0 12px; }
+  .comment-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+  .comment { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; }
+  .comment.mine { background: var(--accent-soft); border-color: transparent; }
+  .comment-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .comment-head b { color: var(--ink); font-weight: 700; }
+  .comment-del { background: transparent; border: 0; color: var(--muted); font-size: 12.5px; padding: 2px 4px; border-radius: 6px; }
+  .comment-del.confirm { color: var(--danger); font-weight: 600; }
+  .comment-text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+  .comment-count { color: var(--accent); font-weight: 700; font-size: 13px; }
+  #commentInput {
+    width: 100%; resize: vertical; font: inherit; font-size: 16px;
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  }
   .msg-list { list-style: none; margin: 0; padding: 0; }
   .msg-item {
     width: 100%; display: grid; grid-template-columns: 14px 1fr; gap: 4px 10px; align-items: center;
@@ -671,6 +688,19 @@
           <button class="btn ghost" id="editCancel" type="button">취소</button>
           <button class="btn" id="editSave" type="button">저장</button>
         </div>
+
+        <div class="comments" id="commentsBox">
+          <h3 id="commentsTitle">댓글</h3>
+          <ul class="comment-list" id="commentList"></ul>
+          <p class="note" id="commentEmpty">아직 댓글이 없어요.</p>
+          <div class="comment-form">
+            <textarea id="commentInput" rows="2" maxlength="200" placeholder="댓글을 적어 주세요" aria-label="새 댓글"></textarea>
+            <div class="compose-row">
+              <span class="muted-s" id="commentLen">0/200</span>
+              <button class="btn" id="commentSend" type="button">댓글 달기</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </section>
@@ -761,7 +791,7 @@
     unsubs.forEach((stop) => stop());
     unsubs = [];
     if (!user) {
-      days = {}; messages = []; readIds = new Set(); expenses = []; bank = null;
+      days = {}; messages = []; comments = []; readIds = new Set(); expenses = []; bank = null;
       foodPrefs = { excluded: new Set(), included: new Set() };
       show("login");
       return;
@@ -786,6 +816,15 @@
       query(collection(db, "messages"), orderBy("created", "desc")),
       (snap) => {
         messages = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
+        renderMsgs();
+      },
+      () => {}
+    ));
+    // comments on messages, oldest first
+    unsubs.push(onSnapshot(
+      query(collection(db, "comments"), orderBy("created", "asc")),
+      (snap) => {
+        comments = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: "estimate" }) }));
         renderMsgs();
       },
       () => {}
@@ -1159,6 +1198,8 @@
   const AUTHOR_UID = "ZeXC7Dzll1hnLfYkEXrmApndkFZ2";
   let messages = [];      // newest first
   let readIds = new Set();
+  let comments = [];      // oldest first, all messages
+  let confirmCommentId = null;
   let msgOpen = null;     // id of the message being read
   let confirmDeleteMsg = false;
   let editingMsg = false;
@@ -1321,6 +1362,7 @@
 
   function openMessage(id) {
     msgOpen = id;
+    confirmCommentId = null;
     confirmDeleteMsg = false;
     editingMsg = false;
     const m = messages.find((x) => x.id === id);
@@ -1362,6 +1404,14 @@
       const time = document.createElement("span");
       time.className = "msg-time";
       time.textContent = fmtTime(m.created);
+      const cn = comments.filter((c) => c.msgId === m.id).length;
+      if (cn) {
+        const badge = document.createElement("span");
+        badge.className = "comment-count";
+        badge.textContent = ` 💬${cn}`;
+        badge.setAttribute("aria-label", `댓글 ${cn}개`);
+        preview.append(badge);
+      }
       btn.append(dot, preview, time);
       btn.addEventListener("click", () => openMessage(m.id));
       li.append(btn);
@@ -1382,8 +1432,60 @@
       $("#detailEdit").hidden = !isAuthor;
       $("#detailDelete").hidden = !isAuthor;
       $("#detailDelete").textContent = confirmDeleteMsg ? "한 번 더 누르면 삭제돼요" : "삭제";
+      renderComments(current.id, isAuthor);
     }
   }
+
+  function renderComments(msgId, isAuthor) {
+    const mine = comments.filter((c) => c.msgId === msgId);
+    $("#commentsTitle").textContent = mine.length ? `댓글 ${mine.length}` : "댓글";
+    $("#commentEmpty").hidden = mine.length > 0;
+    const list = $("#commentList");
+    list.replaceChildren();
+    mine.forEach((c) => {
+      const own = c.authorUid === me();
+      const li = document.createElement("li");
+      li.className = "comment" + (own ? " mine" : "");
+      const head = document.createElement("div");
+      head.className = "comment-head";
+      const who = document.createElement("span");
+      const name = document.createElement("b");
+      name.textContent = own ? "나" : (c.name || "상대");
+      who.append(name, ` · ${fmtTime(c.created)}`);
+      head.append(who);
+      // you can remove your own comment; the message's author can remove any
+      if (own || isAuthor) {
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "comment-del" + (confirmCommentId === c.id ? " confirm" : "");
+        del.textContent = confirmCommentId === c.id ? "한 번 더 누르면 삭제" : "삭제";
+        del.addEventListener("click", () => {
+          if (confirmCommentId !== c.id) { confirmCommentId = c.id; renderMsgs(); return; }
+          confirmCommentId = null;
+          deleteDoc(doc(db, "comments", c.id)).catch(() => toast("삭제하지 못했어요. 다시 시도해 주세요."));
+          renderMsgs();
+        });
+        head.append(del);
+      }
+      const text = document.createElement("p");
+      text.className = "comment-text";
+      setLinkedText(text, c.text || "");
+      li.append(head, text);
+      list.append(li);
+    });
+  }
+
+  $("#commentInput").addEventListener("input", (e) => { $("#commentLen").textContent = `${e.target.value.length}/200`; });
+  $("#commentSend").addEventListener("click", () => {
+    const input = $("#commentInput");
+    const text = input.value.trim().slice(0, 200);
+    if (!text || !msgOpen) return;
+    const name = (auth.currentUser?.displayName || "").trim().split(/\s+/)[0].slice(0, 20);
+    addDoc(collection(db, "comments"), { msgId: msgOpen, text, created: serverTimestamp(), authorUid: me(), name })
+      .catch(() => toast("댓글을 달지 못했어요. 다시 시도해 주세요."));
+    input.value = "";
+    $("#commentLen").textContent = "0/200";
+  });
 
   $("#msgBtn").addEventListener("click", () => { msgOpen = null; editingMsg = false; setTab("msgs"); });
   $("#msgBack").addEventListener("click", () => setTab(lastTab));
@@ -1414,6 +1516,8 @@
     msgOpen = null;
     confirmDeleteMsg = false;
     deleteDoc(doc(db, "messages", id)).catch(() => toast("삭제하지 못했어요. 다시 시도해 주세요."));
+    // its comments go with it
+    comments.filter((c) => c.msgId === id).forEach((c) => deleteDoc(doc(db, "comments", c.id)).catch(() => {}));
     renderMsgs();
   });
   $("#msgInput").addEventListener("input", (e) => { $("#msgLen").textContent = `${e.target.value.length}/300`; });
