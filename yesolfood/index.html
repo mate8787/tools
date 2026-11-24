@@ -316,6 +316,7 @@
   .comment.mine { background: var(--accent-soft); border-color: transparent; }
   .comment-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
   .comment-head b { color: var(--ink); font-weight: 700; }
+  .cdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #e5484d; margin-right: 6px; vertical-align: baseline; }
   .comment-del { background: transparent; border: 0; color: var(--muted); font-size: 12.5px; padding: 2px 4px; border-radius: 6px; }
   .comment-del.confirm { color: var(--danger); font-weight: 600; }
   .comment-text { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
@@ -791,7 +792,7 @@
     unsubs.forEach((stop) => stop());
     unsubs = [];
     if (!user) {
-      days = {}; messages = []; comments = []; readIds = new Set(); expenses = []; bank = null;
+      days = {}; messages = []; comments = []; readIds = new Set(); readCommentIds = new Set(); freshComments.clear(); pendingRead.clear(); expenses = []; bank = null;
       foodPrefs = { excluded: new Set(), included: new Set() };
       show("login");
       return;
@@ -864,6 +865,8 @@
       doc(db, "reads", user.uid),
       (snap) => {
         readIds = new Set(snap.data()?.ids || []);
+        readCommentIds = new Set(snap.data()?.commentIds || []);
+        readCommentIds.forEach((id) => pendingRead.delete(id));   // confirmed by the database
         renderMsgs();
       },
       () => {}
@@ -1198,6 +1201,9 @@
   const AUTHOR_UID = "ZeXC7Dzll1hnLfYkEXrmApndkFZ2";
   let messages = [];      // newest first
   let readIds = new Set();
+  let readCommentIds = new Set();   // comments (by others) this account has already seen
+  const freshComments = new Set();  // comments that were new when the open message was opened: keep their dot while reading
+  const pendingRead = new Set();    // marked as read, waiting for the database to confirm
   let comments = [];      // oldest first, all messages
   let confirmCommentId = null;
   let msgOpen = null;     // id of the message being read
@@ -1206,6 +1212,8 @@
 
   const me = () => auth.currentUser?.uid;
   const isUnread = (m) => !readIds.has(m.id) && m.authorUid !== me();
+  const isNewComment = (c) => c.authorUid !== me() && !readCommentIds.has(c.id);
+  const hasNewComments = (m) => comments.some((c) => c.msgId === m.id && isNewComment(c));
   const fmtTime = (ts) => {
     const d = ts?.toDate ? ts.toDate() : new Date();
     return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -1363,6 +1371,7 @@
   function openMessage(id) {
     msgOpen = id;
     confirmCommentId = null;
+    freshComments.clear();
     confirmDeleteMsg = false;
     editingMsg = false;
     const m = messages.find((x) => x.id === id);
@@ -1373,9 +1382,9 @@
   }
 
   function renderMsgs() {
-    const unread = messages.filter(isUnread).length;
+    const unread = messages.filter((m) => isUnread(m) || hasNewComments(m)).length;
     $("#msgDot").hidden = unread === 0;
-    $("#msgBtn").setAttribute("aria-label", unread ? `메시지, 안 읽은 메시지 ${unread}개` : "메시지");
+    $("#msgBtn").setAttribute("aria-label", unread ? `메시지, 새 소식이 있는 메시지 ${unread}개` : "메시지");
     if (tab !== "msgs") return;
 
     const isAuthor = me() === AUTHOR_UID;
@@ -1389,7 +1398,7 @@
     const list = $("#msgList");
     list.replaceChildren();
     messages.forEach((m) => {
-      const unreadNow = isUnread(m);
+      const unreadNow = isUnread(m) || hasNewComments(m);
       const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button";
@@ -1438,6 +1447,15 @@
 
   function renderComments(msgId, isAuthor) {
     const mine = comments.filter((c) => c.msgId === msgId);
+    // reading the message marks its new comments as seen, but their dot stays while it is open
+    const fresh = mine.filter(isNewComment);
+    fresh.forEach((c) => freshComments.add(c.id));
+    const ids = fresh.map((c) => c.id).filter((id) => !pendingRead.has(id));
+    if (ids.length) {
+      ids.forEach((id) => pendingRead.add(id));
+      setDoc(doc(db, "reads", me()), { commentIds: arrayUnion(...ids) }, { merge: true })
+        .catch(() => ids.forEach((id) => pendingRead.delete(id)));
+    }
     $("#commentsTitle").textContent = mine.length ? `댓글 ${mine.length}` : "댓글";
     $("#commentEmpty").hidden = mine.length > 0;
     const list = $("#commentList");
@@ -1451,6 +1469,13 @@
       const who = document.createElement("span");
       const name = document.createElement("b");
       name.textContent = own ? "나" : (c.name || "상대");
+      if (freshComments.has(c.id)) {
+        const dot = document.createElement("span");
+        dot.className = "cdot";
+        dot.setAttribute("role", "img");
+        dot.setAttribute("aria-label", "새 댓글");
+        who.append(dot);
+      }
       who.append(name, ` · ${fmtTime(c.created)}`);
       head.append(who);
       // you can remove your own comment; the message's author can remove any
