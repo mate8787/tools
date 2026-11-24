@@ -7,6 +7,7 @@ API does not allow requests straight from a web page). Reviews are cached in
 """
 import json
 import os
+import socket
 import sys
 import threading
 import time
@@ -239,8 +240,28 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
-    srv = ThreadingHTTPServer(('127.0.0.1', PORT), Handler)
-    url = 'http://localhost:%d/' % PORT
+    srv, port = None, PORT
+    def in_use(p):  # Windows lets us bind next to another program's wildcard listener, so test by connecting
+        for fam, host in ((socket.AF_INET, '127.0.0.1'), (socket.AF_INET6, '::1')):
+            try:
+                with socket.socket(fam, socket.SOCK_STREAM) as s:
+                    s.settimeout(0.3)
+                    if s.connect_ex((host, p)) == 0:
+                        return True
+            except OSError:
+                pass
+        return False
+    for port in range(PORT, PORT + 20):  # another program may already use 8765: take the next free port
+        if in_use(port):
+            continue
+        try:
+            srv = ThreadingHTTPServer(('127.0.0.1', port), Handler)
+            break
+        except OSError:
+            continue
+    if srv is None:
+        sys.exit('No free port between %d and %d.' % (PORT, PORT + 19))
+    url = 'http://localhost:%d/' % port
     print('Steam Review Dashboard running at ' + url)
     print('Press Ctrl+C to stop.')
     if '--no-browser' not in sys.argv:
