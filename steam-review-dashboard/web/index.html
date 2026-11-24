@@ -287,8 +287,9 @@ const I18N = {
     'gen.hint': 'Numbers follow the current language and date filters. The explanations were written from a sample of {0} reviews ({1} to {2}) and do not change with the filters.',
     'gen.hintNoText': 'Numbers follow the current language and date filters. No written explanation saved for this app yet.',
     'gen.numbers': '{0} reviews: {1}% positive, {2}% negative.',
-    'gen.mention': 'is mentioned in {0}% of reviews ({1}),', 'gen.mostlyPos': 'mostly positive ({0}% positive, vs {1}% across all reviews)',
-    'gen.mostlyNeg': 'mostly negative ({0}% negative, vs {1}% across all reviews)', 'gen.mixed': 'mixed ({0}% positive, {1}% negative)',
+    'gen.mention': 'is mentioned in {0}% of reviews ({1}),',
+    'gen.mostlyPos': 'mostly positive ({0}% positive, {1}% negative)', 'gen.mostlyNeg': 'mostly negative ({0}% positive, {1}% negative)',
+    'gen.mixed': 'mixed ({0}% positive, {1}% negative)',
     'gen.few': 'too few mentions to judge ({0} positive, {1} negative)',
     'gen.inPos': 'In positive reviews:', 'gen.inNeg': 'In negative reviews:',
     'sum.title': 'What players praise and complain about', 'sum.praise': 'Praised', 'sum.complain': 'Complaints',
@@ -344,8 +345,9 @@ const I18N = {
     'gen.hint': '수치는 현재 언어·기간 필터를 따릅니다. 설명은 리뷰 {0}개 샘플({1} ~ {2})을 읽고 작성한 것이며 필터에 따라 바뀌지 않습니다.',
     'gen.hintNoText': '수치는 현재 언어·기간 필터를 따릅니다. 이 앱에 저장된 작성형 설명이 아직 없습니다.',
     'gen.numbers': '리뷰 {0}개: 긍정 {1}%, 부정 {2}%.',
-    'gen.mention': '— 전체 리뷰의 {0}% ({1}개)에서 언급,', 'gen.mostlyPos': '대체로 긍정적 (긍정 {0}%, 전체 평균 {1}%)',
-    'gen.mostlyNeg': '대체로 부정적 (부정 {0}%, 전체 평균 {1}%)', 'gen.mixed': '엇갈림 (긍정 {0}%, 부정 {1}%)',
+    'gen.mention': '— 전체 리뷰의 {0}% ({1}개)에서 언급,',
+    'gen.mostlyPos': '대체로 긍정적 (긍정 {0}%, 부정 {1}%)', 'gen.mostlyNeg': '대체로 부정적 (긍정 {0}%, 부정 {1}%)',
+    'gen.mixed': '엇갈림 (긍정 {0}%, 부정 {1}%)',
     'gen.few': '언급이 너무 적어 판단하기 어려움 (긍정 {0}개, 부정 {1}개)',
     'gen.inPos': '긍정 리뷰에서:', 'gen.inNeg': '부정 리뷰에서:',
     'sum.title': '플레이어들이 칭찬하는 점과 불만인 점', 'sum.praise': '칭찬', 'sum.complain': '불만',
@@ -760,7 +762,8 @@ function renderGeneral() {
     h += `<h3 style="margin-top:18px">${t('gen.topics')}</h3><ol class="gen-list">`;
     for (const s of stats) {
       const p = 100 * s.up / s.all, nt = notes[s.tp.name.trim().toLowerCase()];
-      const lean = s.all < 8 ? t('gen.few', s.up, s.down) : p >= 55 ? t('gen.mostlyPos', p.toFixed(0), overall.toFixed(0)) : p <= 45 ? t('gen.mostlyNeg', (100 - p).toFixed(0), (100 - overall).toFixed(0)) : t('gen.mixed', p.toFixed(0), (100 - p).toFixed(0));
+      const split = [Math.round(p), 100 - Math.round(p)]; // "positive %, negative %", always adding up to 100
+      const lean = s.all < 8 ? t('gen.few', s.up, s.down) : t(p >= 55 ? 'gen.mostlyPos' : p <= 45 ? 'gen.mostlyNeg' : 'gen.mixed', ...split);
       h += `<li><b>${esc(tname(s.tp.name))}</b> ${t('gen.mention', pct(s.all, n), fmt(s.all))} ${lean}.` +
         (nt ? pair(nt.positive, nt.negative, p < 50) : '') + '</li>';
     }
